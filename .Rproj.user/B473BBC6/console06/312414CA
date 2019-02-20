@@ -1,0 +1,72 @@
+git ]0;~/piotr/garden_food_webs[?1034h[piotr@localhost garden_food_webs]$ git [K[K[K[K
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ 
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git remote add origin https://github.com/szef er-piotr/garden_food_webs.git
+fatal: Not a git repository (or any parent up to mount point /home)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git push -u origin master
+fatal: Not a git repository (or any parent up to mount point /home)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git remote add origin https://github.com/szef er-piotr/garden_food_webs.git
+fatal: Not a git repository (or any parent up to mount point /home)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git [K[K[K[Kpwed[K[Kd
+/home/piotr/piotr/garden_food_webs
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git init
+Initialized empty Git repository in /home/piotr/piotr/garden_food_webs/.git/
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git add README.md
+fatal: pathspec 'README.md' did not match any files
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git commit -m "first commit"[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Kadd -a
+error: unknown switch `a'
+usage: git add [options] [--] <pathspec>...
+
+    -n, --dry-run         dry run
+    -v, --verbose         be verbose
+
+    -i, --interactive     interactive picking
+    -p, --patch           select hunks interactively
+    -e, --edit            edit current diff and apply
+    -f, --force           allow adding otherwise ignored files
+    -u, --update          update tracked files
+    -N, --intent-to-add   record only the fact that the path will be added later
+    -A, --all             add changes from all tracked and untracked files
+    --ignore-removal      ignore paths removed in the working tree (same as --no-all)
+    --refresh             don't add, only refresh the index
+    --ignore-errors       just skip files which cannot be added because of errors
+    --ignore-missing      check if - even missing - files are ignored in dry run
+
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git commit -m "fi[K[Kinitial commit"
+# On branch master
+#
+# Initial commit
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	.Rhistory
+#	.Rproj.user/
+#	Ellwood et al 2009.pdf
+#	code/
+#	datasets/
+#	garden_food_webs.Rproj
+nothing added to commit but untracked files present (use "git add" to track)
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git add -a
+error: unknown switch `a'
+usage: git add [options] [--] <pathspec>...
+
+    -n, --dry-run         dry run
+    -v, --verbose         be verbose
+
+    -i, --interactive     interactive picking
+    -p, --patch           select hunks interactively
+    -e, --edit            edit current diff and apply
+    -f, --force           allow adding otherwise ignored files
+    -u, --update          update tracked files
+    -N, --intent-to-add   record only the fact that the path will be added later
+    -A, --all             add changes from all tracked and untracked files
+    --ignore-removal      ignore paths removed in the working tree (same as --no-all)
+    --refresh             don't add, only refresh the index
+    --ignore-errors       just skip files which cannot be added because of errors
+    --ignore-missing      check if - even missing - files are ignored in dry run
+
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$  echo 702E23C8 && /usr/bin/env && echo 574CE744A[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cgit add -a[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[KA

@@ -1,0 +1,10 @@
+herbivores <- read.csv("datasets/wng_insects/wng_bugs.csv",header=TRUE)
+
+sort(unique(herbivores$code)) #3 plots are missing
+
+dat13 <- herbivores[herbivores$code == "w1g1p3", ]
+
+net13 <- contingencyTable2(dat13,"plant","morph","abu")
+
+library(bipartite)
+plotweb2(net13)

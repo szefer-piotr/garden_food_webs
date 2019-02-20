@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1550659578735.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "1|56|37|0|\n",
+    "hash" : "0",
+    "id" : "61577CCA",
+    "lastKnownWriteTime" : 1550659652,
+    "last_content_update" : 1550659857217,
+    "path" : "~/piotr/garden_food_webs/code/data_processing_code.R",
+    "project_path" : "code/data_processing_code.R",
+    "properties" : {
+        "cursorPosition" : "48,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

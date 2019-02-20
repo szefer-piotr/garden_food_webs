@@ -1,0 +1,6 @@
+setwd("C:/Users/Piotr Szefer/Desktop/Work/garden food webs/datasets")
+herbivores <- read.csv("wng_bugs.csv",header=TRUE)
+sort(unique(herbivores$code)) #3 plots are missing
+dat13 <- herbivores[herbivores$code == "w1g1p3", ]
+setwd("C:/Users/Piotr Szefer/Desktop/Work/garden food webs/datasets")
+herbivores <- read.csv("wng_bugs.csv",header=TRUE)

@@ -1,10 +1,99 @@
-herbivores <- read.csv("datasets/wng_insects/wng_bugs.csv",header=TRUE)
+# Contingency table function
+contingencyTable2 <- function(dataset, ROW, COL, VALUE){
+  # Get rid of the empty factors
+  dataset[, colnames(dataset) == ROW] <- as.character(dataset[, colnames(dataset) == ROW])
+  dataset[, colnames(dataset) == COL] <- as.character(dataset[, colnames(dataset) == COL])
+  # Make a table, get rid of the empty rows and columns
+  plants <- table(dataset[, colnames(dataset) == ROW], dataset[, colnames(dataset) == COL])
+  plants <- plants[rowSums(plants) != 0, colSums(plants) != 0]
+  # See where to insert values
+  allSpecCodes <- colnames(plants)
+  allPlotCodes <- rownames(plants)
+  entries <- which(plants != 0, arr.ind = TRUE)
+  # Loop through the entries and insert values
+  for (entry in 1:dim(entries)[1]){
+    plot <- entries[entry,1]
+    plant <- entries[entry,2]
+    specCode <- allSpecCodes[plant]
+    plotCode <- allPlotCodes[plot]
+    #res <- dataset[dataset$ROW == plotCode & dataset$COL == specCode,VALUE]
+    res <- dataset[dataset[,ROW] == plotCode & dataset[,COL] == specCode,VALUE]
+    # print(sum(res))
+    plants[plot,plant] <- sum(res, na.rm = TRUE)
+  }
+  plants[is.na(plants)] <- 0
+  
+  # Change the table to a matrix or data.frame
+  
+  mat_a <- matrix(0, nrow = dim(plants)[1], ncol = dim(plants)[2])
+  colnames(mat_a) <- colnames(plants)
+  rownames(mat_a) <- rownames(plants)
+  for (row in 1:dim(plants)[1]){
+    for (col in 1:dim(plants)[2])
+      mat_a[row,col] <- plants[row,col]
+  }
+  
+  #return(plants)
+  return(mat_a)
+}
 
-sort(unique(herbivores$code)) #3 plots are missing
+# herbivores <- read.csv("datasets/wng_insects/wng_bugs.csv",header=TRUE)
+# 
+# sort(unique(herbivores$code)) #3 plots are missing
+# 
+# dat13 <- herbivores[herbivores$code == "w1g1p3", ]
+# 
+# net13 <- contingencyTable2(dat13,"plant","morph","abu")
+# 
+# library(bipartite)
+# plotweb2(net13)
 
-dat13 <- herbivores[herbivores$code == "w1g1p3", ]
+measur <- read.csv("datasets/csv_measurments_all.csv")
+arthro <- read.csv("datasets/csv_wng_all.csv")
 
-net13 <- contingencyTable2(dat13,"plant","morph","abu")
+arthro$family <- substr(arthro$morphotype, 1, 4)
+measur$family <- substr(measur$morphotype, 1, 4)
 
-library(bipartite)
-plotweb2(net13)
+table(arthro$family)
+table(measur$family)
+
+# Fix the some entries
+measur$Size <- as.numeric(measur$Size)
+names(measur) <- c("morphotype","abund","size","scale","scl","notes")
+measur$morphotype <- as.character(measur$morphotype)
+
+# Cheeck the plat names
+longnames <- which(sapply(as.character(measur$morphotype), nchar)>7)
+chlist <- strsplit(as.character(measur[longnames, ]$morphotype), split=",")
+
+for (i in 1:length(longnames)){
+  row <- longnames[i]
+  measur[row, 1] <- as.character(chlist[[i]][1])
+  measur[row, 2] <- as.numeric(chlist[[i]][2])
+  measur[row, 3] <- as.numeric(chlist[[i]][3])
+  measur[row, 5] <- as.numeric(chlist[[i]][6])
+}
+measur <- measur[,c(1,2,3,5,6)]
+measur$rsize <- measur$size * measur$scl
+head(measur)
+
+summary(arthro)
+unique(arthro$morphotype) # 607 morphotypes
+sort(unique(arthro$tree))
+
+# Sida rhombifolia
+arthro <- arthro[arthro$tree != "sida",]
+dim(arthro)
+
+# Change the names of trees
+tochange <- data.frame(a = sort(unique(arthro$tree)),
+           b=sort(unique(arthro$tree)))
+
+tochange$b[1] <- "breyce"
+tochange$b[5] <- "cordte"
+
+
+# Some notes:
+# Check what Costus sp is.
+# compare tree species with th eones observed in the previous study
+# what ficuses are there?

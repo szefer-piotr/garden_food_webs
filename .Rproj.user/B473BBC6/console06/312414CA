@@ -70,3 +70,111 @@ usage: git add [options] [--] <pathspec>...
 
 ]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$  echo 702E23C8 && /usr/bin/env && echo 574CE744A[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cgit add -a[K
 [K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[KA
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ gti[K[Kit status
+# On branch master
+#
+# Initial commit
+#
+# Changes to be committed:
+#   (use "git rm --cached <file>..." to unstage)
+#
+#	new file:   .Rhistory
+#	new file:   .Rproj.user/B473BBC6/console06/312414CA
+#	new file:   .Rproj.user/B473BBC6/console06/312414CA.env
+#	new file:   .Rproj.user/B473BBC6/console06/INDEX001
+#	new file:   .Rproj.user/B473BBC6/pcs/files-pane.pper
+#	new file:   .Rproj.user/B473BBC6/pcs/source-pane.pper
+#	new file:   .Rproj.user/B473BBC6/pcs/windowlayoutstate.pper
+#	new file:   .Rproj.user/B473BBC6/pcs/workbench-pane.pper
+#	new file:   .Rproj.user/B473BBC6/saved_source_markers
+#	new file:   .Rproj.user/B473BBC6/sources/prop/B992E112
+#	new file:   .Rproj.user/B473BBC6/sources/prop/INDEX
+#	new file:   .Rproj.user/B473BBC6/sources/s-132e77ac/61577CCA
+#	new file:   .Rproj.user/B473BBC6/sources/s-132e77ac/61577CCA-contents
+#	new file:   .Rproj.user/B473BBC6/sources/s-132e77ac/lock_file
+#	new file:   .Rproj.user/shared/notebooks/patch-chunk-names
+#	new file:   Ellwood et al 2009.pdf
+#	new file:   code/data_processing_code.R
+#	new file:   datasets/Gardenproject_cole_lepi_final.xlsx
+#	new file:   datasets/_Rhistory
+#	new file:   datasets/csv_measuments_lepi.csv
+#	new file:   datasets/wng_ants.ods
+#	new file:   datasets/wng_bugs.ods
+#	new file:   datasets/wng_insects/Measurements.xlsx
+#	new file:   datasets/wng_insects/Morphotypes.xlsx
+#	new file:   datasets/wng_insects/csv_measuments.csv
+#	new file:   datasets/wng_insects/csv_wng_arthropods.csv
+#	new file:   datasets/wng_insects/vert.txt
+#	new file:   datasets/wng_insects/wng_arthropods.ods
+#	new file:   datasets/wng_insects/wng_bugs.csv
+#	new file:   datasets/wng_insects/wng_bugs.ods
+#	new file:   datasets/wng_insects/wng_coleo.xlsx
+#	new file:   datasets/wng_insects/wng_coleoptera.xlsx
+#	new file:   datasets/wng_insects/wng_mantoidae.ods
+#	new file:   datasets/wng_insects/wng_spiders.csv
+#	new file:   datasets/wng_insects/wng_spiders.ods
+#	new file:   datasets/wng_spiders.ods
+#	new file:   garden_food_webs.Rproj
+#
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   .Rproj.user/B473BBC6/console06/312414CA
+#
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git commit -m "initailal[K[K[Kal[K[K[K[Kial commit"
+[master (root-commit) 5d35dee] initial commit
+ 37 files changed, 9843 insertions(+)
+ create mode 100644 .Rhistory
+ create mode 100644 .Rproj.user/B473BBC6/console06/312414CA
+ create mode 100644 .Rproj.user/B473BBC6/console06/312414CA.env
+ create mode 100644 .Rproj.user/B473BBC6/console06/INDEX001
+ create mode 100644 .Rproj.user/B473BBC6/pcs/files-pane.pper
+ create mode 100644 .Rproj.user/B473BBC6/pcs/source-pane.pper
+ create mode 100644 .Rproj.user/B473BBC6/pcs/windowlayoutstate.pper
+ create mode 100644 .Rproj.user/B473BBC6/pcs/workbench-pane.pper
+ create mode 100644 .Rproj.user/B473BBC6/saved_source_markers
+ create mode 100644 .Rproj.user/B473BBC6/sources/prop/B992E112
+ create mode 100644 .Rproj.user/B473BBC6/sources/prop/INDEX
+ create mode 100644 .Rproj.user/B473BBC6/sources/s-132e77ac/61577CCA
+ create mode 100644 .Rproj.user/B473BBC6/sources/s-132e77ac/61577CCA-contents
+ create mode 100644 .Rproj.user/B473BBC6/sources/s-132e77ac/lock_file
+ create mode 100644 .Rproj.user/shared/notebooks/patch-chunk-names
+ create mode 100644 Ellwood et al 2009.pdf
+ create mode 100644 code/data_processing_code.R
+ create mode 100644 datasets/Gardenproject_cole_lepi_final.xlsx
+ create mode 100644 datasets/_Rhistory
+ create mode 100644 datasets/csv_measuments_lepi.csv
+ create mode 100644 datasets/wng_ants.ods
+ create mode 100644 datasets/wng_bugs.ods
+ create mode 100644 datasets/wng_insects/Measurements.xlsx
+ create mode 100644 datasets/wng_insects/Morphotypes.xlsx
+ create mode 100644 datasets/wng_insects/csv_measuments.csv
+ create mode 100644 datasets/wng_insects/csv_wng_arthropods.csv
+ create mode 100644 datasets/wng_insects/vert.txt
+ create mode 100644 datasets/wng_insects/wng_arthropods.ods
+ create mode 100644 datasets/wng_insects/wng_bugs.csv
+ create mode 100644 datasets/wng_insects/wng_bugs.ods
+ create mode 100644 datasets/wng_insects/wng_coleo.xlsx
+ create mode 100644 datasets/wng_insects/wng_coleoptera.xlsx
+ create mode 100644 datasets/wng_insects/wng_mantoidae.ods
+ create mode 100644 datasets/wng_insects/wng_spiders.csv
+ create mode 100644 datasets/wng_insects/wng_spiders.ods
+ create mode 100644 datasets/wng_spiders.ods
+ create mode 100644 garden_food_webs.Rproj
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git remote add origin https://github.com/szef er-piotr/garden_food_webs.git
+]0;~/piotr/garden_food_webs[piotr@localhost garden_food_webs]$ git push -u origin master
+error: cannot run rpostback-askpass: No such file or directory
+Username for 'https://github.com': szefer85@gmail.com
+error: cannot run rpostback-askpass: No such file or directory
+Password for 'https://szefer85@gmail.com@github.com': 
+Counting objects: 50, done.
+Delta compression using up to 4 threads.
+Compressing objects:   2% (1/44)   Compressing objects:   4% (2/44)   Compressing objects:   6% (3/44)   Compressing objects:   9% (4/44)   Compressing objects:  11% (5/44)   Compressing objects:  13% (6/44)   Compressing objects:  15% (7/44)   Compressing objects:  18% (8/44)   Compressing objects:  20% (9/44)   Compressing objects:  22% (10/44)   Compressing objects:  25% (11/44)   Compressing objects:  27% (12/44)   Compressing objects:  29% (13/44)   Compressing objects:  31% (14/44)   Compressing objects:  34% (15/44)   Compressing objects:  36% (16/44)   Compressing objects:  38% (17/44)   Compressing objects:  40% (18/44)   Compressing objects:  43% (19/44)   Compressing objects:  45% (20/44)   Compressing objects:  47% (21/44)   Compressing objects:  50% (22/44)   Compressing objects:  52% (23/44)   Compressing objects:  54% (24/44)   Compressing objects:  56% (25/44)   Compressing objects:  59% (26/44)   Compressing objects:  61% (27/44)   Compressing objects:  63% (28/44)   Compressing objects:  65% (29/44)   Compressing objects:  68% (30/44)   Compressing objects:  70% (31/44)   Compressing objects:  72% (32/44)   Compressing objects:  75% (33/44)   Compressing objects:  77% (34/44)   Compressing objects:  79% (35/44)   Compressing objects:  81% (36/44)   Compressing objects:  84% (37/44)   Compressing objects:  86% (38/44)   Compressing objects:  88% (39/44)   Compressing objects:  90% (40/44)   Compressing objects:  93% (41/44)   Compressing objects:  95% (42/44)   Compressing objects:  97% (43/44)   Compressing objects: 100% (44/44)   Compressing objects: 100% (44/44), done.
+Writing objects:   2% (1/50)   Writing objects:   4% (2/50)   Writing objects:   6% (3/50)   Writing objects:   8% (4/50)   Writing objects:  10% (5/50)   Writing objects:  12% (6/50)   Writing objects:  14% (7/50)   Writing objects:  16% (8/50)   Writing objects:  18% (9/50)   Writing objects:  20% (10/50)   Writing objects:  22% (11/50)   Writing objects:  24% (12/50)   Writing objects:  26% (13/50)   Writing objects:  28% (14/50)   Writing objects:  30% (15/50)   Writing objects:  32% (16/50)   Writing objects:  34% (17/50)   Writing objects:  36% (18/50)   Writing objects:  38% (19/50)   Writing objects:  40% (20/50)   Writing objects:  42% (21/50)   Writing objects:  44% (22/50)   Writing objects:  46% (23/50)   Writing objects:  48% (24/50)   Writing objects:  50% (25/50)   Writing objects:  52% (26/50)   Writing objects:  54% (27/50)   Writing objects:  56% (28/50)   Writing objects:  58% (29/50)   Writing objects:  60% (30/50)   Writing objects:  62% (31/50)   Writing objects:  64% (32/50)   Writing objects:  66% (33/50)   Writing objects:  68% (34/50)   Writing objects:  70% (35/50)   Writing objects:  72% (36/50)   Writing objects:  72% (36/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  74% (37/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  76% (38/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  78% (39/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  80% (40/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  82% (41/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  84% (42/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  86% (43/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  88% (44/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  90% (45/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  92% (46/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  94% (47/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  96% (48/50), 1.05 MiB | 471.00 KiB/s   Writing objects:  98% (49/50), 1.05 MiB | 471.00 KiB/s   Writing objects: 100% (50/50), 1.05 MiB | 471.00 KiB/s   Writing objects: 100% (50/50), 1.31 MiB | 471.00 KiB/s, done.
+Total 50 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas:   0% (0/1)   [Kremote: Resolving deltas: 100% (1/1)   [Kremote: Resolving deltas: 100% (1/1), done.[K
+To https://github.com/szefer-piotr/garden_food_webs.git
+ * [new branch]      master -> master
+Branch master set up to track remote branch master from origin.
+]0;~/piotr/garden_food_webs[?1034h[piotr@localhost garden_food_webs]$ 

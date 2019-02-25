@@ -89,11 +89,43 @@ dim(arthro)
 tochange <- data.frame(a = sort(unique(arthro$tree)),
            b=sort(unique(arthro$tree)))
 
+# himibi??? "mimodi"
+# arthro[arthro$tree == "premna",]
+arthro[arthro$tree == "costsp",]
+# arthro[arthro$plot == "w1g1p2",]
+# 
+# premna
+
 tochange$b[1] <- "breyce"
 tochange$b[5] <- "cordte"
+tochange$b[10] <- "ficuco"
+tochange$b[12] <- "mimodi"
+tochange$b[14] <- "homano"
+tochange$b[15] <- "homano"
+tochange$b[25] <- "pipeum"
+tochange$b[29] <- "prems1"
+tochange$b[32] <- "solatu"
+tochange$b[36] <- "tremor"
+tochange$b[41] <- "viteco"
 
+arthro$tree <- as.character(arthro$tree)
+
+# Then use the corrected names to change names in the dataset
+for(name in tochange$a){
+  print(name)
+  arthro[arthro$tree == name, ]$tree <- as.character(tochange[tochange$a == name, ]$b)
+}
+
+sort(unique(arthro$tree))
 
 # Some notes:
 # Check what Costus sp is.
 # compare tree species with th eones observed in the previous study
 # what ficuses are there?
+# ARTOCO ARTOLA BARRS1 BREYCE CARIPA COMMBA DENDLO DENDS1 DRACLA ENDOLA
+# FICUCO FICUCP FICUHA FICUHI FICUPA FICUVA FICUWA GUIOCO HOMANO LEEAIN
+# MACAAL MACABI MACAFA MACAQU MACATA MANIES MELAMU MELOS1 MERRME MUSSCY
+# PIPEAD PIPEUM PIPTAR PISOLO PREMOB PREMS1 TOURSA TREMOR TRICPL VITECO
+
+# Plant biomass!!!
+

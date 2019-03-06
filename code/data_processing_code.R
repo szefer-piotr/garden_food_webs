@@ -59,7 +59,7 @@ table(measur$family)
 
 # Fix the some entries
 measur$Size <- as.numeric(measur$Size)
-names(measur) <- c("morphotype","abund","size","scale","scl","notes")
+names(measur) <- c("morphotype","no","size","scale","scl","notes")
 measur$morphotype <- as.character(measur$morphotype)
 
 # Cheeck the plat names
@@ -128,4 +128,53 @@ sort(unique(arthro$tree))
 # PIPEAD PIPEUM PIPTAR PISOLO PREMOB PREMS1 TOURSA TREMOR TRICPL VITECO
 
 # Plant biomass!!!
+main <- read.table("datasets/wng_main_clean.txt", header = T)
+# each plant in each garden has a biomass, so when i create my table, i could
+# already use arthtopods biomass and supplement it with plant biomass at a given 
+# plot
 
+# Arthropod biomass
+measur$fam <- substr(measur$morphotype, 1,4)
+head(measur)
+
+# Models used to estimate biomass
+# Ganihar 1997
+# Araneae: power;b0=-3.2105 (0.1075);b1=2.4681(0.0756)
+# Orthoptera: power;b0=-3.5338(0.2668);b1=2.4619(0.1002)
+# Hemiptera: power;b0=-3.8893(0.3387);b1=2.7642(0.3113)
+# Homoptera: power;b0=-3.1984(0.1174);b1=2.3487(0.0779)
+# Coleoptera: power;b0=-3.2689(0.0659);b1=2.4625(0.0415)
+
+# Wardhough 
+# (power model ln(weight) = ln(a) + b * length )
+# Mantodea:   a=-6.34(0.72);b=3.01(0.27)
+# Araneae:    a=-2.13(0.15);b=2.23(0.11)
+# Orthoptera: a=-3.17(0.19);b=2.61(0.09)
+# Hemiptera:  a=-3.01(0.17);b=2.59(0.09)
+# Homoptera: 
+# Coleoptera: a=-3.2(0.14); b=2.56(0.08)
+
+params <- list(mant = c(a = -6.34, b = 3.01),
+     aran = c(a = -2.13, b = 2.23))
+
+est_bio <- function(fam, size){
+  fam <- as.character(fam) #transform the input
+  a <- params[[fam]]["a"]
+  b <- params[[fam]]["b"]
+  return(exp(a)*size^b) # weight=a*length^b
+}
+
+fam <- "aran"
+size <- 40          # size has to be in [mm]
+est_bio(fam, size) # what is the unit???? [mg]
+
+# Average measurments for each morphotype,
+# Or should I rather use median?
+head(measur)
+avmed <- tapply(measur$rsize, measur$morphotype, median)
+estims <- data.frame(av_morp =avmed)
+estims$fam <- substr(rownames(estims),1,4)
+for (row in 1:dim(estims)[1]){
+  estims$weight[row] <- est_bio(estims[row,]$fam, 
+                                estims[row,]$av_morp)
+}

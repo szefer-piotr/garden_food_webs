@@ -1,0 +1,5 @@
+"aran001" "aran002" "aran003" "aran004" "aran005" "aran008" "aran009" "aran011" "aran013" "aran015" "aran016" "aran019" "aran031" "aran033" "aran034" "aran039" "aran043" "aran045" "aran059" "aran064" "aran078" "aran119" "aran121" "cole001" "cole002" "cole003" "cole009" "cole017" "cole022" "cole035" "cole054" "cole059" "cole061" "cole105" "cole112" "cole116" "cole119" "cole124" "cole127" "cole131" "hemi059" "hemi094" "lepi008" "lepi009" "lepi011" "lepi015" "lepi031" "lepi093" "mant005" "mant006" "orth002" "orth013" "orth018" "orth019" "orth020" "orth024" "orth026" "orth027" "orth031" "orth043" "orth066" "orth074" "orth086"
+"breyce" 1 2 0 0 0 1 2 0 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 1
+"melamu" 0 0 1 0 1 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 5 1 3 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 1 0 0 0 0 0 1 0 1 0 0
+"piptar" 1 0 1 0 0 0 0 0 0 0 0 0 0 1 2 1 0 0 1 0 1 0 0 2 13 2 4 1 0 5 0 1 0 0 0 1 2 2 1 0 1 2 0 0 0 0 0 0 1 0 1 2 0 2 2 0 0 0 1 1 0 1 0
+"tricpl" 0 0 0 2 0 0 4 1 1 0 1 0 1 0 0 1 1 1 0 0 0 1 1 2 6 3 1 0 0 0 1 1 1 1 1 2 0 0 0 0 0 0 0 3 4 3 1 5 0 0 1 0 0 1 3 1 1 1 0 1 0 0 0

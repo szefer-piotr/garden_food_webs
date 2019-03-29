@@ -116,7 +116,80 @@ for(name in tochange$a){
   arthro[arthro$tree == name, ]$tree <- as.character(tochange[tochange$a == name, ]$b)
 }
 
-sort(unique(arthro$tree))
+arthro[arthro$plot == "wg3p6",]$plot <- "w1g3p6"
+arthro$plot <- as.character(arthro$plot)
+
+# write.table(arthro, "datasets/wng_arthro_clean.txt")
+
+# Biomass and treatments
+main <- read.table("datasets/wng_main_clean.txt", header = T)
+main$TREAT <- as.character(main$TREAT)
+treats <- as.data.frame(tapply(main$TREAT, main$CODE, unique))
+treats$code <- rownames(treats)
+names(treats) <- c("treat", "codes")
+treats$codes <- gsub("W","W1", treats$codes)
+treats$codes <- tolower(treats$codes)
+
+# Read the dataset
+
+arthro <- read.table("datasets/wng_arthro_clean.txt", header = T)
+control_codes <- c("w1g1p3","w1g2p6","w1g3p3",
+                   "w1g4p1","w1g5p1","w1g6p6")
+
+arthro_control <- arthro[arthro$plot %in% control_codes, ]
+
+library(bipartite)
+library(RColorBrewer)
+cols <- colorRampPalette(brewer.pal(9,"Reds"))(3)
+cols <- c("gold","red")
+int.col <- rgb(128,128,128,100,maxColorValue = 255)
+pn = "w1g6p6"
+for(pn in control_codes){
+  dt <- arthro_control[arthro_control$plot == pn, ]
+  p1 <- contingencyTable2(dt, "tree", "morphotype", "amount")
+  family_col <- substr(colnames(p1), 1,4)
+  trophic_lev <- rep("gold", length(family_col))
+  trophic_lev[family_col %in% c("aran","mant")] <- "red"
+  family_col <- cols[as.numeric(as.factor(family_col))]
+  png(paste("control_plots/", pn, ".png", sep=""), 800,400)
+  plotweb(p1, col.high = trophic_lev,
+          col.low = "forestgreen",
+          col.interaction = int.col,
+          bor.col.interaction = NA,
+          bor.col.high = NA,
+          bor.col.low = NA,
+          text.rot=90)
+  dev.off()
+  write.table(p1, paste("control_plots/", pn, ".txt", sep=""))
+}
+
+# Number of insects and 
+#- mean number of plant and insect species and individuals per plot
+plot_desc <- data.frame()
+codes <- c()
+trt <- c()
+for (i in unique(arthro$plot)){
+  print(i)
+  subdat <- arthro[arthro$plot == i, ]
+  plants <- length(unique(subdat$tree))
+  herbivores <- length(unique(subdat[!(subdat$family %in% c("aran", "mant")), ]$morphotype))
+  preds <- length(unique(subdat[subdat$family %in% c("aran", "mant"), 1]))
+  inter_herb <- sum(subdat[!(subdat$family %in% c("aran", "mant")), 2])
+  inter_pred <- sum(subdat[subdat$family %in% c("aran", "mant"), 2])
+  q_int_herb <- dim(subdat[!(subdat$family %in% c("aran", "mant")), ])[1]
+  row <- c(plants, herbivores, preds, inter_herb, inter_pred, q_int_herb)
+  codes <- c(codes, i)
+  trt <-c(trt, as.character(treats[treats$codes == i, "treat"])) 
+  plot_desc <- rbind(plot_desc, row)
+}
+
+plot_names <- cbind(trt, codes)
+data_plots <- cbind(plot_names, plot_desc)
+names(data_plots) <- c("treat", "code", "plant_sp","herbiv_sp","pred_sp","herb_int", "pred_int", "q_int_herb")
+
+write.table(data_plots, "datasets/plot_data.txt")
+
+#- mean number of plant-herbivore interactions per plot
 
 # Some notes:
 # Check what Costus sp is.
@@ -128,10 +201,12 @@ sort(unique(arthro$tree))
 # PIPEAD PIPEUM PIPTAR PISOLO PREMOB PREMS1 TOURSA TREMOR TRICPL VITECO
 
 # Plant biomass!!!
-main <- read.table("datasets/wng_main_clean.txt", header = T)
+# main <- read.table("datasets/wng_main_clean.txt", header = T)
 # each plant in each garden has a biomass, so when i create my table, i could
 # already use arthtopods biomass and supplement it with plant biomass at a given 
 # plot
+
+head(main)
 
 # Arthropod biomass
 measur$fam <- substr(measur$morphotype, 1,4)

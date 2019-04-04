@@ -1,11 +1,12 @@
 # Insects analysis
-source("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\code\\Data_Processing_Script_v2.R")
-setwd("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\datasets\\wng_insects")
-insects <- read.table("csv_wng_arthropods.csv", sep=",", header=T, skip=2)
-insects$group <- substr(insects$Morphotype,1,4)
+# source("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\code\\Data_Processing_Script_v2.R")
+# setwd("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\datasets\\wng_insects")
+# insects <- read.table("csv_wng_arthropods.csv", sep=",", header=T, skip=2)
+# insects$group <- substr(insects$Morphotype,1,4)
 
-sizes <- read.table("csv_measuments.csv", sep=",", header=T)
-sizes$length <- sizes$Size*sizes$scl
+insects <- read.table("datasets/wng_arthro_clean.txt")
+sizes <- read.table("datasets/wng_measurements.txt", header=T)
+sizes$length <- sizes$rsize
 sizes$group <- substr(sizes$morphotype,1,4)
 
 head(insects)

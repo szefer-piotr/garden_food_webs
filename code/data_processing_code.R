@@ -1,4 +1,7 @@
 # Contingency table function
+# This function creates a contingency table for a given row category
+# column categoory and sums values.
+
 contingencyTable2 <- function(dataset, ROW, COL, VALUE){
   # Get rid of the empty factors
   dataset[, colnames(dataset) == ROW] <- as.character(dataset[, colnames(dataset) == ROW])
@@ -37,32 +40,25 @@ contingencyTable2 <- function(dataset, ROW, COL, VALUE){
   return(mat_a)
 }
 
-# herbivores <- read.csv("datasets/wng_insects/wng_bugs.csv",header=TRUE)
-# 
-# sort(unique(herbivores$code)) #3 plots are missing
-# 
-# dat13 <- herbivores[herbivores$code == "w1g1p3", ]
-# 
-# net13 <- contingencyTable2(dat13,"plant","morph","abu")
-# 
-# library(bipartite)
-# plotweb2(net13)
+# 1. Load, fix, and save datasets ----
 
+# Measurements: insect body length
 measur <- read.csv("datasets/csv_measurments_all.csv")
+# Count data: incidence of insects on individual plant species
 arthro <- read.csv("datasets/csv_wng_all.csv")
-
+# Extract family abbreviation
 arthro$family <- substr(arthro$morphotype, 1, 4)
 measur$family <- substr(measur$morphotype, 1, 4)
 
-table(arthro$family)
-table(measur$family)
+# table(arthro$family) # Number of interactions within each family
+# table(measur$family) # Number of measured individuals from each family
 
-# Fix the some entries
+# Fixing some of the entries
 measur$Size <- as.numeric(measur$Size)
 names(measur) <- c("morphotype","no","size","scale","scl","notes")
 measur$morphotype <- as.character(measur$morphotype)
 
-# Cheeck the plat names
+# Check the plat names
 longnames <- which(sapply(as.character(measur$morphotype), nchar)>7)
 chlist <- strsplit(as.character(measur[longnames, ]$morphotype), split=",")
 
@@ -73,17 +69,46 @@ for (i in 1:length(longnames)){
   measur[row, 3] <- as.numeric(chlist[[i]][3])
   measur[row, 5] <- as.numeric(chlist[[i]][6])
 }
-measur <- measur[,c(1,2,3,5,6)]
-measur$rsize <- measur$size * measur$scl
+# measur <- measur[,c(1,2,3,5,6)]
+
+# for MANT, ARAN, HEMI, HOMO: 1 cm = 10 [mm], 0.5 cm = 20 [mm], cm = 1
+# for COLE, ORTH and LEPI, 
+
+summary(measur)
 head(measur)
 
-summary(arthro)
-unique(arthro$morphotype) # 607 morphotypes
+# What type of entries for the scale we have?
+ent <- as.character(unique(measur$scale))
+
+measur$nscl <- 0
+measur[measur$scale %in% ent[c(2,5)], ]$nscl <- 10
+measur[(measur$scale %in% ent[c(1,3,4,7)] & measur$scl == 0.5),]$nscl <- 20
+measur[(measur$scale %in% ent[c(1,3,6,7)] & measur$scl == 1),]$nscl <- 1
+measur[(measur$scale %in% ent[c(1,3,6,7)] & measur$scl == 2),]$nscl <- 2
+
+# Real scale [cm] insect sizes
+measur$rsize <- measur$size/measur$nscl
+
+# Clean measurments table
+# write.table(measur, "datasets/wng_measurements.txt")
+
+
+# 2. Arthropod dataset cleaning ----
+# summary(arthro)
+# summary(measur)
+
+# Test if the datasets are OK, insects loads on plants
+# library(ggplot2)
+# ap <- ggplot(arthro, aes(x = amount, y = tree))
+# ap + geom_boxplot()
+
+# unique(arthro$morphotype) # 607 morphotypes
+
 sort(unique(arthro$tree))
 
-# Sida rhombifolia
+# Remove Sida rhombifolia - this is not a tree
 arthro <- arthro[arthro$tree != "sida",]
-dim(arthro)
+# dim(arthro)
 
 # Change the names of trees
 tochange <- data.frame(a = sort(unique(arthro$tree)),
@@ -95,7 +120,6 @@ arthro[arthro$tree == "costsp",]
 # arthro[arthro$plot == "w1g1p2",]
 # 
 # premna
-
 tochange$b[1] <- "breyce"
 tochange$b[5] <- "cordte"
 tochange$b[10] <- "ficuco"
@@ -119,9 +143,10 @@ for(name in tochange$a){
 arthro[arthro$plot == "wg3p6",]$plot <- "w1g3p6"
 arthro$plot <- as.character(arthro$plot)
 
+# Save the corrected dataset (clean one)
 # write.table(arthro, "datasets/wng_arthro_clean.txt")
 
-# Biomass and treatments
+# 3. Biomass and treatments ----
 main <- read.table("datasets/wng_main_clean.txt", header = T)
 main$TREAT <- as.character(main$TREAT)
 treats <- as.data.frame(tapply(main$TREAT, main$CODE, unique))
@@ -130,64 +155,64 @@ names(treats) <- c("treat", "codes")
 treats$codes <- gsub("W","W1", treats$codes)
 treats$codes <- tolower(treats$codes)
 
-# Read the dataset
+# X. Summaries ----
+# Read the dataset 
+# arthro <- read.table("datasets/wng_arthro_clean.txt", header = T)
+# control_codes <- c("w1g1p3","w1g2p6","w1g3p3",
+#                    "w1g4p1","w1g5p1","w1g6p6")
+# 
+# arthro_control <- arthro[arthro$plot %in% control_codes, ]
+# 
+# library(bipartite)
+# library(RColorBrewer)
+# cols <- colorRampPalette(brewer.pal(9,"Reds"))(3)
+# cols <- c("gold","red")
+# int.col <- rgb(128,128,128,100,maxColorValue = 255)
+# pn = "w1g6p6"
+# for(pn in control_codes){
+#   dt <- arthro_control[arthro_control$plot == pn, ]
+#   p1 <- contingencyTable2(dt, "tree", "morphotype", "amount")
+#   family_col <- substr(colnames(p1), 1,4)
+#   trophic_lev <- rep("gold", length(family_col))
+#   trophic_lev[family_col %in% c("aran","mant")] <- "red"
+#   family_col <- cols[as.numeric(as.factor(family_col))]
+#   png(paste("control_plots/", pn, ".png", sep=""), 800,400)
+#   plotweb(p1, col.high = trophic_lev,
+#           col.low = "forestgreen",
+#           col.interaction = int.col,
+#           bor.col.interaction = NA,
+#           bor.col.high = NA,
+#           bor.col.low = NA,
+#           text.rot=90)
+#   dev.off()
+#   write.table(p1, paste("control_plots/", pn, ".txt", sep=""))
+# }
+# 
+# # Number of insects and 
+# #- mean number of plant and insect species and individuals per plot
+# plot_desc <- data.frame()
+# codes <- c()
+# trt <- c()
+# for (i in unique(arthro$plot)){
+#   print(i)
+#   subdat <- arthro[arthro$plot == i, ]
+#   plants <- length(unique(subdat$tree))
+#   herbivores <- length(unique(subdat[!(subdat$family %in% c("aran", "mant")), ]$morphotype))
+#   preds <- length(unique(subdat[subdat$family %in% c("aran", "mant"), 1]))
+#   inter_herb <- sum(subdat[!(subdat$family %in% c("aran", "mant")), 2])
+#   inter_pred <- sum(subdat[subdat$family %in% c("aran", "mant"), 2])
+#   q_int_herb <- dim(subdat[!(subdat$family %in% c("aran", "mant")), ])[1]
+#   row <- c(plants, herbivores, preds, inter_herb, inter_pred, q_int_herb)
+#   codes <- c(codes, i)
+#   trt <-c(trt, as.character(treats[treats$codes == i, "treat"])) 
+#   plot_desc <- rbind(plot_desc, row)
+# }
+# 
+# plot_names <- cbind(trt, codes)
+# data_plots <- cbind(plot_names, plot_desc)
+# names(data_plots) <- c("treat", "code", "plant_sp","herbiv_sp","pred_sp","herb_int", "pred_int", "q_int_herb")
 
-arthro <- read.table("datasets/wng_arthro_clean.txt", header = T)
-control_codes <- c("w1g1p3","w1g2p6","w1g3p3",
-                   "w1g4p1","w1g5p1","w1g6p6")
-
-arthro_control <- arthro[arthro$plot %in% control_codes, ]
-
-library(bipartite)
-library(RColorBrewer)
-cols <- colorRampPalette(brewer.pal(9,"Reds"))(3)
-cols <- c("gold","red")
-int.col <- rgb(128,128,128,100,maxColorValue = 255)
-pn = "w1g6p6"
-for(pn in control_codes){
-  dt <- arthro_control[arthro_control$plot == pn, ]
-  p1 <- contingencyTable2(dt, "tree", "morphotype", "amount")
-  family_col <- substr(colnames(p1), 1,4)
-  trophic_lev <- rep("gold", length(family_col))
-  trophic_lev[family_col %in% c("aran","mant")] <- "red"
-  family_col <- cols[as.numeric(as.factor(family_col))]
-  png(paste("control_plots/", pn, ".png", sep=""), 800,400)
-  plotweb(p1, col.high = trophic_lev,
-          col.low = "forestgreen",
-          col.interaction = int.col,
-          bor.col.interaction = NA,
-          bor.col.high = NA,
-          bor.col.low = NA,
-          text.rot=90)
-  dev.off()
-  write.table(p1, paste("control_plots/", pn, ".txt", sep=""))
-}
-
-# Number of insects and 
-#- mean number of plant and insect species and individuals per plot
-plot_desc <- data.frame()
-codes <- c()
-trt <- c()
-for (i in unique(arthro$plot)){
-  print(i)
-  subdat <- arthro[arthro$plot == i, ]
-  plants <- length(unique(subdat$tree))
-  herbivores <- length(unique(subdat[!(subdat$family %in% c("aran", "mant")), ]$morphotype))
-  preds <- length(unique(subdat[subdat$family %in% c("aran", "mant"), 1]))
-  inter_herb <- sum(subdat[!(subdat$family %in% c("aran", "mant")), 2])
-  inter_pred <- sum(subdat[subdat$family %in% c("aran", "mant"), 2])
-  q_int_herb <- dim(subdat[!(subdat$family %in% c("aran", "mant")), ])[1]
-  row <- c(plants, herbivores, preds, inter_herb, inter_pred, q_int_herb)
-  codes <- c(codes, i)
-  trt <-c(trt, as.character(treats[treats$codes == i, "treat"])) 
-  plot_desc <- rbind(plot_desc, row)
-}
-
-plot_names <- cbind(trt, codes)
-data_plots <- cbind(plot_names, plot_desc)
-names(data_plots) <- c("treat", "code", "plant_sp","herbiv_sp","pred_sp","herb_int", "pred_int", "q_int_herb")
-
-write.table(data_plots, "datasets/plot_data.txt")
+#  write.table(data_plots, "datasets/plot_data.txt")
 
 #- mean number of plant-herbivore interactions per plot
 
@@ -205,51 +230,51 @@ write.table(data_plots, "datasets/plot_data.txt")
 # each plant in each garden has a biomass, so when i create my table, i could
 # already use arthtopods biomass and supplement it with plant biomass at a given 
 # plot
+# 
+# head(main)
 
-head(main)
-
-# Arthropod biomass
-measur$fam <- substr(measur$morphotype, 1,4)
-head(measur)
-
-# Models used to estimate biomass
-# Ganihar 1997
-# Araneae: power;b0=-3.2105 (0.1075);b1=2.4681(0.0756)
-# Orthoptera: power;b0=-3.5338(0.2668);b1=2.4619(0.1002)
-# Hemiptera: power;b0=-3.8893(0.3387);b1=2.7642(0.3113)
-# Homoptera: power;b0=-3.1984(0.1174);b1=2.3487(0.0779)
-# Coleoptera: power;b0=-3.2689(0.0659);b1=2.4625(0.0415)
-
-# Wardhough 
-# (power model ln(weight) = ln(a) + b * length )
-# Mantodea:   a=-6.34(0.72);b=3.01(0.27)
-# Araneae:    a=-2.13(0.15);b=2.23(0.11)
-# Orthoptera: a=-3.17(0.19);b=2.61(0.09)
-# Hemiptera:  a=-3.01(0.17);b=2.59(0.09)
-# Homoptera: 
-# Coleoptera: a=-3.2(0.14); b=2.56(0.08)
-
-params <- list(mant = c(a = -6.34, b = 3.01),
-     aran = c(a = -2.13, b = 2.23))
-
-est_bio <- function(fam, size){
-  fam <- as.character(fam) #transform the input
-  a <- params[[fam]]["a"]
-  b <- params[[fam]]["b"]
-  return(exp(a)*size^b) # weight=a*length^b
-}
-
-fam <- "aran"
-size <- 40          # size has to be in [mm]
-est_bio(fam, size) # what is the unit???? [mg]
-
-# Average measurments for each morphotype,
-# Or should I rather use median?
-head(measur)
-avmed <- tapply(measur$rsize, measur$morphotype, median)
-estims <- data.frame(av_morp =avmed)
-estims$fam <- substr(rownames(estims),1,4)
-for (row in 1:dim(estims)[1]){
-  estims$weight[row] <- est_bio(estims[row,]$fam, 
-                                estims[row,]$av_morp)
-}
+# # Arthropod biomass
+# measur$fam <- substr(measur$morphotype, 1,4)
+# head(measur)
+# 
+# # Models used to estimate biomass
+# # Ganihar 1997
+# # Araneae: power;b0=-3.2105 (0.1075);b1=2.4681(0.0756)
+# # Orthoptera: power;b0=-3.5338(0.2668);b1=2.4619(0.1002)
+# # Hemiptera: power;b0=-3.8893(0.3387);b1=2.7642(0.3113)
+# # Homoptera: power;b0=-3.1984(0.1174);b1=2.3487(0.0779)
+# # Coleoptera: power;b0=-3.2689(0.0659);b1=2.4625(0.0415)
+# 
+# # Wardhough 
+# # (power model ln(weight) = ln(a) + b * length )
+# # Mantodea:   a=-6.34(0.72);b=3.01(0.27)
+# # Araneae:    a=-2.13(0.15);b=2.23(0.11)
+# # Orthoptera: a=-3.17(0.19);b=2.61(0.09)
+# # Hemiptera:  a=-3.01(0.17);b=2.59(0.09)
+# # Homoptera: 
+# # Coleoptera: a=-3.2(0.14); b=2.56(0.08)
+# 
+# params <- list(mant = c(a = -6.34, b = 3.01),
+#      aran = c(a = -2.13, b = 2.23))
+# 
+# est_bio <- function(fam, size){
+#   fam <- as.character(fam) #transform the input
+#   a <- params[[fam]]["a"]
+#   b <- params[[fam]]["b"]
+#   return(exp(a)*size^b) # weight=a*length^b
+# }
+# 
+# fam <- "aran"
+# size <- 40          # size has to be in [mm]
+# est_bio(fam, size) # what is the unit???? [mg]
+# 
+# # Average measurments for each morphotype,
+# # Or should I rather use median?
+# head(measur)
+# avmed <- tapply(measur$rsize, measur$morphotype, median)
+# estims <- data.frame(av_morp =avmed)
+# estims$fam <- substr(rownames(estims),1,4)
+# for (row in 1:dim(estims)[1]){
+#   estims$weight[row] <- est_bio(estims[row,]$fam, 
+#                                 estims[row,]$av_morp)
+# }

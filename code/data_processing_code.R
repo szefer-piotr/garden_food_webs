@@ -1,7 +1,8 @@
-# Contingency table function
+
+# 0. Contingency table function ----
+
 # This function creates a contingency table for a given row category
 # column categoory and sums values.
-
 contingencyTable2 <- function(dataset, ROW, COL, VALUE){
   # Get rid of the empty factors
   dataset[, colnames(dataset) == ROW] <- as.character(dataset[, colnames(dataset) == ROW])
@@ -42,10 +43,11 @@ contingencyTable2 <- function(dataset, ROW, COL, VALUE){
 
 # 1. Load, fix, and save datasets ----
 
-# Measurements: insect body length
+# Measurements: insect body length ----
 measur <- read.csv("datasets/csv_measurments_all.csv")
-# Count data: incidence of insects on individual plant species
+# Count data: incidence of insects on individual plant species ----
 arthro <- read.csv("datasets/csv_wng_all.csv")
+
 # Extract family abbreviation
 arthro$family <- substr(arthro$morphotype, 1, 4)
 measur$family <- substr(measur$morphotype, 1, 4)
@@ -71,26 +73,34 @@ for (i in 1:length(longnames)){
 }
 # measur <- measur[,c(1,2,3,5,6)]
 
+# Scale codes are as follows
 # for MANT, ARAN, HEMI, HOMO: 1 cm = 10 [mm], 0.5 cm = 20 [mm], cm = 1
 # for COLE, ORTH and LEPI, 
 
-summary(measur)
-head(measur)
+# summary(measur)
+# head(measur)
 
 # What type of entries for the scale we have?
 ent <- as.character(unique(measur$scale))
-
 measur$nscl <- 0
 measur[measur$scale %in% ent[c(2,5)], ]$nscl <- 10
 measur[(measur$scale %in% ent[c(1,3,4,7)] & measur$scl == 0.5),]$nscl <- 20
 measur[(measur$scale %in% ent[c(1,3,6,7)] & measur$scl == 1),]$nscl <- 1
 measur[(measur$scale %in% ent[c(1,3,6,7)] & measur$scl == 2),]$nscl <- 2
 
+
+# Some corrections
+sizes[sizes$rsize == Inf, ]
+sizes[sizes$morphotype == "cole065", ]$nscl <- 20 # I would have to check the morphotype
+sizes[2108, ]$nscl <- 10
+
+
+
 # Real scale [cm] insect sizes
 measur$rsize <- measur$size/measur$nscl
 
 # Clean measurments table
-# write.table(measur, "datasets/wng_measurements.txt")
+write.table(measur, "datasets/wng_measurements.txt")
 
 
 # 2. Arthropod dataset cleaning ----
@@ -154,6 +164,18 @@ treats$code <- rownames(treats)
 names(treats) <- c("treat", "codes")
 treats$codes <- gsub("W","W1", treats$codes)
 treats$codes <- tolower(treats$codes)
+
+# write.table(treats, "datasets/treats_clean.txt")
+
+main$CODE <- gsub("W","W1", main$CODE)
+main$CODE <- tolower(main$CODE)
+
+main_biomass <- main[,c("CODE","PLOT","BLOCK","TREAT","SPEC","SP_CODE","LIFE.FORM","BASAL_A","HEIGHT_M", "LEAVES","TRUNK","WEIGHT")]
+
+# write.table(main_biomass, "datasets/wng_main_bio.txt")
+
+
+
 
 # X. Summaries ----
 # Read the dataset 

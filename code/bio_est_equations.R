@@ -4,18 +4,29 @@
 # insects <- read.table("csv_wng_arthropods.csv", sep=",", header=T, skip=2)
 # insects$group <- substr(insects$Morphotype,1,4)
 
+# 1. Load datasets ----
 insects <- read.table("datasets/wng_arthro_clean.txt")
-sizes <- read.table("datasets/wng_measurements.txt", header=T)
-sizes$length <- sizes$rsize
-sizes$group <- substr(sizes$morphotype,1,4)
+# rsize is in cm
+sizes   <- read.table("datasets/wng_measurements.txt", header=T)
+treats  <- read.table("datasets/treats_clean.txt")
+plants  <- read.table("datasets/wng_main_bio.txt")
+# plots   <- read.table("datasets/plot_data.txt") # diversity etc
 
-head(insects)
+colnames(sizes) <- c("morphotype", "no", "size", "scale", "scl", "notes",  
+                     "group", "nscl", "rsize")
+plants$SP_CODE <- tolower(plants$SP_CODE)
+
 head(sizes)
+head(insects)
+head(plants)
 
-# Size dataset
-size <- tapply(sizes$length, sizes$morphotype, mean)
+# Size dataset, each morphotype's average size
+size <- tapply(sizes$r, sizes$morphotype, mean)
+mft <- names(size)
 group <- substr(names(size),1,4)
-size_dat <- cbind(size,group)
+size_dat <- data.frame(morph = mft,
+                       size = as.numeric(size),
+                       group = group)
 
 # Models used to estimate biomass
 # Ganihar 1997
@@ -27,12 +38,46 @@ size_dat <- cbind(size,group)
 
 # Wardhough 
 # (power model ln(weight) = ln(a) + b * length )
-# Mantodea:   a=-6.34(0.72);b=3.01(0.27)
-# Araneae:    a=-2.13(0.15);b=2.23(0.11)
-# Orthoptera: a=-3.17(0.19);b=2.61(0.09)
-# Hemiptera:  a=-3.01(0.17);b=2.59(0.09)
-# Homoptera: 
-# Coleoptera: a=-3.2(0.14); b=2.56(0.08)
+# weight <- exp(a) * size^b
+# Mantodea:    a=-6.34(0.72);b=3.01(0.27)
+# Araneae:     a=-2.13(0.15);b=2.23(0.11)
+# Orthoptera:  a=-3.17(0.19);b=2.61(0.09)
+# Hemiptera:   a=-3.01(0.17);b=2.59(0.09)
+# Homoptera:   a=-3.20(0.12);b=2.35(0.08) (Ganihar 1997)
+# Coleoptera:  a=-3.2(0.14); b=2.56(0.08)
+# Lepidoptera: a=-5.44(); b=2.55
+
+allo_params <- data.frame(group = unique(sizes$group),
+                          a = c(-6.34,-2.13,-3.01,-3.20,-3.2 ,-3.17, -5.44),
+                          b = c( 3.01, 2.23, 2.59, 2.35, 2.56, 2.61,  2.55))
+
+# Size of an average individual
+size_dat$a <- 0
+size_dat$b <- 0
+for (grp in unique(allo_params$group)){
+  aval <- allo_params[allo_params$group == grp, ]$a
+  bval <- allo_params[allo_params$group == grp, ]$b
+  size_dat[size_dat$group == grp, ]$a <- aval 
+  size_dat[size_dat$group == grp, ]$b <- bval
+}
+
+size_dat$bio <- exp(size_dat$a) * size_dat$size^size_dat$b
+
+# size_dat[size_dat$bio > 10,]
+# size_dat[size_dat$group == "lepi",]
+
+size_dat[size_dat$morph == "hemi009",]
+sizes[sizes$morphotype == "hemi008",]
+sizes[sizes$morphotype == "aran002",]
+sizes[sizes$morphotype == "orth027",]
+size_dat[size_dat$bio == Inf, ]
+
+library(ggplot2)
+bio_dist <- ggplot(size_dat, aes(x = log(bio), fill=group))
+bio_dist + geom_histogram(binwidth=0.5)
+
+ggplot(df, aes(x=weight)) + 
+  geom_histogram(binwidth=1)
 
 # Test the equations for Mantodea
 mant <- sizes[sizes$group == "mant", ]
@@ -41,17 +86,18 @@ homo <- sizes[sizes$group == "homo", ]
 hemi <- sizes[sizes$group == "hemi", ]
 cole <- sizes[sizes$group == "cole", ]
 
+
 aran$morphotype <- as.character(aran$morphotype)
 mant$morphotype <- as.character(mant$morphotype)
 homo$morphotype <- as.character(homo$morphotype)
 hemi$morphotype <- as.character(hemi$morphotype)
 cole$morphotype <- as.character(cole$morphotype)
 
-aran_size <- tapply(aran$length, aran$morphotype, mean)
-mant_size <- tapply(mant$length, mant$morphotype, mean)
-homo_size <- tapply(homo$length, homo$morphotype, mean)
-hemi_size <- tapply(hemi$length, hemi$morphotype, mean)
-cole_size <- tapply(cole$length, cole$morphotype, mean)
+aran_size <- tapply(aran$rsize, aran$morphotype, mean)
+mant_size <- tapply(mant$rsize, mant$morphotype, mean)
+homo_size <- tapply(homo$rsize, homo$morphotype, mean)
+hemi_size <- tapply(hemi$rsize, hemi$morphotype, mean)
+cole_size <- tapply(cole$rsize, cole$morphotype, mean)
 
 # T0 estimate the body size use equations on the individuals!
 mant_ind <- insects[insects$group == "mant", ]

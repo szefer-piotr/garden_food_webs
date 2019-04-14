@@ -1,4 +1,4 @@
-"morphotype" "no" "size" "scale" "scl" "notes" "NA" "nscl" "rsize"
+"morphotype" "no" "size" "scale" "scl" "notes" "group" "nscl" "rsize"
 "1" "mant001" 1 2.7 "cm" 1 "" "mant" 1 2.7
 "2" "mant001" 2 2.7 "cm" 1 "" "mant" 1 2.7
 "3" "mant001" 3 3.5 "cm" 1 "" "mant" 1 3.5
@@ -2106,7 +2106,7 @@
 "2105" "homo013" 8 6.4 "1 cm" 1 "" "homo" 10 0.64
 "2106" "homo013" 9 7.1 "1 cm" 1 "" "homo" 10 0.71
 "2107" "homo013" 10 7.5 "1 cm" 1 "" "homo" 10 0.75
-"2108" "homo014" 1 7.8 "2 cm" 0.5 "" "homo" 0 Inf
+"2108" "homo014" 1 7.8 "2 cm" 0.5 "" "homo" 10 0.78
 "2109" "homo014" 2 8.1 "1 cm" 1 "" "homo" 10 0.81
 "2110" "homo015" 1 9.9 "1 cm" 1 "" "homo" 10 0.99
 "2111" "homo016" 1 6.9 "1 cm" 1 "" "homo" 10 0.69
@@ -2689,7 +2689,7 @@
 "2688" "cole063" 3 4.1 "cm" 0.5 "" "cole" 20 0.205
 "2689" "cole063" 4 3.4 "cm" 0.5 "" "cole" 20 0.17
 "2690" "cole064" 1 7.9 "cm" 2 "" "cole" 2 3.95
-"2691" "cole065" 1 31 "cm" 0 "" "cole" 0 Inf
+"2691" "cole065" 1 31 "cm" 0 "" "cole" 20 1.55
 "2692" "cole066" 1 10.2 "cm" 2 "" "cole" 2 5.1
 "2693" "cole067" 1 9.9 "cm" 2 "" "cole" 2 4.95
 "2694" "cole068" 1 4.7 "cm" 0.5 "" "cole" 20 0.235

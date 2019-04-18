@@ -80,7 +80,8 @@ for (i in 1:length(longnames)){
 # measur <- measur[,c(1,2,3,5,6)]
 # NOTE: Scale codes are as follows
 # for MANT, ARAN, HEMI, HOMO: 1 cm = 10 [mm], 0.5 cm = 20 [mm], cm = 1
-# for COLE, ORTH and LEPI, 
+# for COLE, ORTH and LEPI check the data again!!!
+# For cole scale 2 = 20, 1 = 10, 
 
 # Transform the scale factors
 ent <- as.character(unique(measur$scale))
@@ -93,6 +94,9 @@ measur[(measur$scale %in% ent[c(1,3,6,7)] & measur$scl == 2),]$nscl <- 2
 # Some corrections for missing scale factors
 measur[measur$morphotype == "cole065", ]$nscl <- 20
 measur[2108, ]$nscl <- 10
+
+# Is everything ok with coleoptera?
+measur[measur$group == "cole",] #instead of 2 and 1 there are 1.0 and 2.0
 
 # Real scale [cm] insect sizes
 measur$rsize <- measur$size/measur$nscl

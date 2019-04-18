@@ -1,10 +1,14 @@
 # Introduction
 
 Predator removal can cause various consumptive and non-consumptive effects on the herbivores. Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book.
-Work by Schmitz et al presented mechanistically how predators can shape the plant community composition and provided some basic understanding of food web dynamics. This provided base for understanding how these processes shape complex ecological networks. Here we present... something
+Work by Schmitz et al. presented mechanistically how predators can shape the plant community composition and provided some basic understanding of food web dynamics. This provided base for understanding how these processes shape complex ecological networks. There are many studies showing top down direc effects of herbivores and indirect effects of predators on plant communites. However, studies resolving plant-herbivore networks to species level are rather scarce (are they?)
+
+Here we present... something
 x. Is the a predictive response of the food web to experimental manipulation of the food chain components?
 x. Art there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
 x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control.
+
+Explore changes in plant herbivore food web structure subjected to manipulations of top trophic level and introduction of dominant herbivore. in our previous work we shown that predator removal did not have an effect of total productivity of experimental communities however it caused
 
 How this can help us understand succession better?
 

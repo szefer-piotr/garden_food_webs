@@ -3,6 +3,14 @@
 Predator removal can cause various consumptive and non-consumptive effects on the herbivores. Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book.
 Work by Schmitz et al. presented mechanistically how predators can shape the plant community composition and provided some basic understanding of food web dynamics. This provided base for understanding how these processes shape complex ecological networks. There are many studies showing top down direc effects of herbivores and indirect effects of predators on plant communites. However, studies resolving plant-herbivore networks to species level are rather scarce (are they?)
 
+So, what is that I predict? There might not be a top down effect on plants and herbivores. But it might be visible between the components. Envisioning the whole system as a collection of food chains (Schmitz in monograph, p. 17). Is there a method to find these collections?
+
+Top down effects caused by predators can be masked by pooling biomass among multiple food web subsystems (Schmitz, Rooney 2006). Therefore we try to test for the magnitude of those effects after partitioning food wes into its compartments and study top down effect within these compartments.
+
+Top down effects within the compartments? Compartment methods (Zhao, Zhang, Tian, and Xu 2018, compartments based on energy channels. Can I get these channels form allometric relationships of herbivore biomass? I dont think that it could be possible to do for invertebrate predators). (Weighted modularity Beckett 2016)
+
+Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
+
 Here we present... something
 x. Is the a predictive response of the food web to experimental manipulation of the food chain components?
 x. Art there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
@@ -10,7 +18,7 @@ x. We test whether these effects can be approximated looking at the changes in s
 
 Explore changes in plant herbivore food web structure subjected to manipulations of top trophic level and introduction of dominant herbivore. in our previous work we shown that predator removal did not have an effect of total productivity of experimental communities however it caused
 
-How this can help us understand succession better?
+How this can help us understand succession better? Maybe it will be visible for some species that they shift their feeding domain... they feed on less/more plants...
 
 How to account for the diversity effects?
 
@@ -18,6 +26,8 @@ Again, what could be the purpose of increasing generalist weevil abundance?
 
 What with the presence of omnivores?
 
+Plants vs. herbs? Is one of them reacting in a predictable fashion?
+Main  goal is to describe what is changing in this part of the community.
 
 
 Hypotheses:

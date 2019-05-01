@@ -1,10 +1,19 @@
-contingencyTable2 <- function(dataset, ROW, COL, VALUE){
+
+###to remove
+# dataset <- subinsdat
+# ROW <- "tree"
+# COL <- "family"
+# VALUE <- "totbio"
+
+contingencyTable2 <- function(dataset, ROW, COL, VALUE, rm.null=TRUE){
   # Get rid of the empty factors
   dataset[, colnames(dataset) == ROW] <- as.character(dataset[, colnames(dataset) == ROW])
   dataset[, colnames(dataset) == COL] <- as.character(dataset[, colnames(dataset) == COL])
   # Make a table, get rid of the empty rows and columns
   plants <- table(dataset[, colnames(dataset) == ROW], dataset[, colnames(dataset) == COL])
-  plants <- plants[rowSums(plants) != 0, colSums(plants) != 0]
+  if(rm.null){
+    plants <- plants[rowSums(plants) != 0, colSums(plants) != 0]
+  }
   # See where to insert values
   allSpecCodes <- colnames(plants)
   allPlotCodes <- rownames(plants)

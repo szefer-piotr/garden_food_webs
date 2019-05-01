@@ -33,31 +33,53 @@ ins_bio$totbio <- ins_bio$amount * ins_bio$bio
 # Missing stuff, try to measure myself
 # ins_bio[!complete.cases(ins_bio),]
 
+# Insect abundances
+tapply(ins_bio$amount,ins_bio$plot, sum)
+ins_bio[ins_bio$plot == pcode,]
 
+# CONTINGENCY TABLE PROBLEM!!!!
+pcode <- "w1g1p1"
+
+# Biomasses of insects per plot per plant
+biofulldf <- data.frame()
 # Plots with biomass
-pcode <- "w1g5p1" # assign plot name
-subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
-plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
-plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
-
-rownames(plantbio) <- plantbio[,1]
-plantb <- plantbio[,2]
-names(plantb) <- plantbio[,1]
-subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio")
-
-subdf <- data.frame()
-# Collect data for a given plant within a plot
-for(row in 1:nrow(subinsct)){
-  plnm <- rownames(subinsct)[row]
-  nms <- rownames(as.matrix(subinsct[row,]))
-  bio <- as.matrix(subinsct[row,])
-  trt <- as.character(treats[treats$codes == pcode, "treat"])
-  plbio <- plantbio[plantbio$SP_CODE == plnm, "WEIGHT"]
-  ssdf <- data.frame(bio=bio, nms=nms, plnm=plnm,
-                      trt=trt,plbio=plbio)
+for(pcode in as.character(treats$codes)){
+  print(pcode)
+  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
+  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
+  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
   
-  subdf <- rbind(subdf, ssdf)
+  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
+  cumWeight <- tapply(plantbio$WEIGHT,
+         plantbio$SP_CODE, 
+         sum)
+  
+  pbio <- data.frame(SP_CODE = rownames(cumWeight),
+                     WEIGHT = cumWeight)
+  
+  rownames(pbio) <- pbio[,1]
+  plantb <- pbio[,2]
+  names(plantb) <- pbio[,1]
+  subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio",FALSE)
+  
+  subdf <- data.frame()
+  # Collect data for a given plant within a plot
+  for(row in 1:nrow(subinsct)){
+    plnm <- rownames(subinsct)[row]
+    nms <- rownames(as.matrix(subinsct[row,]))
+    if(is.null(nms)){nms <- colnames(subinsct)}
+    bio <- as.matrix(subinsct[row,])
+    trt <- as.character(treats[treats$codes == pcode, "treat"])
+    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
+    ssdf <- data.frame(bio=bio, nms=nms, plnm=plnm,
+                       trt=trt,plbio=plbio)
+    
+    subdf <- rbind(subdf, ssdf)
+  }
+  biofulldf <- rbind(biofulldf, subdf)
 }
+# pcode <- "w1g5p1" # assign plot name
+
 
 
 

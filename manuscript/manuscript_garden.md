@@ -13,7 +13,7 @@ Intra-guild predation enchances biodiversity and functioning in complex ecosyste
 
 Here we present... something
 x. Is the a predictive response of the food web to experimental manipulation of the food chain components?
-x. Art there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
+x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
 x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control.
 
 Explore changes in plant herbivore food web structure subjected to manipulations of top trophic level and introduction of dominant herbivore. in our previous work we shown that predator removal did not have an effect of total productivity of experimental communities however it caused

@@ -7,14 +7,17 @@ So, what is that I predict? There might not be a top down effect on plants and h
 
 Top down effects caused by predators can be masked by pooling biomass among multiple food web subsystems (Schmitz, Rooney 2006). Therefore we try to test for the magnitude of those effects after partitioning food wes into its compartments and study top down effect within these compartments.
 
-Top down effects within the compartments? Compartment methods (Zhao, Zhang, Tian, and Xu 2018, compartments based on energy channels. Can I get these channels form allometric relationships of herbivore biomass? I dont think that it could be possible to do for invertebrate predators). (Weighted modularity Beckett 2016)
+Top down effects within the compartments? Compartment methods (Zhao, Zhang, Tian, and Xu 2018, compartments based on energy channels. Can I get these channels form allometric relationships of herbivore biomass? I dont think that it could be possible to do for invertebrate predators).
+
+Schmitz suggested that complex networks of interactions can be simplified and analysed within strongly interactiog modules (Schmitz Resolving ecosysytem complexity). Therefore to study top down effects we used modules identified using DIRTLPAwb+ for weighted bipartite networks (Weighted modularity Beckett 2016).
 
 Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
 
 Here we present... something
 x. Is the a predictive response of the food web to experimental manipulation of the food chain components?
 x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
-x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control.
+x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control. IS there any evidence for the habitat shift for most abundant herbivores. How would omnivory affect prediction from schmitz?
+
 
 Explore changes in plant herbivore food web structure subjected to manipulations of top trophic level and introduction of dominant herbivore. in our previous work we shown that predator removal did not have an effect of total productivity of experimental communities however it caused
 

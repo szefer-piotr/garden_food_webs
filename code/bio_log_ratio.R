@@ -42,6 +42,7 @@ pcode <- "w1g1p1"
 
 # Biomasses of insects per plot per plant
 biofulldf <- data.frame()
+gardnets <- list()
 # Plots with biomass
 for(pcode in as.character(treats$codes)){
   print(pcode)
@@ -61,6 +62,10 @@ for(pcode in as.character(treats$codes)){
   plantb <- pbio[,2]
   names(plantb) <- pbio[,1]
   subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio",FALSE)
+  
+  # Add to the list
+  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "totbio",FALSE)
+  gardnets <- append(gardnets, list(subinsctsp)) 
   
   subdf <- data.frame()
   # Collect data for a given plant within a plot

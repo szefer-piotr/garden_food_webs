@@ -62,7 +62,9 @@ for(pcode in as.character(treats$codes)){
   
   # Add to the list
   subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "totbio",FALSE)
-  gardnets <- append(gardnets, list(subinsctsp)) 
+  listnet <- list(subinsctsp)
+  names(listnet) <- pcode
+  gardnets <- append(gardnets, listnet) 
   
   subdf <- data.frame()
   # Collect data for a given plant within a plot
@@ -83,23 +85,25 @@ for(pcode in as.character(treats$codes)){
 # pcode <- "w1g5p1" # assign plot name
 
 # Dataset containing biomasses for the log ratio comparisons
-biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
-biollcp$plot <- as.character(biollcp$plot)
-biollcp$plnm <- as.character(biollcp$plnm)
-biollcp$trt <- as.character(biollcp$trt)
-table(biollcp$trt, biollcp$plnm)
+# biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
+# biollcp$plot <- as.character(biollcp$plot)
+# biollcp$plnm <- as.character(biollcp$plnm)
+# biollcp$trt <- as.character(biollcp$trt)
+# table(biollcp$trt, biollcp$plnm)
 
 # Herbivore log-ratio for each plant species and each group of insects
 # within garden
 
 # Assume that each plant hosts unique community of insects.
 
-biollcp$gard <- substr(biollcp$plot, 3,4)
+# Log ratio analyses
 
-block = "g1"
-plnt = unique(subbl$plnm)[1]
-fam = unique(subblpl$nms)[1]
-
+# biollcp$gard <- substr(biollcp$plot, 3,4)
+# 
+# block = "g1"
+# plnt = unique(subbl$plnm)[1]
+# fam = unique(subblpl$nms)[1]
+# 
 logratiodf <- data.frame()
 # Go through each block
 for(block in unique(biollcp$gard)){
@@ -121,7 +125,7 @@ for(block in unique(biollcp$gard)){
       if(length(famlr) == 0){next}
       print(fam)
       print(famlr)
-      arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr, 
+      arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr,
                                             pltlr=pltlr, gard=block))
     }
   }
@@ -129,31 +133,33 @@ for(block in unique(biollcp$gard)){
 }
 
 logratiodf
-library(ggplot2)
-p <- ggplot(logratiodf, aes(x = lr, y = pltlr, color=fam))
-p + geom_point()
-plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
-abline(0,1, lty=2)
-abline(0,-1, lty=2)
-abline(h=0, lty=1)
-abline(v=0, lty=1)
 
 
-bipartite::plotweb(subinsct,low.abun = plantb,
-                   high.abun = colSums(subinsct))
+# library(ggplot2)
+# p <- ggplot(logratiodf, aes(x = lr, y = pltlr, color=fam))
+# p + geom_point()
+# plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
+# abline(0,1, lty=2)
+# abline(0,-1, lty=2)
+# abline(h=0, lty=1)
+# abline(v=0, lty=1)
+
+# 
+# bipartite::plotweb(subinsct,low.abun = plantb,
+#                    high.abun = colSums(subinsct))
 
 
 
 # Vulnerability etc... for fully resolved networks
-networklevel(subinsct)
+# networklevel(subinsct)
 
 # Motifs
-testGraph = barabasi.game(10, 
-                          m = 5,
-                          power = 2, 
-                          out.pref = TRUE,
-                          zero.appeal = 0.5,
-                          directed = TRUE)
-
-graph.motifs(testGraph, 
-               size = 3)
+# testGraph = barabasi.game(10, 
+#                           m = 5,
+#                           power = 2, 
+#                           out.pref = TRUE,
+#                           zero.appeal = 0.5,
+#                           directed = TRUE)
+# 
+# graph.motifs(testGraph, 
+#                size = 3)

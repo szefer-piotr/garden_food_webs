@@ -9,7 +9,9 @@ Top down effects caused by predators can be masked by pooling biomass among mult
 
 Top down effects within the compartments? Compartment methods (Zhao, Zhang, Tian, and Xu 2018, compartments based on energy channels. Can I get these channels form allometric relationships of herbivore biomass? I dont think that it could be possible to do for invertebrate predators).
 
-Schmitz suggested that complex networks of interactions can be simplified and analysed within strongly interactiog modules (Schmitz Resolving ecosysytem complexity). Therefore to study top down effects we used modules identified using DIRTLPAwb+ for weighted bipartite networks (Weighted modularity Beckett 2016).
+Schmitz suggested that complex networks of interactions can be simplified and analysed within strongly interacting modules (Schmitz Resolving ecosysytem complexity). Therefore to study top down effects we used modules identified using DIRTLPAwb+ for weighted bipartite networks (Weighted modularity Beckett 2016).
+
+Responses of the ecosystem to manipulations can be complex. It has been shown that mortality is higher in the smallest sized groups of insects in the grassland (check that Ovadia and Schmitz 2002). This situation might be different in systems where main predators are birds. This suggests a shift in the size structure of herbivores.
 
 Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
 
@@ -35,6 +37,8 @@ Main  goal is to describe what is changing in this part of the community.
 
 Hypotheses:
 - lack of predators can cause
+
+# Materials and methods
 
 # Document options
 

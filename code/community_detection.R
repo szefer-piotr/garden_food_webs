@@ -11,6 +11,7 @@ size_dat <-read.table("datasets/size_dat_bio.txt")
 source("code/weighted-modularity-LPAwbPLUS/code/R/LPA_wb_plus.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R") #read in plotting function
 
+# From the bio log ratio
 MAT <- subinsct
 
 # Modularity plots - seems like 

@@ -29,7 +29,17 @@ genvuldf$block <- substr(genvuldf$plot, 3,4)
 
 # But generality would also change if the number of plant at the plot is smaller!
 library(ggplot2)
-p <- ggplot(genvuldf, aes(x = trt, y = gen, col = block))
-p + geom_point()
+p <- ggplot(genvuldf, aes(x = trt, y = vul))
+p + stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+                                geom="errorbar", width=0.2, lwd=1.5) +
+  geom_point()
+
+
+library(lme4)
+library(lmerTest)
+vullme <- lmer(vul~trt+(1|block), data=genvuldf) 
+genlme <- lmer(gen~trt+(1|block), data=genvuldf) 
+summary(genlme)
+summary(vullme)
 
 # What can I say using this data?

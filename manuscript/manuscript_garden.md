@@ -1,7 +1,12 @@
 # Introduction
 
-Predator removal can cause various consumptive and non-consumptive effects on the herbivores. Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book.
-Work by Schmitz et al. presented mechanistically how predators can shape the plant community composition and provided some basic understanding of food web dynamics. This provided base for understanding how these processes shape complex ecological networks. There are many studies showing top down direc effects of herbivores and indirect effects of predators on plant communites. However, studies resolving plant-herbivore networks to species level are rather scarce (are they?)
+Succession is a complex ecological process, which includes many interacting abiotic and biotic component. Biotic components of the system create a network of interactions. Functional identity of species involved in interaction network as well as topology the network itself governs many important functions of the ecosystem. Network of interactions affects how the system behaves, based on the functional identity of the species involved. However for the tropical forests topology of these networks and how they depend on the higher trophic levels remain unknown.
+
+Top-down vs bottom-up how would that affect succession? Succession in tropical forest is mainly thought to be bottom-up controlled due  to very fast growth of early successional plants. But I would prefer to avoid this distinction. I would rather present it as a phenomenon, whether effects cascade down or not for different groups of organisms.
+
+Predator removal can cause various consumptive and non-consumptive effects on the herbivores and on plants. Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book.
+
+Work by Schmitz et al. presented mechanistically how predators can shape the plant community composition and provided some basic understanding of food web dynamics. This provided base for understanding how these processes shape complex ecological networks. There are many studies showing top down direct effects of herbivores and indirect effects of predators on plant communities (citations). However, studies resolving plant-herbivore networks to species level are rather scarce (are they?)
 
 So, what is that I predict? There might not be a top down effect on plants and herbivores. But it might be visible between the components. Envisioning the whole system as a collection of food chains (Schmitz in monograph, p. 17). Is there a method to find these collections?
 
@@ -15,9 +20,9 @@ Responses of the ecosystem to manipulations can be complex. It has been shown th
 
 Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
 
-Here we present... something
-x. Is the a predictive response of the food web to experimental manipulation of the food chain components?
-x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc.
+Here we present a study trying to show how food web topology is determined by biotic components of early successional communitites in tropical rain forest.
+x. Is the a predictive response of the food web to experimental manipulation of the food chain components? What does change with manipulations of herbivores, predators and pathogenic fungi?
+x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc. Not trying to mechanistically explain but rather show presence or absence of these. Can I group insects into modules? Then I can characterise them also by diversity within module and size distributions.
 x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control. IS there any evidence for the habitat shift for most abundant herbivores. How would omnivory affect prediction from schmitz?
 
 

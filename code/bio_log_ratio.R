@@ -34,8 +34,8 @@ ins_bio$totbio <- ins_bio$amount * ins_bio$bio
 # ins_bio[!complete.cases(ins_bio),]
 
 # Insect abundances
-tapply(ins_bio$amount,ins_bio$plot, sum)
-ins_bio[ins_bio$plot == pcode,]
+# tapply(ins_bio$amount,ins_bio$plot, sum)
+# ins_bio[ins_bio$plot == pcode,]
 
 # Biomasses of insects per plot per plant
 biofulldf <- data.frame()
@@ -104,35 +104,35 @@ for(pcode in as.character(treats$codes)){
 # plnt = unique(subbl$plnm)[1]
 # fam = unique(subblpl$nms)[1]
 # 
-logratiodf <- data.frame()
-# Go through each block
-for(block in unique(biollcp$gard)){
-  subbl <- biollcp[biollcp$gard == block, ]
-  # within each block obtain community for each plant species
-  for(plnt in unique(subbl$plnm)){
-    subblpl <- subbl[subbl$plnm == plnt, ]
-    subblpl$nms <- as.character(subblpl$nms)
-    subpllr <- tapply(subblpl$plbio, subblpl$trt, mean)
-    pltlr <- log(subpllr["CONTROL"]/subpllr["PREDATOR"])
-    if(is.na(pltlr)){next}
-    arthrodf <- data.frame()
-    print(plnt)
-    for(fam in unique(subblpl$nms)){
-      famsub <- subblpl[subblpl$nms == fam, c("bio","trt")]
-      cont <- famsub[famsub$trt == "CONTROL",]$bio
-      pred <- famsub[famsub$trt == "PREDATOR",]$bio
-      famlr <- log(cont/pred)
-      if(length(famlr) == 0){next}
-      print(fam)
-      print(famlr)
-      arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr,
-                                            pltlr=pltlr, gard=block))
-    }
-  }
-  logratiodf <- rbind(logratiodf, arthrodf)
-}
-
-logratiodf
+# logratiodf <- data.frame()
+# # Go through each block
+# for(block in unique(biollcp$gard)){
+#   subbl <- biollcp[biollcp$gard == block, ]
+#   # within each block obtain community for each plant species
+#   for(plnt in unique(subbl$plnm)){
+#     subblpl <- subbl[subbl$plnm == plnt, ]
+#     subblpl$nms <- as.character(subblpl$nms)
+#     subpllr <- tapply(subblpl$plbio, subblpl$trt, mean)
+#     pltlr <- log(subpllr["CONTROL"]/subpllr["PREDATOR"])
+#     if(is.na(pltlr)){next}
+#     arthrodf <- data.frame()
+#     print(plnt)
+#     for(fam in unique(subblpl$nms)){
+#       famsub <- subblpl[subblpl$nms == fam, c("bio","trt")]
+#       cont <- famsub[famsub$trt == "CONTROL",]$bio
+#       pred <- famsub[famsub$trt == "PREDATOR",]$bio
+#       famlr <- log(cont/pred)
+#       if(length(famlr) == 0){next}
+#       print(fam)
+#       print(famlr)
+#       arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr,
+#                                             pltlr=pltlr, gard=block))
+#     }
+#   }
+#   logratiodf <- rbind(logratiodf, arthrodf)
+# }
+# 
+# logratiodf
 
 
 # library(ggplot2)

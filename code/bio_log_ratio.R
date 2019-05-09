@@ -40,6 +40,7 @@ ins_bio$totbio <- ins_bio$amount * ins_bio$bio
 # Biomasses of insects per plot per plant
 biofulldf <- data.frame()
 gardnets <- list()
+gardnetsfam <- list()
 # Plots with biomass
 for(pcode in as.character(treats$codes)){
   print(pcode)
@@ -59,8 +60,12 @@ for(pcode in as.character(treats$codes)){
   plantb <- pbio[,2]
   names(plantb) <- pbio[,1]
   subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio",FALSE)
+  listnet <- list(subinsct)
+  names(listnet) <- pcode
+  gardnetsfam <- append(gardnetsfam, listnet) 
   
   # Add to the list
+  # By family or by species
   subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "totbio",FALSE)
   listnet <- list(subinsctsp)
   names(listnet) <- pcode
@@ -85,11 +90,11 @@ for(pcode in as.character(treats$codes)){
 # pcode <- "w1g5p1" # assign plot name
 
 # Dataset containing biomasses for the log ratio comparisons
-# biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
-# biollcp$plot <- as.character(biollcp$plot)
-# biollcp$plnm <- as.character(biollcp$plnm)
-# biollcp$trt <- as.character(biollcp$trt)
-# table(biollcp$trt, biollcp$plnm)
+biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
+biollcp$plot <- as.character(biollcp$plot)
+biollcp$plnm <- as.character(biollcp$plnm)
+biollcp$trt <- as.character(biollcp$trt)
+table(biollcp$trt, biollcp$plnm)
 
 # Herbivore log-ratio for each plant species and each group of insects
 # within garden
@@ -98,51 +103,51 @@ for(pcode in as.character(treats$codes)){
 
 # Log ratio analyses
 
-# biollcp$gard <- substr(biollcp$plot, 3,4)
+biollcp$gard <- substr(biollcp$plot, 3,4)
 # 
 # block = "g1"
 # plnt = unique(subbl$plnm)[1]
 # fam = unique(subblpl$nms)[1]
 # 
-# logratiodf <- data.frame()
-# # Go through each block
-# for(block in unique(biollcp$gard)){
-#   subbl <- biollcp[biollcp$gard == block, ]
-#   # within each block obtain community for each plant species
-#   for(plnt in unique(subbl$plnm)){
-#     subblpl <- subbl[subbl$plnm == plnt, ]
-#     subblpl$nms <- as.character(subblpl$nms)
-#     subpllr <- tapply(subblpl$plbio, subblpl$trt, mean)
-#     pltlr <- log(subpllr["CONTROL"]/subpllr["PREDATOR"])
-#     if(is.na(pltlr)){next}
-#     arthrodf <- data.frame()
-#     print(plnt)
-#     for(fam in unique(subblpl$nms)){
-#       famsub <- subblpl[subblpl$nms == fam, c("bio","trt")]
-#       cont <- famsub[famsub$trt == "CONTROL",]$bio
-#       pred <- famsub[famsub$trt == "PREDATOR",]$bio
-#       famlr <- log(cont/pred)
-#       if(length(famlr) == 0){next}
-#       print(fam)
-#       print(famlr)
-#       arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr,
-#                                             pltlr=pltlr, gard=block))
-#     }
-#   }
-#   logratiodf <- rbind(logratiodf, arthrodf)
-# }
-# 
-# logratiodf
+logratiodf <- data.frame()
+# Go through each block
+for(block in unique(biollcp$gard)){
+  subbl <- biollcp[biollcp$gard == block, ]
+  # within each block obtain community for each plant species
+  for(plnt in unique(subbl$plnm)){
+    subblpl <- subbl[subbl$plnm == plnt, ]
+    subblpl$nms <- as.character(subblpl$nms)
+    subpllr <- tapply(subblpl$plbio, subblpl$trt, mean)
+    pltlr <- log(subpllr["CONTROL"]/subpllr["PREDATOR"])
+    if(is.na(pltlr)){next}
+    arthrodf <- data.frame()
+    print(plnt)
+    for(fam in unique(subblpl$nms)){
+      famsub <- subblpl[subblpl$nms == fam, c("bio","trt")]
+      cont <- famsub[famsub$trt == "CONTROL",]$bio
+      pred <- famsub[famsub$trt == "PREDATOR",]$bio
+      famlr <- log(cont/pred)
+      if(length(famlr) == 0){next}
+      print(fam)
+      print(famlr)
+      arthrodf<- rbind(arthrodf, data.frame(plnt=plnt,fam=fam, lr=famlr,
+                                            pltlr=pltlr, gard=block))
+    }
+  }
+  logratiodf <- rbind(logratiodf, arthrodf)
+}
+
+logratiodf
 
 
 # library(ggplot2)
-# p <- ggplot(logratiodf, aes(x = lr, y = pltlr, color=fam))
-# p + geom_point()
-# plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
-# abline(0,1, lty=2)
-# abline(0,-1, lty=2)
-# abline(h=0, lty=1)
-# abline(v=0, lty=1)
+p <- ggplot(logratiodf, aes(x = lr, y = pltlr, color=plnt))
+p + geom_point(size=5)
+plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
+abline(0,1, lty=2)
+abline(0,-1, lty=2)
+abline(h=0, lty=1)
+abline(v=0, lty=1)
 
 # 
 # bipartite::plotweb(subinsct,low.abun = plantb,

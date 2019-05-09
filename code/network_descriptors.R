@@ -17,9 +17,10 @@ genvuldf <- data.frame()
 for(gname in gnames){
   print(gname)
   nlres <- networklevel(gardnets[[gname]], index = "vulnerability")
+  pdi <- mean(PDI(gardnets[[gname]]))
   tt <- tryCatch(networklevel(gardnets[[gnames[gname]]], index = "vulnerability"),error=function(e) e, warning=function(w) w)
   ifelse(is(tt,"warning"),next,"OK")
-  subgvdf <- data.frame(plot = gname, gen = nlres[1], vul = nlres[2])
+  subgvdf <- data.frame(plot = gname, gen = nlres[1], vul = nlres[2], pdi = pdi)
   genvuldf <- rbind(genvuldf, subgvdf)
 }
 
@@ -29,7 +30,7 @@ genvuldf$block <- substr(genvuldf$plot, 3,4)
 
 # But generality would also change if the number of plant at the plot is smaller!
 library(ggplot2)
-p <- ggplot(genvuldf, aes(x = trt, y = vul))
+p <- ggplot(genvuldf, aes(x = trt, y = gen))
 p + stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
                                 geom="errorbar", width=0.2, lwd=1.5) +
   geom_point()
@@ -41,5 +42,25 @@ vullme <- lmer(vul~trt+(1|block), data=genvuldf)
 genlme <- lmer(gen~trt+(1|block), data=genvuldf) 
 summary(genlme)
 summary(vullme)
+
+# Controling for the plant diversity
+sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
+sr$code <- rownames(sr)
+colnames(sr) <- c("sr", "code")
+genvuldf$sr <- sr[genvuldf$plot, "sr"]
+colnames(genvuldf)
+# 
+vullmesr <- lmer(vul~trt+sr+(1|block), data=genvuldf) 
+genlmesr <- lmer(gen~trt+sr+(1|block), data=genvuldf)
+
+summary(vullmesr)
+summary(vullme)
+
+anova(vullme, vullmesr)
+
+summary(genlmesr)
+summary(genlme)
+
+anova(genlme, genlmesr)
 
 # What can I say using this data?

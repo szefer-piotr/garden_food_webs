@@ -22,9 +22,13 @@ Intra-guild predation enchances biodiversity and functioning in complex ecosyste
 
 Here we present a study trying to show how food web topology is determined by biotic components of early successional communitites in tropical rain forest.
 x. Is the a predictive response of the food web to experimental manipulation of the food chain components? What does change with manipulations of herbivores, predators and pathogenic fungi?
-x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc. Not trying to mechanistically explain but rather show presence or absence of these. Can I group insects into modules? Then I can characterise them also by diversity within module and size distributions.
-x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control. IS there any evidence for the habitat shift for most abundant herbivores. How would omnivory affect prediction from schmitz?
+- ANCOVA for vulnerability, generality (specialisation doesnt make sese here because we don't have many species of plants. (vulnerability can tell us if there is reduced variabilty in herbivores feeding on plants. Generality can tell us if under some treatments insects tend to narrow their habitat choice)
 
+x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc. Not trying to mechanistically explain but rather show presence or absence of these. Can I group insects into modules? Then I can characterise them also by diversity within module and size distributions.
+- I think that the plot is ok.
+
+x. We test whether these effects can be approximated looking at the changes in specialization of herbivores within plant herbivore food web. relative to the control. IS there any evidence for the habitat shift for most abundant herbivores. How would omnivory affect prediction from schmitz?
+- network figures showing some shift. how this shif can be evaluated?
 
 Explore changes in plant herbivore food web structure subjected to manipulations of top trophic level and introduction of dominant herbivore. in our previous work we shown that predator removal did not have an effect of total productivity of experimental communities however it caused
 
@@ -95,7 +99,8 @@ Figures can be used with the usual markdown syntax. After the path, you can use
 `{#fig:id width=50%}` to specify the width and the reference. See @tbl:id for
 how to cite. The code below in the markdown source produces @fig:id.
 
-![This is a figure. Figures can have identifiers, and the width can be changed as well. This legend is a bit long, to show what happens in the preprint mode (it continues in the margin below the limit of the figure).](figure/histogram-1.pdf){#fig:id}
+![This is a figure. Figures can have identifiers, and the width can be changed as well. This legend is a bit long, to show what happens in the preprint mode (it continues in the margin below the limit of the figure).]
+#(figs/gard1.pdf){#fig:id}
 
 # Other elements
 
@@ -158,7 +163,7 @@ plot(sort(rnorm(200)), type='l')
 
 You can then use this figure:
 
-![This is the figure created by the chunck `testfig`, so it is in `figure/testfig-1`. You can use different `dev` in the knitr chunk options, so it is possible to generate pdf or png figures.](figure/testfig-1.pdf){#fig:chunk}
+![This is the figure created by the chunck `testfig`, so it is in `figure/testfig-1`. You can use different `dev` in the knitr chunk options, so it is possible to generate pdf or png figures.]
 
 With `knitr`, the `kable` function can create tables. If you add the caption
 paragraph immediately below, then these tables can be cited. This is how we

@@ -138,16 +138,50 @@ for(block in unique(biollcp$gard)){
 }
 
 logratiodf
+logratiodf <- logratiodf[!(is.nan(logratiodf$lr) | is.infinite(logratiodf$lr)), ]
+
+# Biomasses (from the control plots) for each fam and tree
+logratiodf$gard <- as.character(logratiodf$gard)
+logratiodf$plnt <- as.character(logratiodf$plnt)
+logratiodf$fam <- as.character(logratiodf$fam)
+
+biosize <- data.frame()
+for(row in 1:dim(logratiodf)[1]){
+  loc <- c(logratiodf[row,]$gard,
+           logratiodf[row,]$plnt,
+           logratiodf[row,]$fam)
+  bcpc <- biollcp[biollcp$trt == "CONTROL",]
+  bio <- bcpc[(bcpc$gard == loc[1] & bcpc$plnm == loc[2] & 
+               bcpc$nms == loc[3]),]$bio
+  biosize <- rbind(biosize, data.frame(garrd = loc[1],
+                                       plnt = loc[2],
+                                       fam = loc[3], 
+                                       bio = bio))
+}
+
+biosize
+logratiodf$size <- biosize$bio
+
+library(ggplot2)
+p <- ggplot(logratiodf, 
+            aes(x = lr, y = pltlr, label = fam, color=plnt))
+p + coord_cartesian(xlim=c(-5,5), ylim = c(-5,5)) +
+  geom_jitter(size=logratiodf$size, width=0.5) +  
+  geom_text() + 
+  geom_abline(slope = 1, intercept = 0, linetype="dashed") +
+  geom_abline(slope = -1, intercept = 0,linetype="dashed") +
+  xlab("Direct effect of predator removal on insects") + 
+  ylab("Indirect effect of predator removal on plants")
+  
+# I would like to also indicate the abundance in general of these insects on the plot to show their relative importance for the general result.
 
 
-# library(ggplot2)
-p <- ggplot(logratiodf, aes(x = lr, y = pltlr, color=plnt))
-p + geom_point(size=5)
-plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
-abline(0,1, lty=2)
-abline(0,-1, lty=2)
-abline(h=0, lty=1)
-abline(v=0, lty=1)
+
+# plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
+# abline(0,1, lty=2)
+# abline(0,-1, lty=2)
+# abline(h=0, lty=1)
+# abline(v=0, lty=1)
 
 # 
 # bipartite::plotweb(subinsct,low.abun = plantb,

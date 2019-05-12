@@ -175,7 +175,67 @@ p + coord_cartesian(xlim=c(-5,5), ylim = c(-5,5)) +
   
 # I would like to also indicate the abundance in general of these insects on the plot to show their relative importance for the general result.
 
+ib_slice <- ins_bio[(ins_bio$plot == "w1g1p1" & ins_bio$family == "orth"), 
+        c("amount", "bio")]
 
+plot(ib_slice$amount)
+plot(ib_slice$bio)
+plot(ib_slice$amount ~ log(ib_slice$bio)) #seems normally dist. for log(bio)
+# Small sized grashoppers have higher growth rates and higher foraging efforts. This should be the case if there is a high risk of small gh to complete their development before the end of the seasson (no clear seassonality in tropics, food is available all year round for chewers?)
+
+# General agregeated results for the log ratios for various insect groups
+tpcodes <- treats[treats$treat %in% c("PREDATOR","CONTROL"), ]
+tpcodes$codes <- as.character(tpcodes$codes)
+tpcodes$gard <- substr(tpcodes$codes, 3, 4)
+gard <- tpcodes$gard[1]
+
+fams <- as.character(unique(insects$family))
+fam <- as.character(fams[1])
+
+# x11(6,6)
+# par(mfrow = c(4,2))
+
+# Families agregated plants ---- 
+llrodf <- data.frame()
+for(fam in fams){
+  llro <- data.frame()
+  for(gard in unique(tpcodes$gard)){
+    
+    pc <- tpcodes[tpcodes$gard == gard & tpcodes$treat == "PREDATOR", ]$code
+    cc <- tpcodes[tpcodes$gard == gard & tpcodes$treat == "CONTROL", ]$code
+    
+    VCpt <- sum(plants[(plants$CODE == cc & plants$LIFE.FORM %in% c("shrub","tree")),]$WEIGHT, na.rm = T)
+    VCmt <- sum(plants[(plants$CODE == pc & plants$LIFE.FORM %in% c("shrub","tree")),]$WEIGHT, na.rm=T)
+    
+    VCph <- sum(plants[plants$CODE == cc & !(plants$LIFE.FORM %in% c("shrub","tree")),]$WEIGHT, na.rm = T)
+    VCmh <- sum(plants[plants$CODE == pc & !(plants$LIFE.FORM %in% c("shrub","tree")),]$WEIGHT, na.rm = T)
+    
+    # totC <- sum(plants[(plants$CODE == cc),]$WEIGHT)
+    # totP <- sum(plants[(plants$CODE == pc),]$WEIGHT)
+    # VCph + VCpt # control plot biomass
+    # VCmh + VCmt # predator plot biomass
+    # 
+    
+    HCp <- sum(ins_bio[(ins_bio$family == fam & ins_bio$plot == cc), ]$bio, 
+               na.rm = T)
+    HCm <- sum(ins_bio[(ins_bio$family == fam & ins_bio$plot == pc), ]$bio,
+               na.rm=T)
+    llro <- rbind(llro, data.frame(fam=fam, gard=gard, lVt=log(VCpt/VCmt),
+                                   lVh = log(VCph/VCmh), lH = log(HCp/HCm)))
+    
+  }
+  
+  llrodf <- rbind(llrodf, llro)
+  
+}
+
+llrodf
+
+llp <- ggplot(llrodf, aes(x = lH, y=lVt))
+llp + geom_point() +
+  geom_point(aes(x = lH, y=lVh, col="red")) + 
+  facet_wrap(llrodf$fam) + 
+  theme_bw()
 
 # plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
 # abline(0,1, lty=2)

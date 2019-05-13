@@ -184,13 +184,20 @@ plot(ib_slice$amount ~ log(ib_slice$bio)) #seems normally dist. for log(bio)
 # Small sized grashoppers have higher growth rates and higher foraging efforts. This should be the case if there is a high risk of small gh to complete their development before the end of the seasson (no clear seassonality in tropics, food is available all year round for chewers?)
 
 # General agregeated results for the log ratios for various insect groups
-tpcodes <- treats[treats$treat %in% c("PREDATOR","CONTROL"), ]
+# comptrt <- "FUNGICIDE"
+comptrt <- "PREDATOR"
+# comptrt <- "WEEVIL125"
+# comptrt <- "WEEVIL25"
+# comptrt <- "INSECTICIDE"
+
+tpcodes <- treats[treats$treat %in% c(comptrt,"CONTROL"), ]
+
 tpcodes$codes <- as.character(tpcodes$codes)
 tpcodes$gard <- substr(tpcodes$codes, 3, 4)
 gard <- tpcodes$gard[1]
 
 fams <- as.character(unique(insects$family))
-fam <- as.character(fams[1])
+# fam <- as.character(fams[1])
 
 # x11(6,6)
 # par(mfrow = c(4,2))
@@ -201,7 +208,7 @@ for(fam in fams){
   llro <- data.frame()
   for(gard in unique(tpcodes$gard)){
     
-    pc <- tpcodes[tpcodes$gard == gard & tpcodes$treat == "PREDATOR", ]$code
+    pc <- tpcodes[tpcodes$gard == gard & tpcodes$treat == comptrt, ]$code
     cc <- tpcodes[tpcodes$gard == gard & tpcodes$treat == "CONTROL", ]$code
     
     VCpt <- sum(plants[(plants$CODE == cc & plants$LIFE.FORM %in% c("shrub","tree")),]$WEIGHT, na.rm = T)
@@ -233,9 +240,21 @@ llrodf
 
 llp <- ggplot(llrodf, aes(x = lH, y=lVt))
 llp + geom_point() +
+  geom_text(label = llrodf$gard)+
   geom_point(aes(x = lH, y=lVh, col="red")) + 
   facet_wrap(llrodf$fam) + 
   theme_bw()
+
+# Are responces related to the diversity of the control plot (background diveristy?
+sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
+
+bgrdiv <- sr[treats[treats$treat == "CONTROL", ]$codes,]
+names(bgrdiv) <- c("rich","code")
+
+sr$code <- rownames(sr)
+colnames(sr) <- c("sr", "code")
+genvuldf$sr <- sr[genvuldf$plot, "sr"]
+colnames(genvuldf)
 
 # plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
 # abline(0,1, lty=2)

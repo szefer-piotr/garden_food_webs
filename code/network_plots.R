@@ -8,7 +8,7 @@ source("code/bio_log_ratio.R")
 
 gardnetsfam
 
-# Example of the control - predator comparison
+# Example of the control - predator comparison for garden 1
 nc <- "w1g1p3"
 np <- "w1g1p4"
 netc <- gardnetsfam[[nc]]
@@ -28,6 +28,8 @@ colc <- rep(cbPalette[4], length(colnames(netc)))
 colc[!(colnames(netc) %in% c("orth", "lepi","cole","hemi","homo"))] <- cbPalette[7]
 colp <- rep(cbPalette[4], length(colnames(netp)))
 colp[!(colnames(netp) %in% c("orth", "lepi","hemi","homo"))] <- cbPalette[7]
+x11(6,6)
+par(mfrow=c(2,1))
 plotweb(netc, low.abun = plntabuc, col.high = colc)
 plotweb(netp, low.abun = plntabup, col.high = colp)
 
@@ -41,9 +43,11 @@ plntabuc <- plntabudfc$WEIGHT
 plntabup <- plntabudfp$WEIGHT
 names(plntabuc) <- plntabudfc$SP_CODE
 names(plntabup) <- plntabudfp$SP_CODE
+x11(6,6)
 par(mfrow=c(2,1))
 plotweb(netc[, colnames(netc) %in% c("orth", "lepi","cole","hemi","homo")], low.abun = plntabuc)
 plotweb(netp[, colnames(netp) %in% c("orth", "lepi","cole","hemi","homo")], low.abun = plntabup)
+
 x11(4,4)
 par(mfrow=c(2,1))
 plotweb(netc, low.abun = plntabuc, col.high = colc)

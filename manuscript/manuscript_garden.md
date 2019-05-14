@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Introduction
 
 Succession is a complex ecological process, which includes many interacting abiotic and biotic component. Biotic components of the system create a network of interactions. Functional identity of species involved in interaction network as well as topology the network itself governs many important functions of the ecosystem. Network of interactions affects how the system behaves, based on the functional identity of the species involved. However for the tropical forests topology of these networks and how they depend on the higher trophic levels remain unknown.
@@ -100,8 +105,10 @@ Figures can be used with the usual markdown syntax. After the path, you can use
 how to cite. The code below in the markdown source produces @fig:id.
 
 ![This is a figure. Figures can have identifiers, and the width can be changed as well. This legend is a bit long, to show what happens in the preprint mode (it continues in the margin below the limit of the figure).]
-#(figs/gard1.pdf){#fig:id}
+(figs/llratio.pdf){#fig:id}
+<img src="figs/llratio.pdf" alt="some text"  width="600" height="600">
 
+![Alt](figs/llratio.pdf)
 # Other elements
 
 ## Code blocks

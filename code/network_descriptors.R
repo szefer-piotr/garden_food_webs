@@ -76,14 +76,32 @@ p + stat_summary(fun.data=mean_sdl, fun.args = list(mult=1),
 
 # Add plant species richness to the plotdat
 sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
+plotdat$sr <- sr[plotdat$plot,]
 
-# Tests!
-for(type in unique(plotdat$type)){
-  print(type)
-  subdat <- plotdat[plotdat$type == type, ]
-  sublm <- lmer(vul~trt+(1|block), data=genvuldf)
-}
+# Tests! - consider transformations
+# for(type in unique(plotdat$type)){
+#   print(type)
+#   subdat <- plotdat[plotdat$type == type, ]
+#   sublm <- lmer(ind~trt+sr+(1|block), data=subdat)
+#   print(summary(sublm))
+# }
 
+nms <- unique(plotdat$type)
+type <- nms[1]
+print(type)
+subdat <- plotdat[plotdat$type == type, ]
+sublm <- lmer(ind~trt+sr+(1|block), data=subdat)
+print(summary(sublm))
+plot(sublm)
+
+##########>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WARNING - something wrong here with treatments
+# 
+
+
+# Dealing with singularity because of the optimizers - use nlme::lme()
+
+table(subdat$block, subdat$trt)
+table(treats$treat, treats$codes) #
 
 vullme <- lmer(vul~trt+(1|block), data=genvuldf) 
 genlme <- lmer(gen~trt+(1|block), data=genvuldf) 

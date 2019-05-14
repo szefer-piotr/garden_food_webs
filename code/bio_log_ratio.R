@@ -89,6 +89,67 @@ for(pcode in as.character(treats$codes)){
 }
 # pcode <- "w1g5p1" # assign plot name
 
+############## #NETWORKS BASED ON INTERACTIONS 
+
+# Abundances of insects per plot per plant
+abufulldf <- data.frame()
+abugardnets <- list()
+abugardnetsfam <- list()
+# Plots with biomass
+for(pcode in as.character(treats$codes)){
+  print(pcode)
+  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
+  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
+  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
+  
+  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
+  cumWeight <- tapply(plantbio$WEIGHT,
+                      plantbio$SP_CODE, 
+                      sum)
+  
+  pbio <- data.frame(SP_CODE = rownames(cumWeight),
+                     WEIGHT = cumWeight)
+  
+  rownames(pbio) <- pbio[,1]
+  plantb <- pbio[,2]
+  names(plantb) <- pbio[,1]
+  subinsct <- contingencyTable2(subinsdat, "tree", "family", "amount",FALSE)
+  listnet <- list(subinsct)
+  names(listnet) <- pcode
+  abugardnetsfam <- append(abugardnetsfam, listnet) 
+  
+  # Add to the list
+  # By family or by species
+  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "amount",FALSE)
+  listnet <- list(subinsctsp)
+  names(listnet) <- pcode
+  abugardnets <- append(abugardnets, listnet) 
+  
+  subdf <- data.frame()
+  # Collect data for a given plant within a plot
+  for(row in 1:nrow(subinsct)){
+    plnm <- rownames(subinsct)[row]
+    nms <- rownames(as.matrix(subinsct[row,]))
+    if(is.null(nms)){nms <- colnames(subinsct)}
+    bio <- as.matrix(subinsct[row,])
+    trt <- as.character(treats[treats$codes == pcode, "treat"])
+    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
+    ssdf <- data.frame(plot=pcode,bio=bio, nms=nms, plnm=plnm,
+                       trt=trt,plbio=plbio)
+    
+    subdf <- rbind(subdf, ssdf)
+  }
+  abufulldf <- rbind(abufulldf, subdf)
+}
+
+abufulldf
+abugardnets
+abugardnetsfam
+
+############## #
+
+
+
 # Dataset containing biomasses for the log ratio comparisons
 biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
 biollcp$plot <- as.character(biollcp$plot)
@@ -237,24 +298,26 @@ for(fam in fams){
 }
 
 llrodf
-
+pdf("manuscript/figs/llratio.pdf", 6,6)
 llp <- ggplot(llrodf, aes(x = lH, y=lVt))
 llp + geom_point() +
   geom_text(label = llrodf$gard)+
   geom_point(aes(x = lH, y=lVh, col="red")) + 
   facet_wrap(llrodf$fam) + 
-  theme_bw()
-
+  theme_bw() +
+  xlab("Direct effect of predator removal on insects") + 
+  ylab("Indirect effect of predator removal on plants")
+dev.off()
 # Are responces related to the diversity of the control plot (background diveristy?
 sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
 
 bgrdiv <- sr[treats[treats$treat == "CONTROL", ]$codes,]
 names(bgrdiv) <- c("rich","code")
 
-sr$code <- rownames(sr)
-colnames(sr) <- c("sr", "code")
-genvuldf$sr <- sr[genvuldf$plot, "sr"]
-colnames(genvuldf)
+# sr$code <- rownames(sr)
+# colnames(sr) <- c("sr", "code")
+# genvuldf$sr <- sr[genvuldf$plot, "sr"]
+# colnames(genvuldf)
 
 # plot(pltlr~lr, data=logratiodf, col=logratiodf$fam, pch=19)
 # abline(0,1, lty=2)

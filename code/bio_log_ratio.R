@@ -41,6 +41,7 @@ ins_bio$totbio <- ins_bio$amount * ins_bio$bio
 biofulldf <- data.frame()
 gardnets <- list()
 gardnetsfam <- list()
+
 # Plots with biomass
 for(pcode in as.character(treats$codes)){
   print(pcode)
@@ -298,7 +299,7 @@ for(fam in fams){
 }
 
 llrodf
-pdf("manuscript/figs/llratio.pdf", 6,6)
+# pdf("manuscript/figs/llratio.pdf", 6,6)
 llp <- ggplot(llrodf, aes(x = lH, y=lVt))
 llp + geom_point() +
   geom_text(label = llrodf$gard)+
@@ -307,7 +308,7 @@ llp + geom_point() +
   theme_bw() +
   xlab("Direct effect of predator removal on insects") + 
   ylab("Indirect effect of predator removal on plants")
-dev.off()
+# dev.off()
 # Are responces related to the diversity of the control plot (background diveristy?
 sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
 
@@ -344,3 +345,211 @@ names(bgrdiv) <- c("rich","code")
 # 
 # graph.motifs(testGraph, 
 #                size = 3)
+
+# Simple biomass plots
+
+# See where these values are coming from??
+z
+# break it into groups! mobile and the rest
+
+biofulldf
+abufulldf
+rownames(treats) <- treats$codes
+library(ggplot2)
+library(lme4)
+library(lmerTest)
+library(MASS)
+
+# loop for the biomass
+dst <- biofulldf
+nms <- as.character(unique(biofulldf$nms))
+
+predators <- c("aran", "mant")
+mobile <- c("cole", "hemi", "homo", "orth")
+lepidoptera <- c("lepi")
+
+nm <- nms[5]
+nm <- predators
+
+for(nm in unique(biofulldf$nms)){
+  
+  print(nm)
+  
+  #subset the data
+  datast <- dst[dst$nms %in% nm, ]
+  
+  # summarise the data
+  sums <- tapply(datast$bio, datast$plot, sum)
+  
+  # add treatments
+  subtreats <- treats[rownames(sums), ]
+  sumdf <- data.frame(vals = sums, 
+             trt = subtreats$treat,
+             code = subtreats$codes)
+  
+  # Process subdata
+  sumdf$gard <- substr(sumdf$code, 3,4)
+  
+  # Plot
+  ggplot(sumdf, aes(y = vals, x = trt)) + geom_jitter(width = 0.1)
+  
+  # Model
+  lmer1 <- glmer(vals~trt+(1|gard), family=gaussian(link="log"), data=sumdf)
+  print(summary(lmer1))
+  
+}
+
+
+# loop for the abundance
+
+dst <- abufulldf
+nm <- nms[2]
+library(blmeco)
+
+predators <- c("aran", "mant")
+mobile <- c("cole", "hemi", "homo", "orth")
+lepidoptera <- c("lepi")
+
+nm <- lepidoptera
+
+for(nm in unique(biofulldf$nms)){
+  print(nm)
+  
+  #subset the data
+  datast <- dst[dst$nms %in% nm, ]
+  
+  # summarise the data
+  sums <- tapply(datast$bio, datast$plot, sum)
+  # add treatments
+  subtreats <- treats[rownames(sums), ]
+  sumdf <- data.frame(vals = sums, 
+                      trt = subtreats$treat,
+                      code = subtreats$codes)
+  
+  # Process subdata
+  sumdf$gard <- substr(sumdf$code, 3,4)
+  
+  # Plot
+  ggplot(sumdf, aes(y = vals, x = trt)) + geom_jitter(width = 0.1)
+  
+  # Model
+  glmer1 <- glmer(vals~trt+(1|gard), family="poisson", data=sumdf)
+  glmer2 <- glmer.nb(vals~trt+(1|gard), data=sumdf)
+  summary(glmer1)
+  summary(glmer2)
+  # Here is the test for overdispersion and with Poisson there is an overdispersion
+  dispersion_glmer(glmer1) # should not exceed 1.4
+  dispersion_glmer(glmer2)
+  
+}
+
+#################################
+
+# use all species
+
+dst <- abufulldf
+nm <- nms[2]
+predators <- c("aran", "mant")
+mobile <- c("cole", "hemi", "homo", "orth")
+lepidoptera <- c("lepi")
+
+nm <- lepidoptera
+
+for(nm in unique(biofulldf$nms)){
+  print(nm)
+  
+  #subset the data
+  datast <- dst[dst$nms %in% nm, ]
+  
+  # No blocks here
+  datast$gard <- substr(datast$plot, 3,4)
+  
+  # Plot
+  ggplot(datast, aes(y = bio, x = trt)) + geom_jitter(width = 0.1)
+  
+  # Model
+  
+  glmer1 <- glmer(bio~trt+(1|gard), family="poisson", data=datast)
+  glmer2 <- glmer.nb(vals~trt+(1|gard), data=sumdf)
+  
+  # glmer1 <- glmer(vals~trt+(1|gard), family="poisson", data=datast)
+  # glmer2 <- glmer.nb(vals~trt+(1|gard), data=sumdf)
+  summary(glmer1)
+  summary(glmer2)
+  # Here is the test for overdispersion and with Poisson there is an overdispersion
+  dispersion_glmer(glmer1) # should not exceed 1.4
+  dispersion_glmer(glmer2)
+  
+}
+
+
+
+dst <- biofulldf
+nms <- as.character(unique(biofulldf$nms))
+
+predators <- c("aran", "mant")
+mobile <- c("cole", "hemi", "homo", "orth")
+lepidoptera <- c("lepi")
+nm <- nms[5]
+nm <- predators
+for(nm in unique(biofulldf$nms)){
+  print(nm)
+  #subset the data
+  datast <- dst[dst$nms %in% nm, ]
+  # Process subdata
+  datast$gard <- substr(datast$plot, 3,4)
+  datast <- datast[complete.cases(datast), ]
+  datast <- datast[datast$bio != 0,]
+  datast$trt <- factor(datast$trt, labels = c("CONTROL",
+                                            "FUNGICIDE", 
+                                            "WEEVIL125",
+                                            "PREDATOR", 
+                                            "WEEVIL25", 
+                                            "INSECTICIDE"))
+  # Plot
+  ggplot(datast, aes(y = log(bio), x = trt)) + geom_jitter(width = 0.1)
+ 
+  # Model
+  lmer1 <- lmer(log(bio)~trt+(1|gard),data=datast)
+  print(summary(lmer1))
+}
+
+#################################
+
+
+#################################
+
+# Number of stems
+# abu_rbl <- glmer(stems ~ TREATMENT + (1|GARDEN),
+#                  data = tree_test, family = "poisson")
+# 
+# abu_nb_rbl <- glmer.nb(stems ~ TREATMENT + (1|GARDEN),
+#                        data = tree_test)
+# 
+# 
+# summary(abu_rbl)
+# summary(abu_nb_rbl)
+# 
+# library(blmeco)
+# # Here is the test for overdispersion and with Poisson there is an overdispersion
+# dispersion_glmer(abu_rbl) # should not exceed 1.4
+# dispersion_glmer(abu_nb_rbl)
+
+##################################
+
+
+
+
+
+ds <- tapply(biofulldf$bio, biofulldf$plot, sum)
+dfbio <- data.frame(bio = ds, bcodes = rownames(ds), 
+                    trt = treats$treat, trtcodes = treats$codes)
+dfbio$gard <- substr(dfbio$bcodes, 3, 4)
+bioplt <- ggplot(dfbio, aes(x = trt, y = bio))
+bioplt + geom_jitter(width = 0.1)
+
+library(lme4)
+library(lmerTest)
+mod1 <- lmer(bio~trt + (1|gard), data=dfbio)
+mod1 <- lm(bio~trt, data=dfbio)
+summary(mod1)

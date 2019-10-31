@@ -1,6 +1,7 @@
 ---
 output:
   pdf_document: default
+  word_document: default
   html_document: default
 ---
 # Introduction
@@ -22,6 +23,8 @@ Top down effects within the compartments? Compartment methods (Zhao, Zhang, Tian
 Schmitz suggested that complex networks of interactions can be simplified and analysed within strongly interacting modules (Schmitz Resolving ecosysytem complexity). Therefore to study top down effects we used modules identified using DIRTLPAwb+ for weighted bipartite networks (Weighted modularity Beckett 2016).
 
 Responses of the ecosystem to manipulations can be complex. It has been shown that mortality is higher in the smallest sized groups of insects in the grassland (check that Ovadia and Schmitz 2002). This situation might be different in systems where main predators are birds. This suggests a shift in the size structure of herbivores.
+
+Huntly 1991 Herbivores and the dynamics of ...: "Associational resistance (indirect mutualism) has been proposed to result from the tendency for herbivores to be attracted to and stay in patches of high density of a favorred resource"
 
 Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
 
@@ -53,6 +56,12 @@ Hypotheses:
 - lack of predators can cause
 
 # Materials and methods
+
+
+# Results
+
+
+1. Food web descriptors
 
 # Document options
 
@@ -106,9 +115,10 @@ how to cite. The code below in the markdown source produces @fig:id.
 
 ![This is a figure. Figures can have identifiers, and the width can be changed as well. This legend is a bit long, to show what happens in the preprint mode (it continues in the margin below the limit of the figure).]
 (figs/llratio.pdf){#fig:id}
-<img src="figs/llratio.pdf" alt="some text"  width="600" height="600">
 
 ![Alt](figs/llratio.pdf)
+![Alt](figs/descriptors.pdf)
+
 # Other elements
 
 ## Code blocks

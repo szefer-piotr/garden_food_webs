@@ -3,14 +3,15 @@ treats  <- read.table("datasets/treatments_clean.txt")
 plants  <- read.table("datasets/plants_clean.txt")
 size_dat <-read.table("datasets/size_dat_bio.txt")
 
-library("bipartite")
+library(bipartite)
 library(lme4)
 library(lmerTest)
 source("code/bio_log_ratio.R")
 source("code/contingencyTable.R")
-source("code/bio_log_ratio.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/LPA_wb_plus.R")
-source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R") #read in plotting function
+source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R")
+source("code/weighted-modularity-LPAwbPLUS/code/R/convert2moduleWeb.R")
+source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R")
 # gardnets - networks in individual plots
 # biofulldf biomass of all insects and trees
 
@@ -66,13 +67,22 @@ plotdat$type <- rep(c("Generality", "Vulnerability", "Specialization PDI", "Conn
       "Modularity", "Herbivore Species", 
       "Predator Species"), each=33)
 
+pdf("manuscript/figs/descriptors.pdf", 7, 7)
 p <- ggplot(plotdat, aes(x = trt, y = ind))
-p + stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-                                geom="errorbar", width=0.1, 
-                 color = "grey60", lwd=1.5) +
-  geom_jitter(width = 0.1) + 
+p + stat_summary(fun.data=mean_cl_boot, 
+                                geom="pointrange", width=0.1, 
+                 color = "red", lwd=1) +
+  stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
+  geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) + 
   theme_bw() + 
+  theme(axis.text.x=element_text(angle=90, size=5, hjust=0.5))+
   facet_wrap(~type, scales="free")
+dev.off()
+
+# stat_summary(fun.data=mean_cl_boot, 
+# geom="pointrange", color= colors, width=0.2, lwd=1.5) +
+#   stat_summary(fun.y=mean, geom="point", color=colors, cex = 5) +
+#   theme(axis.text.x=element_text(angle=0, size=20, hjust=0.5)
 
 # Add plant species richness to the plotdat
 sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))

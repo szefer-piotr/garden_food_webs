@@ -1,3 +1,5 @@
+# Network descriptors
+
 insects <- read.table("datasets/arthropods_clean.txt")
 treats  <- read.table("datasets/treatments_clean.txt")
 plants  <- read.table("datasets/plants_clean.txt")

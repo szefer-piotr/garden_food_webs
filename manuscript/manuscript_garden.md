@@ -6,9 +6,13 @@ output:
 ---
 # Introduction
 
-Succession is a complex ecological process, which includes many interacting abiotic and biotic component. Biotic components of the system create a network of interactions. Functional identity of species involved in interaction network as well as topology the network itself governs many important functions of the ecosystem. Network of interactions affects how the system behaves, based on the functional identity of the species involved. However for the tropical forests topology of these networks and how they depend on the higher trophic levels remain unknown.
+[Herbivore diet breadth. Dietary specialization was associated with increased enemy-free space. Specialized species cannot afford to switch resources... i cannod dive deeply into details because i dont have these information]
 
-Long term debate on the control regime of ecosystems (top down and bottom up) is now considered to be a false dichotomy (Schmitz 2010, and there Hunter and Price 1992). Top-down vs bottom-up together can shape ecosystems. Nevertheless,depending on the species composition and character of interactions between modules in the interaction networks systems can be... Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book.... succession in tropical forest can be mainly bottom-up controlled due to very fast growth of early successional plants. Predator removal, experiments however, can cause various consumptive and non-consumptive effects on the herbivores and on plants.
+[Early successional assembly, modified by biotic factor monipulation, and top down effects, generalists included and fungi moonipulattion]. Succession is a complex ecological process, which includes interaction of abiotic and biotic factors driving its dynamics. Biotic components of the system create a network of interactions. Functional identity of species involved in interaction network as well as topology the network itself governs many important functions of the ecosystem. Network of interactions affects how the system behaves, based on the functional identity of the species involved. However for the tropical forests topology of these networks and how they depend on the higher trophic levels remain unknown.
+
+Long term debate on the control regime of ecosystems (top down and bottom up) is now considered to be a false dichotomy (Schmitz 2010, and there Hunter and Price 1992), and top-down and bottom-up together can shape ecosystems. <<< Nevertheless,depending on the species composition and character of interactions between modules in the interaction networks systems can be... Depending on the character of these effects they can cause biomass responses of plant community or remain undetected if total biomass is considered. "Non-consumptive effects have a greater likelihood of propagating strong top-down control over plant abundance and community composition" Schmitz book... >>> succession in tropical forest could be mainly bottom-up controlled due to very fast growth of early successional plants. Predator removal, experiments however, can cause various consumptive and non-consumptive effects on the herbivores and on plants.
+
+
 
 But I would prefer to avoid this distinction. I would rather present it as a phenomenon, whether effects cascade down or not for different groups of organisms. Bottom up and top downmay co-occur but at different scales (Elschot et al. 2017)
 
@@ -28,8 +32,9 @@ Huntly 1991 Herbivores and the dynamics of ...: "Associational resistance (indir
 
 Intra-guild predation enchances biodiversity and functioning in complex ecosystems (Wang, Broose and Gravel 2019, Ecology)
 
-Here we present a study trying to show how food web topology is determined by biotic components of early successional communitites in tropical rain forest.
-x. Is the a predictive response of the food web to experimental manipulation of the food chain components? What does change with manipulations of herbivores, predators and pathogenic fungi?
+Here we present a study trying to show how food web topology is determined by biotic components of early successional communitites in tropical rain forest and how top down factors can influence interaction network components.
+x. Is the a predictive response of the food web to experimental manipulation of the food chain components? I dont think I should include fungi and increased herbivoruy unless there is a good reason for this.
+
 - ANCOVA for vulnerability, generality (specialisation doesnt make sese here because we don't have many species of plants. (vulnerability can tell us if there is reduced variabilty in herbivores feeding on plants. Generality can tell us if under some treatments insects tend to narrow their habitat choice)
 
 x. Are there top-down effects/bottom-up effects on plants and herbivore diversity abundance etc. Not trying to mechanistically explain but rather show presence or absence of these. Can I group insects into modules? Then I can characterise them also by diversity within module and size distributions.

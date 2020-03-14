@@ -3,6 +3,7 @@
 # Direct and indirect effects on plants can be calculated using the log ratio. ln(Vp+/Vp-) where V's are community variables (herbivore abundance and plant biomass in the presence and absence of herbivores). These effect magnitudes can be plotted in relation to each other on an x-y plane and in relation to a 45 deg reference line tha represents the equivalence in strength of direct and indirect effect of carnivores.
 
 # The log ratio effect of carnivores on herbivores should always be negative if carnivores are limiting herbivores regardles of the of the way herbivores are resource limited.
+
 # page 36 Resloving ecosystem complexity
 
 # I need biomass of herbivores, arthropod predators and plant for each plot.
@@ -21,9 +22,7 @@ plants  <- read.table("datasets/plants_clean.txt")
 size_dat <-read.table("datasets/size_dat_bio.txt")
 # sizes   <- read.table("datasets/sizes_clean.txt")
 
-## 2. Log response ratios ----
-
-# Attach biomass measurments to othe main insects dataset
+# Attach biomass measurments to the main insects dataset
 rownames(size_dat) <- size_dat$morph
 arthbio  <- size_dat[as.character(insects$morphotype), ]
 ins_bio <- cbind(insects, arthbio[, c("morph", "bio")])
@@ -42,6 +41,7 @@ biofulldf <- data.frame()
 gardnets <- list()
 gardnetsfam <- list()
 
+# 1.1 Abundances networks ----
 # Plots with biomass
 for(pcode in as.character(treats$codes)){
   print(pcode)
@@ -89,9 +89,12 @@ for(pcode in as.character(treats$codes)){
   biofulldf <- rbind(biofulldf, subdf)
 }
 # pcode <- "w1g5p1" # assign plot name
+# biofulldf   # dataframe
+# gardnets    # morphotype based networks for each garden
+# gardnetsfam # family aagregated networks for all garden
 
-############## #NETWORKS BASED ON INTERACTIONS 
 
+# 1.2 Interaction based networks ----
 # Abundances of insects per plot per plant
 abufulldf <- data.frame()
 abugardnets <- list()
@@ -143,34 +146,74 @@ for(pcode in as.character(treats$codes)){
   abufulldf <- rbind(abufulldf, subdf)
 }
 
-abufulldf
-abugardnets
-abugardnetsfam
-
-############## #
+# abufulldf # dataframe
+# abugardnets # morphotype based networks for each garden
+# abugardnetsfam # family aagregated networks for all garden
 
 
+## 2. Log response ratios ----
 
-# Dataset containing biomasses for the log ratio comparisons
+# Dataset containing biomasses for the log ratio comparisons between predator exclosures and control plots
 biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
 biollcp$plot <- as.character(biollcp$plot)
 biollcp$plnm <- as.character(biollcp$plnm)
 biollcp$trt <- as.character(biollcp$trt)
-table(biollcp$trt, biollcp$plnm)
-
-# Herbivore log-ratio for each plant species and each group of insects
-# within garden
+biollcp$gard <- substr(biollcp$plot, 3,4)
+# see which species are present in both treatment plots
+table(biollcp$trt, biollcp$plnm) 
 
 # Assume that each plant hosts unique community of insects.
 
 # Log ratio analyses
 
-biollcp$gard <- substr(biollcp$plot, 3,4)
-# 
+# 2.1 General log ratio for herbivores, intermediate predators and plants
+
+# For each garden bioHp (plus), bioHm (minus), bioIPp, bioIPm, bioPp, bioPm
+
+
+-------------------------------
+# finish this
+#  I 
+#  V
+-------------------------------
+
+genllratio <- data.frame()
+for (block in unique(biollcp$gard)){
+  subbl <- biollcp[biollcp$gard == block, ]
+  # for individual block
+  for(plt in unique(subbl$plot)){
+    # Values for control
+    crow <- data.frame(bl = block, 
+                       pt = plt, 
+                       bioH=NA, 
+                       bioIP=NA,
+                       bioPp)
+    for (treat in c("CONTROL","PREDATOR")){
+      subplot <- subbl[subbl$trt == "CONTROL", ]
+      # for each plant evaluate H, IP and P and then sum them together
+      biovec <- c(0,0,0)
+      for (plant in unique(subplot$plnm)){
+        print(plant)
+        subplant <- subplot[subplot$plnm == plant,]
+        ip <- sum(subplant[subplant$nms %in% c("aran","mant"), ]$bio)
+        h <- sum(subplant[!(subplant$nms %in% c("aran","mant")), ]$bio)
+        p <- subplant$plbio[1]
+        print(c(h,ip,p))
+        biovec <- biovec + c(h,ip,p)
+      }
+    }
+  }
+  genllratio <- rbind(genllratio,
+                      data.frame(bl=block,))
+}
+
+# 2.2 Herbivore log-ratio for each plant species and each group of insects ----
+# within garden
+
 # block = "g1"
 # plnt = unique(subbl$plnm)[1]
 # fam = unique(subblpl$nms)[1]
-# 
+
 logratiodf <- data.frame()
 # Go through each block
 for(block in unique(biollcp$gard)){
@@ -300,10 +343,10 @@ for(fam in fams){
 
 llrodf
 # pdf("manuscript/figs/llratio.pdf", 6,6)
-llp <- ggplot(llrodf, aes(x = lH, y=lVt))
+llp <- ggplot(llrodf, aes(x = lVh, y=lVt))
 llp + geom_point() +
   geom_text(label = llrodf$gard)+
-  geom_point(aes(x = lH, y=lVh, col="red")) + 
+  geom_point(aes(x = lVh, y=lVt, col="red")) + 
   facet_wrap(llrodf$fam) + 
   theme_bw() +
   xlab("Direct effect of predator removal on insects") + 
@@ -349,7 +392,6 @@ names(bgrdiv) <- c("rich","code")
 # Simple biomass plots
 
 # See where these values are coming from??
-z
 # break it into groups! mobile and the rest
 
 biofulldf

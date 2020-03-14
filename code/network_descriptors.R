@@ -1,4 +1,4 @@
-# Network descriptors
+# Network descriptors ----
 
 insects <- read.table("datasets/arthropods_clean.txt")
 treats  <- read.table("datasets/treatments_clean.txt")
@@ -20,7 +20,7 @@ source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R")
 # Is it possible to study average number of plants per herbivore species using raw data?
 # That could be done for arthropod species present in both predator and control plots. That would be problematic if there are differences in plant communities between blocks
 
-# Simple vulnerability and generality patterns in networks
+# Simple vulnerability and generality patterns in networks ----
 gnames <- as.character(treats$codes)
 genvuldf <- data.frame()
 for(gname in gnames){

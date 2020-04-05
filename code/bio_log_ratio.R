@@ -10,141 +10,7 @@
 
 # Inspect that and see if there are any changes in the food web structure. What can i expect?
 
-source("code/contingencyTable.R")
-library("bipartite")
-library("igraph")
-
-# 1. Load datesets ----
-
-insects <- read.table("datasets/arthropods_clean.txt")
-treats  <- read.table("datasets/treatments_clean.txt")
-plants  <- read.table("datasets/plants_clean.txt")
-size_dat <-read.table("datasets/size_dat_bio.txt")
-# sizes   <- read.table("datasets/sizes_clean.txt")
-
-# Attach biomass measurments to the main insects dataset
-rownames(size_dat) <- size_dat$morph
-arthbio  <- size_dat[as.character(insects$morphotype), ]
-ins_bio <- cbind(insects, arthbio[, c("morph", "bio")])
-ins_bio$totbio <- ins_bio$amount * ins_bio$bio
-# ins_bio[1341,]
-
-# Missing stuff, try to measure myself
-# ins_bio[!complete.cases(ins_bio),]
-
-# Insect abundances
-# tapply(ins_bio$amount,ins_bio$plot, sum)
-# ins_bio[ins_bio$plot == pcode,]
-
-# Biomasses of insects per plot per plant
-biofulldf <- data.frame()
-gardnets <- list()
-gardnetsfam <- list()
-
-# 1.1 Abundances networks ----
-# Plots with biomass
-for(pcode in as.character(treats$codes)){
-  print(pcode)
-  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
-  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
-  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
-  
-  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
-  cumWeight <- tapply(plantbio$WEIGHT,
-         plantbio$SP_CODE, 
-         sum)
-  
-  pbio <- data.frame(SP_CODE = rownames(cumWeight),
-                     WEIGHT = cumWeight)
-  
-  rownames(pbio) <- pbio[,1]
-  plantb <- pbio[,2]
-  names(plantb) <- pbio[,1]
-  subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio",FALSE)
-  listnet <- list(subinsct)
-  names(listnet) <- pcode
-  gardnetsfam <- append(gardnetsfam, listnet) 
-  
-  # Add to the list
-  # By family or by species
-  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "totbio",FALSE)
-  listnet <- list(subinsctsp)
-  names(listnet) <- pcode
-  gardnets <- append(gardnets, listnet) 
-  
-  subdf <- data.frame()
-  # Collect data for a given plant within a plot
-  for(row in 1:nrow(subinsct)){
-    plnm <- rownames(subinsct)[row]
-    nms <- rownames(as.matrix(subinsct[row,]))
-    if(is.null(nms)){nms <- colnames(subinsct)}
-    bio <- as.matrix(subinsct[row,])
-    trt <- as.character(treats[treats$codes == pcode, "treat"])
-    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
-    ssdf <- data.frame(plot=pcode,bio=bio, nms=nms, plnm=plnm,
-                       trt=trt,plbio=plbio)
-    
-    subdf <- rbind(subdf, ssdf)
-  }
-  biofulldf <- rbind(biofulldf, subdf)
-}
-# pcode <- "w1g5p1" # assign plot name
-# biofulldf   # dataframe
-# gardnets    # morphotype based networks for each garden
-# gardnetsfam # family aagregated networks for all garden
-
-
-# 1.2 Interaction based networks ----
-# Abundances of insects per plot per plant
-abufulldf <- data.frame()
-abugardnets <- list()
-abugardnetsfam <- list()
-# Plots with biomass
-for(pcode in as.character(treats$codes)){
-  print(pcode)
-  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
-  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
-  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
-  
-  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
-  cumWeight <- tapply(plantbio$WEIGHT,
-                      plantbio$SP_CODE, 
-                      sum)
-  
-  pbio <- data.frame(SP_CODE = rownames(cumWeight),
-                     WEIGHT = cumWeight)
-  
-  rownames(pbio) <- pbio[,1]
-  plantb <- pbio[,2]
-  names(plantb) <- pbio[,1]
-  subinsct <- contingencyTable2(subinsdat, "tree", "family", "amount",FALSE)
-  listnet <- list(subinsct)
-  names(listnet) <- pcode
-  abugardnetsfam <- append(abugardnetsfam, listnet) 
-  
-  # Add to the list
-  # By family or by species
-  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "amount",FALSE)
-  listnet <- list(subinsctsp)
-  names(listnet) <- pcode
-  abugardnets <- append(abugardnets, listnet) 
-  
-  subdf <- data.frame()
-  # Collect data for a given plant within a plot
-  for(row in 1:nrow(subinsct)){
-    plnm <- rownames(subinsct)[row]
-    nms <- rownames(as.matrix(subinsct[row,]))
-    if(is.null(nms)){nms <- colnames(subinsct)}
-    bio <- as.matrix(subinsct[row,])
-    trt <- as.character(treats[treats$codes == pcode, "treat"])
-    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
-    ssdf <- data.frame(plot=pcode,bio=bio, nms=nms, plnm=plnm,
-                       trt=trt,plbio=plbio)
-    
-    subdf <- rbind(subdf, ssdf)
-  }
-  abufulldf <- rbind(abufulldf, subdf)
-}
+source("code/data_processing_code.R")
 
 # abufulldf # dataframe
 # abugardnets # morphotype based networks for each garden
@@ -166,46 +32,274 @@ table(biollcp$trt, biollcp$plnm)
 
 # Log ratio analyses
 
-# 2.1 General log ratio for herbivores, intermediate predators and plants
+# 2.1 General log ratio for herbivores, intermediate predators and plants ----
 
 # For each garden bioHp (plus), bioHm (minus), bioIPp, bioIPm, bioPp, bioPm
-
-
--------------------------------
-# finish this
-#  I 
-#  V
--------------------------------
-
 genllratio <- data.frame()
+
 for (block in unique(biollcp$gard)){
   subbl <- biollcp[biollcp$gard == block, ]
   # for individual block
   for(plt in unique(subbl$plot)){
     # Values for control
+    print(plot)
+    subplot <- subbl[subbl$plot == plt, ]
+ 
     crow <- data.frame(bl = block, 
-                       pt = plt, 
-                       bioH=NA, 
-                       bioIP=NA,
-                       bioPp)
-    for (treat in c("CONTROL","PREDATOR")){
-      subplot <- subbl[subbl$trt == "CONTROL", ]
+                       pt = plt,
+                       trt = unique(subplot$trt),
+                       bioH= NA, 
+                       bioIP= NA,
+                       bioPp = NA)
+    
+    # for each plant evaluate H, IP and P and then sum them together
+    biovec <- c(0,0,0)
+    for (plant in unique(subplot$plnm)){
+      #print(plant)
+      subplant <- subplot[subplot$plnm == plant,]
+      ip <- sum(subplant[subplant$nms %in% c("aran","mant"), ]$bio)
+      h <- sum(subplant[!(subplant$nms %in% c("aran","mant")), ]$bio)
+      p <- subplant$plbio[1]
+      #print(c(h,ip,p))
+      biovec <- biovec + c(h,ip,p)
+    }
+    crow$bioH <- biovec[1]
+    crow$bioIP <- biovec[2]
+    crow$bioPp <- biovec[3]
+    genllratio <- rbind(genllratio,
+                        crow)
+  }
+}
+
+
+genllratio
+
+# Evaluate the log ratios: CONTROL/PREDATOR
+generallr <- data.frame()
+for(block in unique(genllratio$bl)){
+  sbl <- genllratio[genllratio$bl == block,]
+  ctrlplot <- sbl[sbl$trt == "CONTROL",]
+  predplot <- sbl[sbl$trt == "PREDATOR",]
+  ctrlvals <- ctrlplot[, c("bioH","bioIP","bioPp")]
+  predvals <- predplot[, c("bioH","bioIP","bioPp")]
+  llratiovals <- log(ctrlvals/predvals)
+  llratiorow <- data.frame(bl = block,
+                           H = llratiovals$bioH,
+                           IP = llratiovals$bioIP,
+                           P = llratiovals$bioPp)
+  generallr <- rbind(generallr, llratiorow)
+}
+
+# Correlation plot
+library(psych)
+pairs.panels(generallr[,c(2,3,4)], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = FALSE # show correlation ellipses
+)
+
+with(generallr, plot(H,P, pch=19, cex=1.5))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
+
+
+
+# * 2.1.1 General log ratio for abundances ----
+
+# Dataset containing biomasses for the log ratio comparisons between predator exclosures and control plots
+abullcp <- abufulldf[abufulldf$trt %in% c("CONTROL", "PREDATOR"),]
+abullcp$plot <- as.character(abullcp$plot)
+abullcp$plnm <- as.character(abullcp$plnm)
+abullcp$trt <- as.character(abullcp$trt)
+abullcp$gard <- substr(abullcp$plot, 3,4)
+# see which species are present in both treatment plots
+table(abullcp$trt, abullcp$plnm) 
+
+
+genllratio <- data.frame()
+
+for (block in unique(abullcp$gard)){
+  subbl <- abullcp[abullcp$gard == block, ]
+  # for individual block
+  for(plt in unique(subbl$plot)){
+    # Values for control
+    print(plot)
+    subplot <- subbl[subbl$plot == plt, ]
+    
+    crow <- data.frame(bl = block, 
+                       pt = plt,
+                       trt = unique(subplot$trt),
+                       bioH= NA, 
+                       bioIP= NA,
+                       bioPp = NA)
+    
+    # for each plant evaluate H, IP and P and then sum them together
+    biovec <- c(0,0,0)
+    for (plant in unique(subplot$plnm)){
+      #print(plant)
+      subplant <- subplot[subplot$plnm == plant,]
+      ip <- sum(subplant[subplant$nms %in% c("aran","mant"), ]$bio)
+      h <- sum(subplant[!(subplant$nms %in% c("aran","mant")), ]$bio)
+      p <- subplant$plbio[1]
+      #print(c(h,ip,p))
+      biovec <- biovec + c(h,ip,p)
+    }
+    crow$bioH <- biovec[1]
+    crow$bioIP <- biovec[2]
+    crow$bioPp <- biovec[3]
+    genllratio <- rbind(genllratio,
+                        crow)
+  }
+}
+
+
+genllratio
+
+# Evaluate the log ratios: CONTROL/PREDATOR
+generallr <- data.frame()
+for(block in unique(genllratio$bl)){
+  sbl <- genllratio[genllratio$bl == block,]
+  ctrlplot <- sbl[sbl$trt == "CONTROL",]
+  predplot <- sbl[sbl$trt == "PREDATOR",]
+  ctrlvals <- ctrlplot[, c("bioH","bioIP","bioPp")]
+  predvals <- predplot[, c("bioH","bioIP","bioPp")]
+  llratiovals <- log(ctrlvals/predvals)
+  llratiorow <- data.frame(bl = block,
+                           H = llratiovals$bioH,
+                           IP = llratiovals$bioIP,
+                           P = llratiovals$bioPp)
+  generallr <- rbind(generallr, llratiorow)
+}
+
+# Correlation plot
+library(psych)
+pairs.panels(generallr[,c(2,3,4)], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = FALSE # show correlation ellipses
+)
+
+with(generallr, plot(H,P, pch=19, cex=1.5))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
+
+# * 2.1.2 Herbivore families responses -----
+
+herbfams <- unique(biollcp$nms)[-grep("aran|mant", unique(biollcp$nms))]
+herbfams <- as.character(herbfams)
+#family <- herbfams[1]
+lratioFam <-function(family){
+  genllratio <- data.frame()
+  fambiollcp <- biollcp[biollcp$nms == family, ]
+  for (block in unique(fambiollcp$gard)){
+    subbl <- fambiollcp[fambiollcp$gard == block, ]
+    # for individual block
+    for(plt in unique(subbl$plot)){
+      # Values for control
+      print(plt)
+      subplot <- subbl[subbl$plot == plt, ]
+      
+      crow <- data.frame(bl = block, 
+                         pt = plt,
+                         trt = unique(subplot$trt),
+                         bioH= NA, 
+                         bioIP= NA,
+                         bioPp = NA)
+      
       # for each plant evaluate H, IP and P and then sum them together
       biovec <- c(0,0,0)
       for (plant in unique(subplot$plnm)){
-        print(plant)
+        #print(plant)
         subplant <- subplot[subplot$plnm == plant,]
         ip <- sum(subplant[subplant$nms %in% c("aran","mant"), ]$bio)
         h <- sum(subplant[!(subplant$nms %in% c("aran","mant")), ]$bio)
         p <- subplant$plbio[1]
-        print(c(h,ip,p))
+        #print(c(h,ip,p))
         biovec <- biovec + c(h,ip,p)
       }
+      crow$bioH <- biovec[1]
+      crow$bioIP <- biovec[2]
+      crow$bioPp <- biovec[3]
+      genllratio <- rbind(genllratio,
+                          crow)
     }
   }
-  genllratio <- rbind(genllratio,
-                      data.frame(bl=block,))
+  
+  
+  genllratio
+  
+  # Evaluate the log ratios: CONTROL/PREDATOR
+  generallr <- data.frame()
+  for(block in unique(genllratio$bl)){
+    sbl <- genllratio[genllratio$bl == block,]
+    ctrlplot <- sbl[sbl$trt == "CONTROL",]
+    predplot <- sbl[sbl$trt == "PREDATOR",]
+    ctrlvals <- ctrlplot[, c("bioH","bioIP","bioPp")]
+    predvals <- predplot[, c("bioH","bioIP","bioPp")]
+    if(dim(predvals)[1] == 0 | dim(ctrlvals)[1] == 0){
+      print(paste("No insects from this family in block",block))
+      llratiorow <- data.frame(bl = block,
+                               H = NA,
+                               IP = NA,
+                               P = NA)
+    }else{
+      llratiovals <- log(ctrlvals/predvals)
+      llratiorow <- data.frame(bl = block,
+                               H = llratiovals$bioH,
+                               IP = llratiovals$bioIP,
+                               P = llratiovals$bioPp)
+    }
+    
+    generallr <- rbind(generallr, llratiorow)
+  }
+  
+  # Correlation plot
+  # library(psych)
+  # pairs.panels(generallr[,c(2,4)], 
+  #              method = "pearson", # correlation method
+  #              hist.col = "#00AFBB",
+  #              density = TRUE,  # show density plots
+  #              ellipses = FALSE # show correlation ellipses
+  with(generallr, plot(H,P, pch=19, cex=1.5,main=family))
+  abline(h=0)
+  abline(v=0)
+  abline(0,1, lty =2)
+  abline(0, -1, lty = 2)
+  
+  generallr <- generallr[,c("bl","H","P")]
+  colnames(generallr) <- c("bl",
+                           paste(family, "H", sep=""),
+                           paste(family, "Pl", sep=""))
+  return(generallr)
 }
+
+par(mfrow=c(2,3))
+
+colelr <- lratioFam(herbfams[1])
+hemilr <- lratioFam(herbfams[2])
+homolr <- lratioFam(herbfams[3])
+lepilr <- lratioFam(herbfams[4])
+orthlr <- lratioFam(herbfams[5])
+
+famdat <- Reduce(function(x, y) merge(x, y, by = "bl"), 
+       list(colelr,
+            hemilr,
+            homolr,
+            lepilr,
+            orthlr))
+
+pairs.panels(famdat[,grep("H",colnames(famdat))], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = FALSE # show correlation ellipses
+)
 
 # 2.2 Herbivore log-ratio for each plant species and each group of insects ----
 # within garden
@@ -307,8 +401,10 @@ fams <- as.character(unique(insects$family))
 # x11(6,6)
 # par(mfrow = c(4,2))
 
-# Families agregated plants ---- 
+# 2.3 Families agregated plants ---- 
+
 llrodf <- data.frame()
+
 for(fam in fams){
   llro <- data.frame()
   for(gard in unique(tpcodes$gard)){
@@ -389,7 +485,7 @@ names(bgrdiv) <- c("rich","code")
 # graph.motifs(testGraph, 
 #                size = 3)
 
-# Simple biomass plots
+# X.X Simple biomass plots ----
 
 # See where these values are coming from??
 # break it into groups! mobile and the rest
@@ -595,3 +691,6 @@ library(lmerTest)
 mod1 <- lmer(bio~trt + (1|gard), data=dfbio)
 mod1 <- lm(bio~trt, data=dfbio)
 summary(mod1)
+
+# 3. Resource limitation exploration (Schmitz 2010, p.31)
+biofulldf

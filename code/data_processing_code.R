@@ -165,3 +165,143 @@ main$CODE <- tolower(main$CODE)
 main_biomass <- main[,c("CODE","PLOT","BLOCK","TREAT","SPEC","SP_CODE","LIFE.FORM","BASAL_A","HEIGHT_M", "LEAVES","TRUNK","WEIGHT")]
 
 # write.table(main_biomass, "datasets/wng_main_bio.txt")
+
+# Food webs
+
+source("code/contingencyTable.R")
+library("bipartite")
+library("igraph")
+
+# 1. Load datesets ----
+
+insects <- read.table("datasets/arthropods_clean.txt")
+treats  <- read.table("datasets/treatments_clean.txt")
+plants  <- read.table("datasets/plants_clean.txt")
+size_dat <-read.table("datasets/size_dat_bio.txt")
+# sizes   <- read.table("datasets/sizes_clean.txt")
+
+# Attach biomass measurments to the main insects dataset
+rownames(size_dat) <- size_dat$morph
+arthbio  <- size_dat[as.character(insects$morphotype), ]
+ins_bio <- cbind(insects, arthbio[, c("morph", "bio")])
+ins_bio$totbio <- ins_bio$amount * ins_bio$bio
+# ins_bio[1341,]
+
+# Missing stuff, try to measure myself
+# ins_bio[!complete.cases(ins_bio),]
+
+# Insect abundances
+# tapply(ins_bio$amount,ins_bio$plot, sum)
+# ins_bio[ins_bio$plot == pcode,]
+
+# 1.1 Biomass based networks ----
+
+# Biomasses of insects per plot per plant
+biofulldf <- data.frame()
+gardnets <- list()
+gardnetsfam <- list()
+
+# Plots with biomass
+for(pcode in as.character(treats$codes)){
+  print(pcode)
+  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
+  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
+  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
+  
+  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
+  cumWeight <- tapply(plantbio$WEIGHT,
+                      plantbio$SP_CODE, 
+                      sum)
+  
+  pbio <- data.frame(SP_CODE = rownames(cumWeight),
+                     WEIGHT = cumWeight)
+  
+  rownames(pbio) <- pbio[,1]
+  plantb <- pbio[,2]
+  names(plantb) <- pbio[,1]
+  subinsct <- contingencyTable2(subinsdat, "tree", "family", "totbio",FALSE)
+  listnet <- list(subinsct)
+  names(listnet) <- pcode
+  gardnetsfam <- append(gardnetsfam, listnet) 
+  
+  # Add to the list
+  # By family or by species
+  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "totbio",FALSE)
+  listnet <- list(subinsctsp)
+  names(listnet) <- pcode
+  gardnets <- append(gardnets, listnet) 
+  
+  subdf <- data.frame()
+  # Collect data for a given plant within a plot
+  for(row in 1:nrow(subinsct)){
+    plnm <- rownames(subinsct)[row]
+    nms <- rownames(as.matrix(subinsct[row,]))
+    if(is.null(nms)){nms <- colnames(subinsct)}
+    bio <- as.matrix(subinsct[row,])
+    trt <- as.character(treats[treats$codes == pcode, "treat"])
+    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
+    ssdf <- data.frame(plot=pcode,bio=bio, nms=nms, plnm=plnm,
+                       trt=trt,plbio=plbio)
+    
+    subdf <- rbind(subdf, ssdf)
+  }
+  biofulldf <- rbind(biofulldf, subdf)
+}
+# pcode <- "w1g5p1" # assign plot name
+# biofulldf   # dataframe
+# gardnets    # morphotype based networks for each garden
+# gardnetsfam # family aagregated networks for all garden
+
+
+# 1.2 Abundance (number of individuals) based networks ----
+# Abundances of insects per plot per plant
+abufulldf <- data.frame()
+abugardnets <- list()
+abugardnetsfam <- list()
+# Plots with biomass
+for(pcode in as.character(treats$codes)){
+  print(pcode)
+  subinsdat <- ins_bio[ins_bio$plot == pcode,] # get insect biomass
+  plantcodes <- unique(subinsdat$tree) # see which plants have to be extracted
+  plantbio <- plants[(plants$CODE == pcode & plants$SP_CODE %in% plantcodes), c("SP_CODE","WEIGHT")] # in KG
+  
+  plantbio$SP_CODE <- as.character(plantbio$SP_CODE)
+  cumWeight <- tapply(plantbio$WEIGHT,
+                      plantbio$SP_CODE, 
+                      sum)
+  
+  pbio <- data.frame(SP_CODE = rownames(cumWeight),
+                     WEIGHT = cumWeight)
+  
+  rownames(pbio) <- pbio[,1]
+  plantb <- pbio[,2]
+  names(plantb) <- pbio[,1]
+  subinsct <- contingencyTable2(subinsdat, "tree", "family", "amount",FALSE)
+  listnet <- list(subinsct)
+  names(listnet) <- pcode
+  abugardnetsfam <- append(abugardnetsfam, listnet) 
+  
+  # Add to the list
+  # By family or by species
+  subinsctsp <- contingencyTable2(subinsdat, "tree", "morph", "amount",FALSE)
+  listnet <- list(subinsctsp)
+  names(listnet) <- pcode
+  abugardnets <- append(abugardnets, listnet) 
+  
+  subdf <- data.frame()
+  # Collect data for a given plant within a plot
+  for(row in 1:nrow(subinsct)){
+    plnm <- rownames(subinsct)[row]
+    nms <- rownames(as.matrix(subinsct[row,]))
+    if(is.null(nms)){nms <- colnames(subinsct)}
+    bio <- as.matrix(subinsct[row,])
+    trt <- as.character(treats[treats$codes == pcode, "treat"])
+    plbio <- pbio[pbio$SP_CODE == plnm, "WEIGHT"]
+    ssdf <- data.frame(plot=pcode,bio=bio, nms=nms, plnm=plnm,
+                       trt=trt,plbio=plbio)
+    
+    subdf <- rbind(subdf, ssdf)
+  }
+  abufulldf <- rbind(abufulldf, subdf)
+}
+

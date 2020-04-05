@@ -9,8 +9,8 @@ source("code/bio_log_ratio.R")
 gardnetsfam
 
 # Example of the control - predator comparison for garden 1
-nc <- "w1g1p3"
-np <- "w1g1p4"
+nc <- "w1g1p3" #control
+np <- "w1g1p4" #predator
 netc <- gardnetsfam[[nc]]
 netp <- gardnetsfam[[np]]
 plntabudfc <- plants[(plants$CODE == nc), c("SP_CODE", "WEIGHT")]
@@ -19,9 +19,11 @@ plntabuc <- plntabudfc$WEIGHT
 plntabup <- plntabudfp$WEIGHT
 names(plntabuc) <- plntabudfc$SP_CODE
 names(plntabup) <- plntabudfp$SP_CODE
-par(mfrow=c(2,1))
-plotweb(netc[, c("orth", "lepi","cole","hemi","homo")], low.abun = plntabuc)
-plotweb(netp[, c("orth", "lepi","hemi","homo")], low.abun = plntabup)
+par(mfrow=c(1,1))
+plotweb(netc[, c("orth", "lepi","cole","hemi","homo")], 
+        low.abun = plntabuc)
+plotweb(netp[, c("orth", "lepi","hemi","homo")], 
+        low.abun = plntabup)
 # Seems like at least in the case of orthoptera majority of the interactions have shifted to a different resource
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 colc <- rep(cbPalette[4], length(colnames(netc)))

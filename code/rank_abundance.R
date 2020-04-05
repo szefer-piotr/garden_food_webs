@@ -63,3 +63,19 @@ cmx
 rankabu <- colSums(cmx)
 hist(rankabu, breaks = 50)
 table(rankabu)
+treshold <- 2
+
+# How often specialists vs generalists swith their resources under the treatment (predator removal)
+sum(rankabu <= treshold) # number of specialists
+sum(rankabu > treshold)  # rest
+
+dim(cmx)
+
+#co-inertia
+install.packages("cocorresp")
+library(cocorresp)
+
+data(beetles, plants)
+coin <- coinertia(beetles, plants)
+coin
+summary(coin)

@@ -1,9 +1,13 @@
 # Community detection
 
 source("code/contingencyTable.R")
-source("code/bio_log_ratio.R")
+# source("code/bio_log_ratio.R")
+source("code/data_processing_code.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/LPA_wb_plus.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R") #read in plotting function
+source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R") 
+library("bipartite")
+source("code/weighted-modularity-LPAwbPLUS/code/R/convert2moduleWeb.R") # read in conversion 
 
 # 1. Load datesets ----
 insects <- read.table("datasets/arthropods_clean.txt")
@@ -59,25 +63,26 @@ for(gard in pcplots){
 for (i in pcplots){
   MAT <- pcnets_noip[[i]]
   if(dim(MAT)[1] <= 1){next}
-  # MOD1 = LPA_wb_plus(MAT) # find labels and weighted modularity using LPAwb+
-  MOD2 = DIRT_LPA_wb_plus(MAT) # find labels and weighted modularity using DIRTLPAwb+
-  # MOD3 = DIRT_LPA_wb_plus(MAT>0, 2, 20) 
+  # find labels and weighted modularity using DIRTLPAwb+
+  MOD2 = DIRT_LPA_wb_plus(MAT)
+  
   patch <- paste("figs/", "gard", i, sep="")
-  tiff(patch) 
-  MODULARPLOT(MAT,MOD2)
+  
+  treatment <- as.character(treats[treats$codes == i, "treat"])
+  
+  png(patch, width = 1000,height = 350) 
+  # MODULARPLOT(MAT,MOD2)
+  # converts the configuration found in MOD1 to a moduleWeb object
+  MOD1modWeb = convert2moduleWeb(MAT,MOD2) 
+  # plot the corresponding moduleWeb object using plotModuleWeb in library bipartite
+  plotModuleWeb(MOD1modWeb, labsize = 0.8)
+  text(5,2,treatment)
   dev.off()
-  # show the modular network configuration found in MOD1. Row and column numbering indicates the ordering of rows and columns in MAT. Modules are highlighted in red rectangles.
 }
 
-# MAT <- gardnets[[32]]
-# MOD2 = DIRT_LPA_wb_plus(MAT)
-# MOD2 = DIRT_LPA_wb_plus(MAT, 4, 1000)
-# MOD2 = LPA_wb_plus(MAT)
-# MODULARPLOT(MAT,MOD2)
-
 # Highlight modules
-
 library(RColorBrewer)
+
 mod <- unique(MOD2$Col_labels)
 colors <- brewer.pal(length(mod),"BrBG")
 barplot(c(1,1,1,1),col = colors)
@@ -96,22 +101,12 @@ plotweb(MAT,
         col.high = upperCol, bor.col.high = upperCol,
         col.low = lowerCol, bor.col.low = lowerCol)
 
-
-
-# MAT <- subinsct
-MOD1 = LPA_wb_plus(MAT) # find labels and weighted modularity using LPAwb+
-MOD3 = DIRT_LPA_wb_plus(MAT>0, 2, 20)
-# MODULARPLOT(MAT,MOD2) # show the modular network configuration found in MOD1. Row and column numbering indicates the ordering of rows and columns in MAT. Modules are highlighted in red rectangles.
-
 #use with R library 'bipartite'
-library("bipartite")
-source("code/weighted-modularity-LPAwbPLUS/code/R/convert2moduleWeb.R") # read in conversion function 
-
-MOD1modWeb = convert2moduleWeb(MAT,MOD2) # converts the configuration found in MOD1 to a moduleWeb object
-plotModuleWeb(MOD1modWeb) # plot the corresponding moduleWeb object using plotModuleWeb in library bipartite
 
 
-source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R") #read in function for finding additional information
+
+
+#read in function for finding additional information
 
 MOD1information = GetModularInformation(MAT,MOD2)
 # normalised modularity score for configuration found by MOD1 for MAT

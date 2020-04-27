@@ -8,7 +8,8 @@ size_dat <-read.table("datasets/size_dat_bio.txt")
 library(bipartite)
 library(lme4)
 library(lmerTest)
-source("code/bio_log_ratio.R")
+# source("code/bio_log_ratio.R")
+source("code/data_processing_code.R")
 source("code/contingencyTable.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/LPA_wb_plus.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R")
@@ -16,6 +17,7 @@ source("code/weighted-modularity-LPAwbPLUS/code/R/convert2moduleWeb.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R")
 
 ctrpl <- treats[treats$treat == "CONTROL",]$codes
+ctrpl <- treats[!(treats$treat %in% c("FUNGICIDE", "INSECTICIDE")),] $codes
 ctrlgardnets <- gardnets[ctrpl]
 cg1 <- ctrlgardnets[[1]]
 cg2 <- ctrlgardnets[[2]]
@@ -40,19 +42,11 @@ matrix_to_data <- function(mat){
   return(df)
 }
 
-dfcg1 <- matrix_to_data(cg1)
-dfcg2 <- matrix_to_data(cg2)
-dfcg3 <- matrix_to_data(cg3)
-dfcg4 <- matrix_to_data(cg4)
-dfcg5 <- matrix_to_data(cg5)
-dfcg6 <- matrix_to_data(cg6)
-
-dfcg <- rbind(dfcg1,
-      dfcg2,
-      dfcg3,
-      dfcg4,
-      dfcg5,
-      dfcg6)
+dfcg <- data.frame()
+for(nm in names(ctrlgardnets)){
+  cgx <- matrix_to_data(ctrlgardnets[[nm]])
+  dfcg <- rbind(dfcg, cgx)
+}
 
 library(reshape)
 cmx <- cast(dfcg, rowname~colname, fun.aggregate = sum)
@@ -72,10 +66,9 @@ sum(rankabu > treshold)  # rest
 dim(cmx)
 
 #co-inertia
-install.packages("cocorresp")
-library(cocorresp)
-
-data(beetles, plants)
-coin <- coinertia(beetles, plants)
-coin
-summary(coin)
+# library(cocorresp)
+# 
+# data(beetles, plants)
+# coin <- coinertia(beetles, plants)
+# coin
+# anova(coin)

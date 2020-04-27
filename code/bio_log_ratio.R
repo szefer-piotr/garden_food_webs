@@ -74,6 +74,36 @@ for (block in unique(biollcp$gard)){
 
 genllratio
 
+# * 2.1.1 Effects of predator removal on herbivores, intermediate predators and plants ----
+
+library(ggplot2)
+par(mfrow=c(1,3))
+p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Herbivores")
+  
+p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Intermediate predators")
+
+p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Plants")
+
+library(gridExtra)
+grid.arrange(p1,p2,p3,nrow = 1)
+
+#
+
 # Evaluate the log ratios: CONTROL/PREDATOR
 generallr <- data.frame()
 for(block in unique(genllratio$bl)){
@@ -107,7 +137,7 @@ abline(0, -1, lty = 2)
 
 
 
-# * 2.1.1 General log ratio for abundances ----
+# * 2.1.2 General log ratio for abundances ----
 
 # Dataset containing biomasses for the log ratio comparisons between predator exclosures and control plots
 abullcp <- abufulldf[abufulldf$trt %in% c("CONTROL", "PREDATOR"),]
@@ -158,6 +188,30 @@ for (block in unique(abullcp$gard)){
 
 genllratio
 
+p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Herbivores")
+
+p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Intermediate predators")
+
+p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
+  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun.data = "mean_cl_normal", 
+               geom = "errorbar",
+               width=0.3)+
+  ggtitle("Plants")
+
+library(gridExtra)
+grid.arrange(p1,p2,p3,nrow = 1)
+
 # Evaluate the log ratios: CONTROL/PREDATOR
 generallr <- data.frame()
 for(block in unique(genllratio$bl)){
@@ -189,7 +243,7 @@ abline(v=0)
 abline(0,1, lty =2)
 abline(0, -1, lty = 2)
 
-# * 2.1.2 Herbivore families responses -----
+# * 2.1.3 Herbivore families log ratio responses -----
 
 herbfams <- unique(biollcp$nms)[-grep("aran|mant", unique(biollcp$nms))]
 herbfams <- as.character(herbfams)
@@ -300,6 +354,10 @@ pairs.panels(famdat[,grep("H",colnames(famdat))],
              density = TRUE,  # show density plots
              ellipses = FALSE # show correlation ellipses
 )
+
+# * 2.2.4 Herbivore families biomass/abundance responces ----
+
+
 
 # 2.2 Herbivore log-ratio for each plant species and each group of insects ----
 # within garden
@@ -694,3 +752,4 @@ summary(mod1)
 
 # 3. Resource limitation exploration (Schmitz 2010, p.31)
 biofulldf
+

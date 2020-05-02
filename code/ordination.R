@@ -1,5 +1,6 @@
 # RDA
 
+# Prepare data ----
 source("code/data_processing_code.R")
 
 # Original datasets in case I need to go back to these
@@ -59,7 +60,8 @@ treats_trimmed[treats_trimmed$treat == "CONTROL",]$birdef <- "bird"
 # treats_trimmed <- treats_trimmed[rowSums(treats_trimmed[,1:ddd]) != 0, ]
 treats_trimmed$sites <- rownames(treats_trimmed)
 
-# DATASETS ----
+# Create datasets for ordination ----
+
 # Herbivore dataset for selected treatments
 abumat_trimmed <- abumat_noip[rownames(abumat_noip) %in% rownames(treats_trimmed), ]
 biomat_trimmed <- biomat_noip[rownames(biomat_noip) %in% rownames(treats_trimmed), ]
@@ -72,7 +74,10 @@ ipbio_trimmed <- biomat[treats_trimmed$sites,
                         grep("aran|mant", colnames(biomat))]
 
 # PLANT PCA ----
+
 # pPCA <- rda(plants_trimmed ~ Condition(block + PREDATOR), data=treats_trimmed)
+
+# Bosc suggested conditioning only on block (Appendix S1). 
 pPCA <- rda(plants_trimmed ~ Condition(block), data=treats_trimmed)
 
 # Site axes
@@ -104,13 +109,14 @@ nullRDA <- rda(biomat_trimmed ~ 1 +
 scopeRDA <- rda(update.formula(rdaform, . ~ . + Condition(block+treat)),
                 data = treats_pc)
 
+# Forward secelction
 fselbioins <- ordiR2step(nullRDA, scope = scopeRDA, 
                          direction = "forward")
 
 # PC4 is significant
 fselbioins$anova
 
-# IP PCA ----
+# Intermediate Predator PCA ----
 ipppPCA <- rda(ipbio_trimmed ~ Condition(block), data=treats_trimmed)
 
 # Quick check wether there is bird effect on intermediate preds
@@ -227,6 +233,7 @@ names(r2_arth[names(sig_arth[sig_arth <= 0.05] )])
 names(r2_arth[r2_arth >= 0.2363755])
 # Find projection of points on predator effect axis
 
+# Calculate projection on bird effect axis ----
 library(LearnGeom)
 predEff <- CreateLinePoints(c_control, centroid)
 
@@ -254,7 +261,7 @@ abline(v=0, lty=2)
 
 projection_on_predef <- hp_rot[,1]
 
-# Use predator effect axis
+# Predator effect axis vs PDI----
 vals <- projection_on_predef
 summary(vals)
 qts <- quantile(vals, c(0.375,0.625))
@@ -271,22 +278,8 @@ length(neutral)
 length(positive)
 length(negative)
 
-# Now calculate PDI for herbivores and correlate with these coordinates
-# source("code/rank_abundance.R")
-# diet_breadth <- data.frame(herbivores = colnames(cmx), 
-#                            db = rankabu)
+source("code/pdi.R")
 
-pdidata <- ins_bio
-pdidata$trt <- as.character(treats[pdidata$plot, ]$treat)
-pdidata <- pdidata[!(pdidata$trt %in% c("FUNGICIDE", "INSECTICIDE")),]
-pdimat <- contingencyTable2(pdidata, "tree", "morphotype", "totbio")
-# pdimat <- contingencyTable2(pdidata, "tree", "morphotype", "amount")
-
-par(mfrow=c(1,1))
-library(bipartite)
-plotweb(pdimat)
-
-diet_breadth <- PDI(pdimat, normalise = F, log = T)
 # highest for cole009
 
 pdimat[, "cole009"]
@@ -393,6 +386,7 @@ spibc <- ibc[ibc$morphotype == sp,]
 spibc$treat <- treats_trimmed[as.character(spibc$plot),]$treat
 
 # Compare predator effect on food web ----
+# Role of species in the food web ----
 par(mfrow=c(1,1))
 library(bipartite)
 main$SP_CODE <- as.character(main$SP_CODE)
@@ -404,11 +398,13 @@ biomassP <- tapply(main[main$TREAT == "PREDATOR", c("WEIGHT")],
                    main[main$TREAT == "PREDATOR",]$SP_CODE,sum)
 names(biomassP) <- tolower(names(biomassP))
 
+# Plot food webs P vs C ----
 plotweb(ccompFood, method = "normal", 
         low.abun = biomassC, labsize = 1.1,
         text.rot = 90)
 plotweb(pcompFood, method = "normal", low.abun = biomassP)
 
+# C and Z vals - roles of specis ----
 mcfw <- computeModules(ccompFood)
 czvalsc <- czvalues(mcfw)
 plot(czvalsc$c, czvalsc$z)
@@ -425,6 +421,7 @@ colorsC[colnames(ccompFood) == nm] <- "red"
 colorsP <- rep(grayAlpha,length(colnames(pcompFood)))
 colorsP[colnames(pcompFood) == nm] <- "red"
 
+par(mfrow=c(1,2))
 plot(czvalsc$c, czvalsc$z, col = colorsC, pch = 19)
 abline(h=2.5)
 abline(v=0.62)
@@ -437,6 +434,8 @@ proc  <- procrustes(cbind(czvalsp$c, czvalsp$z),
                     cbind(czvalsc$c, czvalsc$z), 
                     scale = T,
                     symmetric = T)
+par(mfrow=c(1,1))
+plot(proc)
 
 # Biggest change experienced by:
 max(residuals(proc))
@@ -461,6 +460,7 @@ calcDietDissimilarity <- function(name, ...){
   return(res)
 }
 
+# create diet dissimilarity database
 dietdiss <- data.frame()
 for(nms in colnames(ccompFood)){
   entry <- calcDietDissimilarity(nms, "bray")
@@ -473,14 +473,19 @@ seldb <- diet_breadth[dietdiss$species]
 
 dbdd <- cbind(dietdiss, seldb)
 
+# Hypothesis here is: higher generality higher the change
 plot(seldb~braydiss, data=dbdd, log="y")
 plot(log(seldb)~braydiss, data=dbdd)
-glm(seldb~braydiss, data=dbdd, family = gaussian(link = "log"))
+
+dbdd$lsdb <- log(dbdd$seldb)
+dbdd <- dbdd[dbdd$lsdb != -Inf, ]
+
+summary(glm(lsdb~braydiss, data=dbdd)) # not significant
 proc$scale
 
-par(mfrow=c(1,1))
-plot(proc)
-text(proc)
+# par(mfrow=c(1,1))
+# plot(proc)
+# text(proc)
 
 # How dissimilar are these sites in case of plants?
 Cdf <- data.frame(species=names(biomassC),

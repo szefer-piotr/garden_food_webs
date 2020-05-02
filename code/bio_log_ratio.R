@@ -100,7 +100,7 @@ p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
   ggtitle("Plants")
 
 library(gridExtra)
-grid.arrange(p1,p2,p3,nrow = 1)
+# grid.arrange(p1,p2,p3,nrow = 1)
 
 #
 
@@ -122,18 +122,18 @@ for(block in unique(genllratio$bl)){
 
 # Correlation plot
 library(psych)
-pairs.panels(generallr[,c(2,3,4)], 
-             method = "pearson", # correlation method
-             hist.col = "#00AFBB",
-             density = TRUE,  # show density plots
-             ellipses = FALSE # show correlation ellipses
-)
+# pairs.panels(generallr[,c(2,3,4)], 
+#              method = "pearson", # correlation method
+#              hist.col = "#00AFBB",
+#              density = TRUE,  # show density plots
+#              ellipses = FALSE # show correlation ellipses
+# )
 
-with(generallr, plot(H,P, pch=19, cex=1.5))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
+# with(generallr, plot(H,P, pch=19, cex=1.5))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
 
 
 
@@ -210,7 +210,7 @@ p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
   ggtitle("Plants")
 
 library(gridExtra)
-grid.arrange(p1,p2,p3,nrow = 1)
+# grid.arrange(p1,p2,p3,nrow = 1)
 
 # Evaluate the log ratios: CONTROL/PREDATOR
 generallr <- data.frame()
@@ -237,13 +237,45 @@ pairs.panels(generallr[,c(2,3,4)],
              ellipses = FALSE # show correlation ellipses
 )
 
-with(generallr, plot(H,P, pch=19, cex=1.5))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
+# with(generallr, plot(H,P, pch=19, cex=1.5))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
 
 # * 2.1.3 Herbivore families log ratio responses -----
+
+fam <- "aran"
+bl <- "g1"
+datfam <- data.frame()
+for(fam in unique(biollcp$nms)){
+  print(fam)
+  fambiocp <- biollcp[biollcp$nms == fam,]
+  blockdat <- data.frame()
+  for (bl in unique(biollcp$gard)){
+    print(bl)
+    fcpbl <- fambiocp[fambiocp$gard == bl,]
+    print(fcpbl)
+    cbio <- sum(fcpbl[fcpbl$trt %in% c("CONTROL"), ]$bio)
+    pbio <- sum(fcpbl[fcpbl$trt %in% c("PREDATOR"), ]$bio)
+    blockrow <- data.frame(fam = fam,
+                           val = c(cbio,pbio),
+                           trt = c("control", "predator"), 
+                           block = bl)
+    blockdat <- rbind(blockdat, blockrow)
+  }
+  datfam <- rbind(datfam, blockdat)
+}
+
+library("ggplot2")
+# datfam_nozero <- datfam[datfam$val != 0, ]
+# ggplot(datfam_nozero, aes(x = trt, y=log(val))) + 
+#   geom_jitter(width = 0.1) +
+#   stat_summary(fun = mean, geom = "point", col="red")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3, col="red") +
+#   facet_grid(~fam)
 
 herbfams <- unique(biollcp$nms)[-grep("aran|mant", unique(biollcp$nms))]
 herbfams <- as.character(herbfams)
@@ -348,12 +380,12 @@ famdat <- Reduce(function(x, y) merge(x, y, by = "bl"),
             lepilr,
             orthlr))
 
-pairs.panels(famdat[,grep("H",colnames(famdat))], 
-             method = "pearson", # correlation method
-             hist.col = "#00AFBB",
-             density = TRUE,  # show density plots
-             ellipses = FALSE # show correlation ellipses
-)
+# pairs.panels(famdat[,grep("H",colnames(famdat))], 
+#              method = "pearson", # correlation method
+#              hist.col = "#00AFBB",
+#              density = TRUE,  # show density plots
+#              ellipses = FALSE # show correlation ellipses
+# )
 
 # * 2.2.4 Herbivore families biomass/abundance responces ----
 
@@ -420,15 +452,15 @@ biosize
 logratiodf$size <- biosize$bio
 
 library(ggplot2)
-p <- ggplot(logratiodf, 
-            aes(x = lr, y = pltlr, label = fam, color=plnt))
-p + coord_cartesian(xlim=c(-5,5), ylim = c(-5,5)) +
-  geom_jitter(size=logratiodf$size, width=0.5) +  
-  geom_text() + 
-  geom_abline(slope = 1, intercept = 0, linetype="dashed") +
-  geom_abline(slope = -1, intercept = 0,linetype="dashed") +
-  xlab("Direct effect of predator removal on insects") + 
-  ylab("Indirect effect of predator removal on plants")
+# p <- ggplot(logratiodf, 
+#             aes(x = lr, y = pltlr, label = fam, color=plnt))
+# p + coord_cartesian(xlim=c(-5,5), ylim = c(-5,5)) +
+#   geom_jitter(size=logratiodf$size, width=0.5) +  
+#   geom_text() + 
+#   geom_abline(slope = 1, intercept = 0, linetype="dashed") +
+#   geom_abline(slope = -1, intercept = 0,linetype="dashed") +
+#   xlab("Direct effect of predator removal on insects") + 
+#   ylab("Indirect effect of predator removal on plants")
   
 # I would like to also indicate the abundance in general of these insects on the plot to show their relative importance for the general result.
 
@@ -752,4 +784,3 @@ summary(mod1)
 
 # 3. Resource limitation exploration (Schmitz 2010, p.31)
 biofulldf
-

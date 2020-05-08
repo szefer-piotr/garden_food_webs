@@ -16,6 +16,20 @@ pdimat <- contingencyTable2(pdidata, "tree", "morphotype", "totbio")
 
 par(mfrow=c(1,1))
 library(bipartite)
-plotweb(pdimat)
+# plotweb(pdimat)
 
-diet_breadth <- PDI(pdimat, normalise = F, log = T)
+diet_breadth <- PDI(pdimat, normalise = T, log = T)
+
+# dbnorm <- PDI(pdimat, normalise = T, log = T)
+# dbrel <- PDI(pdimat, normalise = F, log = T)
+# 
+# # plot(dbnorm~dbrel, log="x")
+# 
+# min(diet_breadth)
+# 
+# db <- diet_breadth
+# db <- db[db != 0]
+# db[db == min(db)]
+# 
+# pdimat[, "orth037"]
+# pdimat[, "orth092"]

@@ -82,6 +82,7 @@ compdf_niop <- compdf[-grep("aran|mant", compdf$spec), ]
 
 library(lme4)
 library(lmerTest)
+
 # weights
 ins_bio$morphotype <- as.character(ins_bio$morphotype)
 morphbios  <- tapply(ins_bio$totbio, ins_bio$morphotype, sum, na.rm=T)

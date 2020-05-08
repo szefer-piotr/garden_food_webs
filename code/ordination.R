@@ -225,7 +225,7 @@ colnames(abumat_trimmed)
 sp_fitsa <- envfit(rdatoplot, abumat_trimmed)
 sig_arth <- sp_fitsa$vectors$pvals
 r2_arth <- sp_fitsa$vectors$r
-plot(sort(r2_arth, decreasing = T))
+# plot(sort(r2_arth, decreasing = T))
 # there are only few significanlty affected herbivores
 # r2 of these might be used in weighted regression as these bring more information 
 # than nonsignificant ones
@@ -243,10 +243,10 @@ theta <- atan(vec[2]/vec[1]) # in radians
 
 par(mfrow=c(1,2))
 herbpoints <- rdatoplot$CCA$v[,c(1,2)]
-plot(herbpoints)
-abline(0,0.5200527)
-abline(h=0, lty=2)
-abline(v=0, lty=2)
+# plot(herbpoints)
+# abline(0,0.5200527)
+# abline(h=0, lty=2)
+# abline(v=0, lty=2)
 
 Rmat <- matrix(c(cos(theta), -sin(theta), 
                  sin(theta),  cos(theta)), 
@@ -254,10 +254,10 @@ Rmat <- matrix(c(cos(theta), -sin(theta),
 
 hp_rot <- herbpoints %*%  Rmat
 
-plot(hp_rot)
-abline(0,0.5200527)
-abline(h=0, lty=2)
-abline(v=0, lty=2)
+# plot(hp_rot)
+# abline(0,0.5200527)
+# abline(h=0, lty=2)
+# abline(v=0, lty=2)
 
 projection_on_predef <- hp_rot[,1]
 
@@ -265,9 +265,9 @@ projection_on_predef <- hp_rot[,1]
 vals <- projection_on_predef
 summary(vals)
 qts <- quantile(vals, c(0.375,0.625))
-hist(vals,breaks = 50)
-abline(v=qts[1], lty= 2, col=2)
-abline(v=qts[2], lty= 2, col=2)
+# hist(vals,breaks = 50)
+# abline(v=qts[1], lty= 2, col=2)
+# abline(v=qts[2], lty= 2, col=2)
 names(sp_fitsa$vectors$pvals)[sp_fitsa$vectors$pvals <= 0.05]
 neutral <- vals[vals<=qts[2] & vals>=qts[1]]
 positive <- vals[vals>qts[2]]
@@ -323,13 +323,13 @@ plot(inter.test1)
 phabu <- cld(inter.test1, Letter="abcdefghijklm")
 
 # I am going to log them anyway to better visualize
-ggplot(dbdf, aes(x = birdef, y = log(pdi)))+
-  geom_jitter(width = 0.1, col = rgb(0,0,0,50,maxColorValue = 255))+
-  stat_summary(fun.y = mean, geom = "point", col= "red")+
-  stat_summary(fun.data = "mean_cl_boot", 
-               geom = "errorbar",
-               width=0.05, col="red", lwd=1.1)+
-  ggtitle("H")
+# ggplot(dbdf, aes(x = birdef, y = log(pdi)))+
+#   geom_jitter(width = 0.1, col = rgb(0,0,0,50,maxColorValue = 255))+
+#   stat_summary(fun.y = mean, geom = "point", col= "red")+
+#   stat_summary(fun.data = "mean_cl_boot", 
+#                geom = "errorbar",
+#                width=0.05, col="red", lwd=1.1)+
+#   ggtitle("H")
 
 # DIET SWITCHING ----
 # Herbivores present in P and C treatments
@@ -338,9 +338,7 @@ contsites <- treats[treats$treat == "CONTROL",]$codes
 
 ips <- grep("aran|mant", ins_bio$morphotype)
 
-ins_bioOrig <- ins_bio
-
-ins_bio <- ins_bio[-ips, ]
+ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
 
 pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
                              "plot","morphotype","amount")
@@ -407,7 +405,7 @@ plotweb(pcompFood, method = "normal", low.abun = biomassP)
 # C and Z vals - roles of specis ----
 mcfw <- computeModules(ccompFood)
 czvalsc <- czvalues(mcfw)
-plot(czvalsc$c, czvalsc$z)
+# plot(czvalsc$c, czvalsc$z)
 
 mpfw <- computeModules(pcompFood)
 czvalsp <- czvalues(mpfw)
@@ -422,14 +420,15 @@ colorsP <- rep(grayAlpha,length(colnames(pcompFood)))
 colorsP[colnames(pcompFood) == nm] <- "red"
 
 par(mfrow=c(1,2))
-plot(czvalsc$c, czvalsc$z, col = colorsC, pch = 19)
+# plot(czvalsc$c, czvalsc$z, col = colorsC, pch = 19)
 abline(h=2.5)
 abline(v=0.62)
 
-plot(czvalsp$c, czvalsp$z, col = colorsP, pch = 19)
+# plot(czvalsp$c, czvalsp$z, col = colorsP, pch = 19)
 abline(h=2.5)
 abline(v=0.62)
 
+# Procrustes plot ----
 proc  <- procrustes(cbind(czvalsp$c, czvalsp$z),
                     cbind(czvalsc$c, czvalsc$z), 
                     scale = T,
@@ -444,6 +443,7 @@ max(residuals(proc))
 min(residuals(proc))
 sort(residuals(proc))
 
+# Diet dissimilarity plot ----
 calcDietDissimilarity <- function(name, ...){
   before <- pcompFood[,name]
   after <- ccompFood[,name]
@@ -469,13 +469,26 @@ for(nms in colnames(ccompFood)){
   dietdiss <- rbind(dietdiss, dsrow)
 }
 
+# Normalised PDI
+source("code/pdi.R")
 seldb <- diet_breadth[dietdiss$species]
 
 dbdd <- cbind(dietdiss, seldb)
-
+dbdd <- dbdd[dbdd$seldb != 0 , ]
 # Hypothesis here is: higher generality higher the change
-plot(seldb~braydiss, data=dbdd, log="y")
-plot(log(seldb)~braydiss, data=dbdd)
+# plot(seldb~braydiss, data=dbdd, log="y")
+
+# BC PDI PLOT ----
+plot(braydiss~seldb, data=dbdd)
+
+# 
+# ggplot(dbdd, aes(x=braydiss, y=seldb) ) +
+#   stat_density_2d(aes(fill = ..level..), geom = "raster")
+
+ggplot(dbdd, aes(x=braydiss, y=seldb) ) +
+  stat_density_2d(aes(fill = ..density..), geom = "raster", contour = FALSE)+
+  scale_fill_distiller(palette= "Spectral", direction=1) + 
+  geom_point(col = "white")
 
 dbdd$lsdb <- log(dbdd$seldb)
 dbdd <- dbdd[dbdd$lsdb != -Inf, ]
@@ -524,6 +537,7 @@ library(lme4)
 testR <- glmer.nb(qty~trt+(1|block), dfdata)
 testN <- glm.nb(qty~trt, dfdata)
 
+# Notes
 #Different than other suggestions, I guess you would like a similarity function or index between networks.
 # In this case, I can suggest employing a network or graph matching approach, which seeks for solving the isomorphism problem (Np-complete https://en.wikipedia.org/wiki/Graph_isomorphism_problem).
 # There are two family methods: exact or error-tolerance network matching.

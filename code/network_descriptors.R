@@ -105,16 +105,16 @@ plotdat$type <- rep(c("Generality", "Vulnerability", "Specialization PDI", "Conn
 
 # clip ds to only C vs P comparison
 
-# Plot
-p <- ggplot(plotdat, aes(x = trt, y = ind))
-p + stat_summary(fun.data=mean_cl_boot, 
-                                geom="pointrange", width=0.1, 
-                 color = "red", lwd=1) +
-  stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
-  geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) + 
-  theme_bw() + 
-  theme(axis.text.x=element_text(angle=90, size=5, hjust=0.5))+
-  facet_wrap(~type, scales="free")
+# Facet plot all descriptors ----
+# p <- ggplot(plotdat, aes(x = trt, y = ind))
+# p + stat_summary(fun.data=mean_cl_boot, 
+#                                 geom="pointrange", width=0.1, 
+#                  color = "red", lwd=1) +
+#   stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
+#   geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) + 
+#   theme_bw() + 
+#   theme(axis.text.x=element_text(angle=90, size=5, hjust=0.5))+
+#   facet_wrap(~type, scales="free")
 
 # dev.off()
 
@@ -189,15 +189,16 @@ sigind <- c("Vulnerability",
 
 clippedpd <- clippedpd[clippedpd$type %in% sigind, ]
 
-p <- ggplot(clippedpd, aes(x = trt, y = ind))
-p + stat_summary(fun.data=mean_cl_boot, 
-                 geom="pointrange", width=0.1, 
-                 color = "red", lwd=1) +
-  stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
-  geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) + 
-  theme_bw() + 
-  theme(axis.text.x=element_text(angle=0, size=5, hjust=0.5))+
-  facet_wrap(~type, scales="free")
+# Clipped plot ----
+# p <- ggplot(clippedpd, aes(x = trt, y = ind))
+# p + stat_summary(fun.data=mean_cl_boot, 
+#                  geom="pointrange", width=0.1, 
+#                  color = "red", lwd=1) +
+#   stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
+#   geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) + 
+#   theme_bw() + 
+#   theme(axis.text.x=element_text(angle=0, size=5, hjust=0.5))+
+#   facet_wrap(~type, scales="free")
 
 # stat_summary(fun.data=mean_cl_boot, 
 # geom="pointrange", color= colors, width=0.2, lwd=1.5) +
@@ -252,7 +253,7 @@ colnames(genvuldf)
 # 
 # anova(genlme, genlmesr)
 
-#  IP/herb
+#  IP/herb ----
 gardnets
 for(gard in names(gardnets)){
   print(dim(gardnets[[gard]]))
@@ -293,7 +294,7 @@ for(gard in csites){
 
 iphratio <- rbind(cihratio,pihratio)
 iphratio$block <- substr(iphratio$site, 3, 4)
-# library(ggplot2)
+library(ggplot2)
 # p <- ggplot(iphratio, aes(x =trt, y = log(iphr)))
 # p + geom_jitter()
 

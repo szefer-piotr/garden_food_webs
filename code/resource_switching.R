@@ -96,22 +96,24 @@ dotcols <- alpha(dotcols, 0.5)
 compdf_niop$lratio <- log(compdf_niop$ratio)
 compdf_niop$alratio <- abs(compdf_niop$lratio)
 
+# PDI and lratio ----
 plot(lratio~pdi, data = compdf_niop, 
      pch = 19, col = dotcols, cex = log(compdf_niop$bio*10))
 lmer1 <- lmer(lratio~pdi+(1|block), 
      data = compdf_niop,
      weights = bio)
-summary(lmer1)
-abline(-0.04862,0.24944, lwd = 3,  col = alpha("black", 0.5))
+sl <- summary(lmer1)
+abline(sl$coefficients[1,1],
+       sl$coefficients[2,1], lwd = 3,  col = alpha("black", 0.5))
 abline(h=0,col = alpha("black", 0.5), lty = 2)
 
 # plot
 library(ggplot2)
 gray <- rgb(0,0,0,50,maxColorValue = 255)
-ggplot(slgfullnozero, aes(x = type, y = log(pdi), 
+ggplot(slgfullnozero, aes(x = type, y = pdi, 
                        color = ))+
   geom_jitter(width = 0.1, color = gray, pch=19) + 
-  stat_summary(fun.y = mean, geom = "point", col= "red")+
+  stat_summary(fun = mean, geom = "point", col= "red")+
   stat_summary(fun.data = "mean_cl_boot", 
                geom = "errorbar",
                width=0.05, col="red", lwd=1.1)
@@ -121,12 +123,17 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 
-lmer1 <-(lmer(log(pdi)~type+(1|block), slgfullnozero))
+ins_bio$morphplot <- paste(ins_bio$morphotype, 
+                            ins_bio$plot, sep="")
+rownames(ins_bio) <- ins_bio$morphotype
+slgfullnozero$abundance <- ins_bio
+
+lmer1 <-(lmer(pdi~type+(1|block), slgfullnozero))
 
 inter.test1 <- emmeans(lmer1, "type")
-plot(inter.test1)
+# plot(inter.test1)
 
-# PDA vs ABUNDANCE ----
+# PDI vs ABUNDANCE ----
 # Were species with high PD more abundnat?
 
 diet_breadth
@@ -136,11 +143,17 @@ abund$morphotype <- as.character(abund$morphotype)
 abund$db <- diet_breadth[abund$morphotype]
 abund_noip <- abund[-grep("aran|mant", abund$morphotype), ]
 
-plot(totbio~db ,abund_noip, pch=19, col = gray,
+anip <- abund_noip[!is.na(abund_noip$db) & abund_noip$db != 0,]
+
+plot(totbio~db ,
+     anip, 
+     pch=19, col = gray,
      xlab = "PDI", ylab="Biomass")
 library(MASS)
-glm1 <- glm(totbio~db, abund_noip, family = gaussian(link="log"))
+
+glm1 <- glm(totbio~db, anip, family = gaussian(link="log"))
 summary(glm1)
+
 ndat <- data.frame(db = seq(0,3.5,by=0.01))
 res <- predict(glm1, newdata = ndat, 
                type = "response",

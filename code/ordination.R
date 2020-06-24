@@ -49,6 +49,37 @@ treats_dummy$block <- substr(rownames(treats_dummy), 3,4)
 #                                    "PREDATOR",
 #                                    "block")]
 
+# Predator vs control only ----
+treats_trimmed <- treats[!(treats$treat %in% c("FUNGICIDE", "INSECTICIDE",
+                                               "WEEVIL25",  "WEEVIL125")), ]
+treats_trimmed$codes <- as.character(treats_trimmed$codes)
+
+# Add predator effect main effect
+treats_trimmed$birdef <- "no_bird"
+treats_trimmed[treats_trimmed$treat == "CONTROL",]$birdef <- "bird"
+treats_trimmed$sites <- rownames(treats_trimmed)
+abumat_trimmed <- abumat_noip[rownames(abumat_noip) %in% rownames(treats_trimmed), ]
+biomat_trimmed <- biomat_noip[rownames(biomat_noip) %in% rownames(treats_trimmed), ]
+plants_trimmed <- plants_woody[rownames(plants_woody) %in% rownames(treats_trimmed), ]
+# Intermediate predator subset
+ipabu_trimmed <- abumat[treats_trimmed$sites,
+                        grep("aran|mant", colnames(abumat))]
+ipbio_trimmed <- biomat[treats_trimmed$sites,
+                        grep("aran|mant", colnames(biomat))]
+
+plantTreat <- rda(plants_trimmed~treat+Condition(block), data = treats_trimmed)
+anova(plantTreat, by="terms")
+plot(plantTreat, display="species")
+plantFit <- envfit(plantTreat, plants_trimmed)
+
+
+herbTreat <- rda(biomat_trimmed~treat+Condition(block), data = treats_trimmed)
+anova(herbTreat, by="terms")
+plot(herbTreat, display="species")
+herbFit <- envfit(herbTreat, biomat_trimmed)
+
+herbivoreTreat <- rda()
+# The rest ----
 treats_trimmed <- treats[!(treats$treat %in% c("FUNGICIDE", "INSECTICIDE")), ]
 treats_trimmed$codes <- as.character(treats_trimmed$codes)
 
@@ -85,7 +116,7 @@ ort_sites <- pPCA$CA$u
 ort_sites <- as.data.frame(ort_sites)
 
 # Orthogonal axes selection on herbivore dataset (no ip)
-maxa <- 10
+maxa <- 4
 pcs <- paste("PC", seq(1:maxa), sep="")
 pcseq <- paste(pcs, collapse="+")
 form <- paste("biomat_trimmed", "~", pcseq,sep="")
@@ -95,7 +126,7 @@ rdaform <- with(ort_sites, {as.formula(form)})
 treats_pc <- cbind(treats_trimmed, ort_sites[,1:maxa])
 
 # See which axes of plant variability influence herbivore community
-nullRDA <- rda(biomat_trimmed ~ 1 + 
+nullRDA <- rda(abumat_trimmed ~ 1 + 
                  Condition(block+treat),
              data = treats_pc)
 

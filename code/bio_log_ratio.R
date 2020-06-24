@@ -79,21 +79,21 @@ genllratio
 library(ggplot2)
 par(mfrow=c(1,3))
 p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+
   ggtitle("Herbivores")
   
 p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+
   ggtitle("Intermediate predators")
 
 p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+
@@ -189,21 +189,21 @@ for (block in unique(abullcp$gard)){
 genllratio
 
 p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+
   ggtitle("Herbivores")
 
 p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+
   ggtitle("Intermediate predators")
 
 p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
-  stat_summary(fun.y = mean, geom = "bar")+
+  stat_summary(fun = mean, geom = "bar")+
   stat_summary(fun.data = "mean_cl_normal", 
                geom = "errorbar",
                width=0.3)+

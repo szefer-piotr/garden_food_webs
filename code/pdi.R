@@ -30,6 +30,16 @@ diet_breadth <- PDI(pdimat, normalise = T, log = T)
 # db <- diet_breadth
 # db <- db[db != 0]
 # db[db == min(db)]
-# 
-# pdimat[, "orth037"]
+
+# I need to remove zeros
+pdimat[, "cole004"]
+
+diet_breadt <- diet_breadth[diet_breadth==0]
+
+diet_breadth[diet_breadth==1]
+
+# I need to remove zeros
+pdimat[, "cole014"]
+
+pdimat[, "orth037"]
 # pdimat[, "orth092"]

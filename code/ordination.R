@@ -409,6 +409,31 @@ pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
 dim(pcompFood)
 dim(ccompFood)
 
+# Combine dataset 
+rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
+rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
+
+compFood <- rbind(pcompFood,ccompFood)
+
+envdat <- data.frame(treat = rep(c("predator", "control"), 
+              c(dim(pcompFood)[1],
+                dim(ccompFood)[1])))
+rownames(envdat) <- rownames(compFood)
+
+dietrda <- rda(compFood~treat, data=envdat)
+anova(dietrda, by="axis")
+plot(dietrda)
+
+# 
+row <- 2
+compare_row <- function(row){
+  compvec <- compFood[,row]
+  pred <- grep("p_", names(compvec))
+  cont <- grep("c_", names(compvec))
+  cbind(compvec[pred],
+        compvec[cont])
+}
+
 # inspect individual species
 sp <- "orth052"
 spibc <- ibc[ibc$morphotype == sp,]

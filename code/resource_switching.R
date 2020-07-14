@@ -98,14 +98,34 @@ compdf_niop$alratio <- abs(compdf_niop$lratio)
 
 # PDI and lratio ----
 plot(lratio~pdi, data = compdf_niop, 
-     pch = 19, col = dotcols, cex = log(compdf_niop$bio*10))
+     pch = 19, col = block, cex = log(compdf_niop$bio*10))
 lmer1 <- lmer(lratio~pdi+(1|block), 
      data = compdf_niop,
      weights = bio)
+
 sl <- summary(lmer1)
 abline(sl$coefficients[1,1],
        sl$coefficients[2,1], lwd = 3,  col = alpha("black", 0.5))
 abline(h=0,col = alpha("black", 0.5), lty = 2)
+
+# Need to add confidence intervals
+pdiseq <- seq(min(compdf_niop$pdi), max(compdf_niop$pdi), by=0.001)
+blocks <- unique(compdf_niop$block)
+newdata = expand.grid(pdi = pdiseq, block = blocks)
+newdata_noref = expand.grid(pdi = pdiseq)
+
+library(merTools)
+preds <- predictInterval(lmer1, newdata = newdata, n.sims = 999)
+
+# pnd <- predict(lmer1, newdata=newdata, interval='prediction')
+newdata$lratio.upr <- preds$upr
+newdata$lratio.lwr <- preds$lwr
+newdata$lratio.fit <- preds$fit
+
+plot(lratio.upr~pdi, newdata)
+par(new=T)
+plot(lratio.lwr~pdi, newdata)
+
 
 # plot
 library(ggplot2)
@@ -161,6 +181,7 @@ res <- predict(glm1, newdata = ndat,
 lines(res$fit~ndat$db, lwd =2, col = "red")
 
 # 2.Calculate distances between diets
+pdimat
 
 # 3. See wether species reduced or switched its resources
 

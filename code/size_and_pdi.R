@@ -3,6 +3,9 @@
 source("code/data_processing_code.R")
 source("code/pdi.R")
 
+library(dplyr)
+library(tidyr)
+
 diet_breadth
 ins_bio
 treats
@@ -34,7 +37,7 @@ inssub$block <- substr(inssub$plot, 3,4)
 
 
 # Treshold how many individuals has to be in each group
-treshold <- 5
+treshold <- 3
 finalno <- 0
 specdat <- c()
 nm <- compnames[22]
@@ -43,10 +46,21 @@ for (nm in compnames){
   # print(nm)
   nmsub <- inssub[inssub$morphotype == nm, ]
   
-  nmsN <- group_by(nmsub, block, tree) %>%
-    tally()
-  nmsN %>% tbl_df %>% print(n=40)
-  nmsN[nmsN$n == 2, ]
+  for(bl in unique(nmsub$block)){
+    print(bl)
+    with(nmsub[nmsub$block == bl, ], 
+         {rs <- rowSums(table(tree, treat))
+         rs
+         which(rs == 2)}
+         )
+  }
+  
+  bscN <- group_by(nmsub,tree) %>%
+    tally(treat)
+  bscN %>% tbl_df %>% print(n=100)
+  
+  pctrees<-bscN[duplicated(bscN$tree), ]$tree
+  bscN[bscN$tree %in% pctrees, ]
   
   subtb <- table(nmsub$treat)
   if(subtb[1] >= treshold & subtb[2] >= treshold){
@@ -229,8 +243,7 @@ average <- "piptar"
 
 # Check how much data I have for each interaction
 
-library(dplyr)
-library(tidyr)
+
 
 # Example
 # loc<-c("city1","city2","city1","city2","city1","city1","city2","city2","city1","city2")

@@ -305,3 +305,13 @@ for(pcode in as.character(treats$codes)){
   abufulldf <- rbind(abufulldf, subdf)
 }
 
+
+#### bio_log_ratio CUTTED line 22
+# Dataset containing biomasses for the log ratio comparisons between predator exclosures and control plots
+biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
+biollcp$plot <- as.character(biollcp$plot)
+biollcp$plnm <- as.character(biollcp$plnm)
+biollcp$trt <- as.character(biollcp$trt)
+biollcp$gard <- substr(biollcp$plot, 3,4)
+# see which species are present in both treatment plots
+# table(biollcp$trt, biollcp$plnm) 

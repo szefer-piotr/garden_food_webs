@@ -1,9 +1,10 @@
 # source("code/data_processing_code.R")
 
 # Plants from C and P that are in both sites.
-
 ins_bio_noip <- ins_bio[-grep("aran|mant", ins_bio$morphotype), ]
 fullbio <- tapply(ins_bio$totbio , ins_bio$tree, sum, na.rm = T)
+fullabu <- tapply(ins_bio$amount , ins_bio$tree, sum, na.rm = T)
+
 no_herb <- table(ins_bio_noip$tree, ins_bio_noip$morphotype)
 attractivness <- rowSums(no_herb)
 
@@ -12,12 +13,16 @@ specperbio <- attractivness/fullbio
 sort(specperbio)
 
 # More abundant species gather more species, this is almost a perfect relationship
-
 cbind(attractivness,fullbio)
 lm1  <- lm(log(attractivness)~log(fullbio))
 plot(log(attractivness)~log(fullbio))
 abline(lm1)
 
+cbind(attractivness,fullabu)
+lm1  <- lm(log(attractivness)~log(fullabu))
+plot(log(attractivness)~log(fullabu))
+abline(lm1)
+# We may not have any specialists at all, but only undersampled species.
 
 main_biomass
 main

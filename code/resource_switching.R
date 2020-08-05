@@ -3,6 +3,8 @@
 rm(list=ls())
 source("code/data_processing_code.R")
 source("code/pdi.R")
+# source("code/bio_log_ratio.R")
+source("code/diet_shift.R")
 
 ins_bio$block <- substr(ins_bio$plot, 3,4)
 treats$treat <- tolower(treats$treat)
@@ -17,7 +19,7 @@ cpfull_noip <- cpfull[-grep("aran|mant", cpfull$morphotype), ]
 cpfull_noip$morphotype <- as.character(cpfull_noip$morphotype)
 
 # For each block get species which are comparable
-bl <- "g1"
+# bl <- "g1"
 
 slgfulldat <- data.frame()
 for(bl in unique(cpfull_noip$block)){
@@ -64,12 +66,17 @@ dim(slgfullnozero)
 # Weighted lratio of individual species change vs PDI ----
 
 compdf <- data.frame()
+
 for(bl in unique(treats$block)){
+  
+  # Any species, that was found in pred and control site in any block
   subbl <- cpfull_noip[cpfull_noip$block == bl,]
   psite <- treats[treats$block == bl & treats$treat == "predator", ]$codes
   csite <- treats[treats$block == bl & treats$treat == "control", ]$codes
+  
   pn <- gardnets[[psite]]
   cn <- gardnets[[csite]]
+  
   mtnms <- colnames(cn)[colnames(cn) %in% colnames(pn)]
   ratios <- colSums(pn[,mtnms])/colSums(cn[,mtnms])
   dbs <- diet_breadth[mtnms]
@@ -93,15 +100,33 @@ library(ggplot2)
 dotcols <- brewer.pal(6, "BrBG")
 dotcols <- alpha(dotcols, 0.5)
 
+# Adding the diet switch ... capabilities?
+#Examine log ratios
+lrnm <- "homo004"
+compdf_niop[compdf_niop$spec == lrnm, ]
+
+
 compdf_niop$lratio <- log(compdf_niop$ratio)
 compdf_niop$alratio <- abs(compdf_niop$lratio)
+rownames(shiftDf) <- shiftDf$species
+compdf_niop$spec <- as.character(compdf_niop$spec)
+compdf_niop$shift <- shiftDf[compdf_niop$spec,]$shift
 
 # PDI and lratio ----
 plot(lratio~pdi, data = compdf_niop, 
      pch = 19, col = block, cex = log(compdf_niop$bio*10))
+
 lmer1 <- lmer(lratio~pdi+(1|block), 
      data = compdf_niop,
      weights = bio)
+
+summary(lmer1)
+
+plot(lratio~shift,data=compdf_niop)
+lratio_shift <- lmer(lratio~shift+(1|block), data=compdf_niop)
+summary(lratio_shift)
+
+
 
 sl <- summary(lmer1)
 abline(sl$coefficients[1,1],

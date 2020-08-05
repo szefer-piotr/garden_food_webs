@@ -1,6 +1,7 @@
 # RDA
 
 # Prepare data ----
+rm(list=ls())
 source("code/data_processing_code.R")
 
 # Original datasets in case I need to go back to these
@@ -49,29 +50,56 @@ treats_dummy$block <- substr(rownames(treats_dummy), 3,4)
 #                                    "PREDATOR",
 #                                    "block")]
 
-# Predator vs control only ----
-treats_trimmed <- treats[!(treats$treat %in% c("FUNGICIDE", "INSECTICIDE",
-                                               "WEEVIL25",  "WEEVIL125")), ]
-treats_trimmed$codes <- as.character(treats_trimmed$codes)
 
-# Add predator effect main effect
-treats_trimmed$birdef <- "no_bird"
-treats_trimmed[treats_trimmed$treat == "CONTROL",]$birdef <- "bird"
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4,2)]
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4,5,2)]
+
+# Predator vs control only ----
+treats_trimmed <- treats[(treats$treat %in% treats_to_plot), ]
+treats_trimmed$codes <- as.character(treats_trimmed$codes)
+treats_dummy <- dummy.code(as.character(treats_trimmed$treat))
+treats_trimmed <- cbind(treats_trimmed, treats_dummy)
+
+# Add predator effect main effect (bird effect analysis)
+# treats_to_plot <- as.character(unique(treats$treat))[c(3,4,2,5)]
+# treats_trimmed <- treats[(treats$treat %in% treats_to_plot), ]
+# treats_trimmed$codes <- as.character(treats_trimmed$codes)
+# treats_trimmed$birdef <- "no_bird"
+# treats_trimmed[treats_trimmed$treat == "CONTROL",]$birdef <- "bird"
+
+# Datasets containing only selected treatments
 treats_trimmed$sites <- rownames(treats_trimmed)
 abumat_trimmed <- abumat_noip[rownames(abumat_noip) %in% rownames(treats_trimmed), ]
 biomat_trimmed <- biomat_noip[rownames(biomat_noip) %in% rownames(treats_trimmed), ]
 plants_trimmed <- plants_woody[rownames(plants_woody) %in% rownames(treats_trimmed), ]
+
 # Intermediate predator subset
 ipabu_trimmed <- abumat[treats_trimmed$sites,
                         grep("aran|mant", colnames(abumat))]
 ipbio_trimmed <- biomat[treats_trimmed$sites,
                         grep("aran|mant", colnames(biomat))]
 
-plantTreat <- rda(plants_trimmed~treat+Condition(block), data = treats_trimmed)
+# treats_trimmed <- treats_trimmed[,!(colnames(treats_trimmed) %in% c("CONTROL"))]
+treats_to_formula <- as.character(unique(treats_trimmed$treat))
+treats_to_formula <- treats_to_formula[!(treats_to_formula %in% c("CONTROL"))]
+
+formula_string <- paste("plants_trimmed~", 
+                    paste(paste(treats_to_formula,
+                          collapse = "+"), 
+                          "Condition(block)", 
+                          sep = "+"), 
+                    sep="")
+rda_formula <- formula(formula_string)
+plantTreat <- rda(rda_formula, data = treats_trimmed)
+
 anova(plantTreat, by="terms")
-plot(plantTreat, display="species")
+plot(plantTreat)
 plantFit <- envfit(plantTreat, plants_trimmed)
 
+summary(plantTreat)
+
+
+# This maybe represents the variability well... for meany of these plants, standard deviation is zero.
 
 herbTreat <- rda(biomat_trimmed~treat+Condition(block), data = treats_trimmed)
 anova(herbTreat, by="terms")
@@ -79,6 +107,7 @@ plot(herbTreat, display="species")
 herbFit <- envfit(herbTreat, biomat_trimmed)
 
 herbivoreTreat <- rda()
+
 # The rest ----
 treats_trimmed <- treats[!(treats$treat %in% c("FUNGICIDE", "INSECTICIDE")), ]
 treats_trimmed$codes <- as.character(treats_trimmed$codes)
@@ -362,58 +391,60 @@ phabu <- cld(inter.test1, Letter="abcdefghijklm")
 #                width=0.05, col="red", lwd=1.1)+
 #   ggtitle("H")
 
-# DIET SWITCHING ----
-# Herbivores present in P and C treatments
-predsites <- treats[treats$treat == "PREDATOR",]$codes
-contsites <- treats[treats$treat == "CONTROL",]$codes
+# # DIET SWITCHING ----
+# # Herbivores present in P and C treatments
+# predsites <- treats[treats$treat == "PREDATOR",]$codes
+# contsites <- treats[treats$treat == "CONTROL",]$codes
+# 
+# ips <- grep("aran|mant", ins_bio$morphotype)
+# 
+# ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
+# 
+# pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
+#                              "plot","morphotype","amount")
+# pbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% predsites, ],
+#                              "plot","morphotype","totbio")
+# 
+# cabumat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+#                              "plot","morphotype","amount")
+# cbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+#                              "plot","morphotype","totbio")
+# 
+# comparable <- colnames(cbiomat)[colnames(cbiomat) %in% colnames(pbiomat)]
+# 
+# # Remove intermediate predators
+# comparable
+# 
+# # Food plants for comparable herbivores
+# cp_treats <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL","PREDATOR"),]$sites
+# csites <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL"),]$sites
+# psites <- treats_trimmed[treats_trimmed$treat %in% c("PREDATOR"),]$sites
+# 
+# ins_bio_cp <- ins_bio[ins_bio$plot %in% cp_treats, ]
+# ins_bio_cp_comparable <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable,]
+# ibc <- ins_bio_cp_comparable
+# ibc <- ibc[complete.cases(ibc),]
+# 
+# ccompFood <- contingencyTable2(ibc[ibc$plot %in% csites, ],
+#                                "tree",
+#                                "morphotype",
+#                                "totbio")
+# 
+# pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
+#                                "tree",
+#                                "morphotype",
+#                                "totbio")
+# 
+# dim(pcompFood)
+# dim(ccompFood)
+# 
+# # Combine dataset 
+# rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
+# rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
+# 
+# compFood <- rbind(pcompFood,ccompFood)
 
-ips <- grep("aran|mant", ins_bio$morphotype)
-
-ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
-
-pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
-                             "plot","morphotype","amount")
-pbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% predsites, ],
-                             "plot","morphotype","totbio")
-
-cabumat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
-                             "plot","morphotype","amount")
-cbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
-                             "plot","morphotype","totbio")
-
-comparable <- colnames(cbiomat)[colnames(cbiomat) %in% colnames(pbiomat)]
-
-# Remove intermediate predators
-comparable
-
-# Food plants for comparable herbivores
-cp_treats <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL","PREDATOR"),]$sites
-csites <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL"),]$sites
-psites <- treats_trimmed[treats_trimmed$treat %in% c("PREDATOR"),]$sites
-
-ins_bio_cp <- ins_bio[ins_bio$plot %in% cp_treats, ]
-ins_bio_cp_comparable <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable,]
-ibc <- ins_bio_cp_comparable
-ibc <- ibc[complete.cases(ibc),]
-
-ccompFood <- contingencyTable2(ibc[ibc$plot %in% csites, ],
-                               "tree",
-                               "morphotype",
-                               "totbio")
-
-pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
-                               "tree",
-                               "morphotype",
-                               "totbio")
-
-dim(pcompFood)
-dim(ccompFood)
-
-# Combine dataset 
-rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
-rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
-
-compFood <- rbind(pcompFood,ccompFood)
+#### UNHASH IN CASE OF EMERGENCY
 
 envdat <- data.frame(treat = rep(c("predator", "control"), 
               c(dim(pcompFood)[1],
@@ -424,15 +455,48 @@ dietrda <- rda(compFood~treat, data=envdat)
 anova(dietrda, by="axis")
 plot(dietrda)
 
+# DIet shift initial code
+# compare_row <- function(row){
+#   compvec <- compFood[,row]
+#   pred <- grep("p_", names(compvec))
+#   cont <- grep("c_", names(compvec))
+#   # Predator treatment will always have more woody plants
+#   # However, I need to fix the names.
+#   predvec <- compvec[pred]
+#   contvec <- compvec[cont]
+#   # Remove indicator
+#   names(predvec) <- substr(names(predvec), 3, 8)
+#   names(contvec) <- substr(names(contvec), 3, 8)
+#   # Merge two vectors
+#   compDat <- data.frame(pred = predvec)
+#   rownames(compDat) <- names(predvec)
+#   compDat$cont <- contvec[rownames(compDat)]
+#   # Here is another problem. What about palnts thet were, not
+#   # present in the control plot but were in the predator exclosure.
+#   # If they were not present, but favored would that count as a shift?
+#   # I will initially make these values zeros.
+#   compDat$cont[is.na(compDat$cont)] <- 0
+#   # Caluculate proportions for the diets
+#   compDatStand <- as.data.frame(apply(compDat, 2, function(x){x/sum(x)}))
+#   # I calculate differences between proportions in utilizing different
+#   # plant species. I use absolute values. This way values would vary between
+#   # 0 (no shift) and 2 - compelete shift. Therefore I could divide by 2 to 
+#   # standardize
+#   compDatStand$diff <- abs(compDatStand$pred - compDatStand$cont)
+#   shift <- sum(compDatStand$diff)/2
+#   return(shift)
+# }
 # 
-row <- 2
-compare_row <- function(row){
-  compvec <- compFood[,row]
-  pred <- grep("p_", names(compvec))
-  cont <- grep("c_", names(compvec))
-  cbind(compvec[pred],
-        compvec[cont])
-}
+# shiftDf <- data.frame()
+# for (row in 1:dim(compFood)[2]){
+#   print(row)
+#   shiftSpec <- data.frame(species = colnames(compFood)[row],
+#                      shift = compare_row(row))
+#   shiftDf <- rbind(shiftDf, shiftSpec)
+# }
+# 
+# # See if it does what it says
+# compFood[, 'orth051'] # yes it does
 
 # inspect individual species
 sp <- "orth052"

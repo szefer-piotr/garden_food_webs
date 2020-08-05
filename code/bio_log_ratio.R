@@ -10,7 +10,7 @@
 
 # Inspect that and see if there are any changes in the food web structure. What can i expect?
 
-source("code/data_processing_code.R")
+# source("code/data_processing_code.R")
 
 # abufulldf # dataframe
 # abugardnets # morphotype based networks for each garden
@@ -19,14 +19,8 @@ source("code/data_processing_code.R")
 
 ## 2. Log response ratios ----
 
-# Dataset containing biomasses for the log ratio comparisons between predator exclosures and control plots
-biollcp <- biofulldf[biofulldf$trt %in% c("CONTROL", "PREDATOR"),]
-biollcp$plot <- as.character(biollcp$plot)
-biollcp$plnm <- as.character(biollcp$plnm)
-biollcp$trt <- as.character(biollcp$trt)
-biollcp$gard <- substr(biollcp$plot, 3,4)
-# see which species are present in both treatment plots
-table(biollcp$trt, biollcp$plnm) 
+#### CUTTED
+source("code/data_processing_code.R")
 
 # Assume that each plant hosts unique community of insects.
 
@@ -34,6 +28,7 @@ table(biollcp$trt, biollcp$plnm)
 
 # 2.1 General log ratio for herbivores, intermediate predators and plants ----
 
+# Biomass of each group
 # For each garden bioHp (plus), bioHm (minus), bioIPp, bioIPm, bioPp, bioPm
 genllratio <- data.frame()
 
@@ -42,7 +37,7 @@ for (block in unique(biollcp$gard)){
   # for individual block
   for(plt in unique(subbl$plot)){
     # Values for control
-    print(plot)
+    print(plt)
     subplot <- subbl[subbl$plot == plt, ]
  
     crow <- data.frame(bl = block, 
@@ -76,30 +71,30 @@ genllratio
 
 # * 2.1.1 Effects of predator removal on herbivores, intermediate predators and plants ----
 
-library(ggplot2)
-par(mfrow=c(1,3))
-p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Herbivores")
-  
-p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Intermediate predators")
-
-p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Plants")
-
-library(gridExtra)
+# library(ggplot2)
+# par(mfrow=c(1,1))
+# p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Herbivores")
+# 
+# p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Intermediate predators")
+# 
+# p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Plants")
+# 
+# library(gridExtra)
 # grid.arrange(p1,p2,p3,nrow = 1)
 
 #
@@ -121,7 +116,7 @@ for(block in unique(genllratio$bl)){
 }
 
 # Correlation plot
-library(psych)
+# library(psych)
 # pairs.panels(generallr[,c(2,3,4)], 
 #              method = "pearson", # correlation method
 #              hist.col = "#00AFBB",
@@ -146,7 +141,7 @@ abullcp$plnm <- as.character(abullcp$plnm)
 abullcp$trt <- as.character(abullcp$trt)
 abullcp$gard <- substr(abullcp$plot, 3,4)
 # see which species are present in both treatment plots
-table(abullcp$trt, abullcp$plnm) 
+# table(abullcp$trt, abullcp$plnm) 
 
 
 genllratio <- data.frame()
@@ -156,7 +151,7 @@ for (block in unique(abullcp$gard)){
   # for individual block
   for(plt in unique(subbl$plot)){
     # Values for control
-    print(plot)
+    print(plt)
     subplot <- subbl[subbl$plot == plt, ]
     
     crow <- data.frame(bl = block, 
@@ -188,28 +183,28 @@ for (block in unique(abullcp$gard)){
 
 genllratio
 
-p1 <- ggplot(genllratio, aes(x=trt, y = bioH))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Herbivores")
+# ggplot(genllratio, aes(x=trt, y = bioH))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Herbivores")
+# 
+# ggplot(genllratio, aes(x=trt, y = bioIP))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Intermediate predators")
+# 
+# ggplot(genllratio, aes(x=trt, y = bioPp))+
+#   stat_summary(fun = mean, geom = "bar")+
+#   stat_summary(fun.data = "mean_cl_normal",
+#                geom = "errorbar",
+#                width=0.3)+
+#   ggtitle("Plants")
 
-p2 <- ggplot(genllratio, aes(x=trt, y = bioIP))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Intermediate predators")
-
-p3 <- ggplot(genllratio, aes(x=trt, y = bioPp))+
-  stat_summary(fun = mean, geom = "bar")+
-  stat_summary(fun.data = "mean_cl_normal", 
-               geom = "errorbar",
-               width=0.3)+
-  ggtitle("Plants")
-
-library(gridExtra)
+# library(gridExtra)
 # grid.arrange(p1,p2,p3,nrow = 1)
 
 # Evaluate the log ratios: CONTROL/PREDATOR
@@ -229,13 +224,13 @@ for(block in unique(genllratio$bl)){
 }
 
 # Correlation plot
-library(psych)
-pairs.panels(generallr[,c(2,3,4)], 
-             method = "pearson", # correlation method
-             hist.col = "#00AFBB",
-             density = TRUE,  # show density plots
-             ellipses = FALSE # show correlation ellipses
-)
+# library(psych)
+# pairs.panels(generallr[,c(2,3,4)], 
+#              method = "pearson", # correlation method
+#              hist.col = "#00AFBB",
+#              density = TRUE,  # show density plots
+#              ellipses = FALSE # show correlation ellipses
+# )
 
 # with(generallr, plot(H,P, pch=19, cex=1.5))
 # abline(h=0)
@@ -365,20 +360,20 @@ lratioFam <-function(family){
   return(generallr)
 }
 
-par(mfrow=c(2,3))
+# par(mfrow=c(2,3))
 
-colelr <- lratioFam(herbfams[1])
-hemilr <- lratioFam(herbfams[2])
-homolr <- lratioFam(herbfams[3])
-lepilr <- lratioFam(herbfams[4])
-orthlr <- lratioFam(herbfams[5])
+# colelr <- lratioFam(herbfams[1])
+# hemilr <- lratioFam(herbfams[2])
+# homolr <- lratioFam(herbfams[3])
+# lepilr <- lratioFam(herbfams[4])
+# orthlr <- lratioFam(herbfams[5])
 
-famdat <- Reduce(function(x, y) merge(x, y, by = "bl"), 
-       list(colelr,
-            hemilr,
-            homolr,
-            lepilr,
-            orthlr))
+# famdat <- Reduce(function(x, y) merge(x, y, by = "bl"), 
+#        list(colelr,
+#             hemilr,
+#             homolr,
+#             lepilr,
+#             orthlr))
 
 # pairs.panels(famdat[,grep("H",colnames(famdat))], 
 #              method = "pearson", # correlation method
@@ -467,9 +462,9 @@ library(ggplot2)
 ib_slice <- ins_bio[(ins_bio$plot == "w1g1p1" & ins_bio$family == "orth"), 
         c("amount", "bio")]
 
-plot(ib_slice$amount)
-plot(ib_slice$bio)
-plot(ib_slice$amount ~ log(ib_slice$bio)) #seems normally dist. for log(bio)
+# plot(ib_slice$amount)
+# plot(ib_slice$bio)
+# plot(ib_slice$amount ~ log(ib_slice$bio)) #seems normally dist. for log(bio)
 # Small sized grashoppers have higher growth rates and higher foraging efforts. This should be the case if there is a high risk of small gh to complete their development before the end of the seasson (no clear seassonality in tropics, food is available all year round for chewers?)
 
 # General agregeated results for the log ratios for various insect groups
@@ -529,14 +524,14 @@ for(fam in fams){
 
 llrodf
 # pdf("manuscript/figs/llratio.pdf", 6,6)
-llp <- ggplot(llrodf, aes(x = lVh, y=lVt))
-llp + geom_point() +
-  geom_text(label = llrodf$gard)+
-  geom_point(aes(x = lVh, y=lVt, col="red")) + 
-  facet_wrap(llrodf$fam) + 
-  theme_bw() +
-  xlab("Direct effect of predator removal on insects") + 
-  ylab("Indirect effect of predator removal on plants")
+# llp <- ggplot(llrodf, aes(x = lVh, y=lVt))
+# llp + geom_point() +
+#   geom_text(label = llrodf$gard)+
+#   geom_point(aes(x = lVh, y=lVt, col="red")) + 
+#   facet_wrap(llrodf$fam) + 
+#   theme_bw() +
+#   xlab("Direct effect of predator removal on insects") + 
+#   ylab("Indirect effect of predator removal on plants")
 # dev.off()
 # Are responces related to the diversity of the control plot (background diveristy?
 sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
@@ -773,8 +768,8 @@ ds <- tapply(biofulldf$bio, biofulldf$plot, sum)
 dfbio <- data.frame(bio = ds, bcodes = rownames(ds), 
                     trt = treats$treat, trtcodes = treats$codes)
 dfbio$gard <- substr(dfbio$bcodes, 3, 4)
-bioplt <- ggplot(dfbio, aes(x = trt, y = bio))
-bioplt + geom_jitter(width = 0.1)
+# bioplt <- ggplot(dfbio, aes(x = trt, y = bio))
+# bioplt + geom_jitter(width = 0.1)
 
 library(lme4)
 library(lmerTest)
@@ -783,4 +778,4 @@ mod1 <- lm(bio~trt, data=dfbio)
 summary(mod1)
 
 # 3. Resource limitation exploration (Schmitz 2010, p.31)
-biofulldf
+# biofulldf

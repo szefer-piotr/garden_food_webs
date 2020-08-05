@@ -1,16 +1,19 @@
 # size and specialization... can they predict the predator effect/abundance change?
-
+rm(list=ls())
 source("code/data_processing_code.R")
+source("code/plant_species_quality.R")
+source("code/diet_shift.R")
 source("code/pdi.R")
 
 library(dplyr)
 library(tidyr)
 
-diet_breadth
-ins_bio
-treats
-biollcp # i should have used this instead
-abufulldf # or this for abundnace
+# Datasets overwiev
+# diet_breadth
+# ins_bio
+# treats
+# biollcp # i should have used this instead
+# abufulldf # or this for abundnace
 plbio <- tapply(biollcp$plbio, biollcp$plnm, max)
 
 # General model, offset for biomass
@@ -18,7 +21,7 @@ psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
 csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
 
 inssub <- ins_bio[ins_bio$plot %in% c(psites, csites), ]
-# bcpsub <- biollcp[biollcp$plot %in% c(psites, csites), ]
+bcpsub <- biollcp[biollcp$plot %in% c(psites, csites), ]
 # inssub <- bcpsub
 inssub$plottreeherb <- paste(inssub$plot, inssub$tree, inssub$family, sep = "") 
 biollcp$plottreeherb <- paste(biollcp$plot, biollcp$plnm, biollcp$nms, sep = "") 
@@ -55,12 +58,13 @@ for (nm in compnames){
          )
   }
   
-  bscN <- group_by(nmsub,tree) %>%
-    tally(treat)
-  bscN %>% tbl_df %>% print(n=100)
-  
-  pctrees<-bscN[duplicated(bscN$tree), ]$tree
-  bscN[bscN$tree %in% pctrees, ]
+  # nmsub$treat <- as.factor(nmsub$treat)
+  # bscN <- group_by(nmsub,tree) %>%
+  #   tally(treat)
+  # bscN %>% tbl_df %>% print(n=100)
+  # 
+  # pctrees<-bscN[duplicated(bscN$tree), ]$tree
+  # bscN[bscN$tree %in% pctrees, ]
   
   subtb <- table(nmsub$treat)
   if(subtb[1] >= treshold & subtb[2] >= treshold){
@@ -76,7 +80,7 @@ spsub <- inssub[inssub$morphotype == specdat[1], ]
 
 specdat_noip <- specdat[-grep("aran|mant", specdat)]
 
-biosub <- inssub[inssub$morphotype %in% specdat_noip, ]
+biosub <- inssub[inssub$morphotype %in% specdat, ]
 biosub$block <- substr(biosub$plot, 3,4)
 
 # Fill in later
@@ -84,14 +88,17 @@ biosub$ipbio <- 0
 biosub$ipabu <- 0
 
 # remove unused columns
-bsc <- biosub[,c("morphotype", "amount", "bio", "totbio",
-                 "ipbio", "ipabu",
-                 "tree", "family", "morph", "plbio", "db",
-                 "treat", "block", "plot")]
+
+columns <- c("morphotype", "amount", "bio", "totbio",
+  "ipbio", "ipabu",
+  "tree", "family", "morph", "plbio", "db",
+  "treat", "block", "plot")
+columns[(columns %in% names(biosub))]
+
+bsc <- biosub[,columns[(columns %in% names(biosub))]]
 
 # get some indication of food quality for plants and instead of using species
 # use that indincation
-source("code/plant_species_quality.R")
 plant_quality
 
 # Plant quality measured as percentage water content

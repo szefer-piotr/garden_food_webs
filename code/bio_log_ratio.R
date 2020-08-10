@@ -20,6 +20,7 @@
 ## 2. Log response ratios ----
 
 #### CUTTED
+rm(list=ls())
 source("code/data_processing_code.R")
 
 # Assume that each plant hosts unique community of insects.
@@ -117,19 +118,34 @@ for(block in unique(genllratio$bl)){
 
 # Correlation plot
 # library(psych)
-# pairs.panels(generallr[,c(2,3,4)], 
+# pairs.panels(generallr[,c(2,3,4)],
 #              method = "pearson", # correlation method
 #              hist.col = "#00AFBB",
 #              density = TRUE,  # show density plots
 #              ellipses = FALSE # show correlation ellipses
 # )
 
-# with(generallr, plot(H,P, pch=19, cex=1.5))
-# abline(h=0)
-# abline(v=0)
-# abline(0,1, lty =2)
-# abline(0, -1, lty = 2)
+par(mfrow=c(1,3))
+with(generallr, 
+     plot(H,P, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
 
+with(generallr, 
+     plot(IP,P, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
+
+with(generallr, 
+     plot(IP,H, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
 
 
 # * 2.1.2 General log ratio for abundances ----
@@ -232,11 +248,27 @@ for(block in unique(genllratio$bl)){
 #              ellipses = FALSE # show correlation ellipses
 # )
 
-# with(generallr, plot(H,P, pch=19, cex=1.5))
-# abline(h=0)
-# abline(v=0)
-# abline(0,1, lty =2)
-# abline(0, -1, lty = 2)
+par(mfrow=c(1,3))
+with(generallr, 
+     plot(H,P, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
+
+with(generallr, 
+     plot(IP,P, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
+
+with(generallr, 
+     plot(IP,H, pch=19, cex=1.5, main=))
+abline(h=0)
+abline(v=0)
+abline(0,1, lty =2)
+abline(0, -1, lty = 2)
 
 # * 2.1.3 Herbivore families log ratio responses -----
 

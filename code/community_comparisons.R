@@ -411,30 +411,3 @@ ggplot(panelData[panelData$treat %in% treats_to_plot,],
   stat_summary(fun=mean, geom="point",cex = 2)+
   stat_summary(fun=mean, geom="text", hjust = 2,
                vjust = 1)
-
-fpl <- ggplot(facet_dat, aes(x = fsucc, y = val, 
-                             col = group,
-                             group = group,
-                             label = post_hoc))
-fullflp <- fpl + geom_jitter(width=0.1, alpha=0.3, cex=2) +
-  facet_wrap(~type, scales = "free") +
-  stat_summary(fun.data=mean_cl_boot, 
-               geom="pointrange", lwd=0.8) +
-  stat_summary(fun=mean, geom="point",cex = 2) +
-  stat_summary(fun=mean, geom="line",lwd=1, lty=2)+
-  stat_summary(fun=mean, geom="text", 
-               col = rgb(10,10,10,180,maxColorValue = 255),
-               hjust = 1.4,
-               vjust = -1.5) +
-  theme() +
-  xlab("") + ylab("") +
-  theme_bw() +
-  scale_color_manual(values=c(colvec[1], 
-                              colvec[2], 
-                              colvec[3]))
-  
-  
-ggplot(panelData[panelData$treat %in% treats_to_plot,], aes(x = treat, y = value, group = group))+
-  geom_jitter(width = 0.1)+
-  facet_grid(cols = vars(group),
-             rows = vars(descriptor), scales = "free")

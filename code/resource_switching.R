@@ -13,15 +13,20 @@ treats$block <- substr(treats$codes, 3,4)
 cpsites <- as.character(treats[treats$treat %in% c("control", 
                                       "predator"),]$codes)
 cpfull <- ins_bio[ins_bio$plot %in% cpsites, ]
-  
+cpfull$morphotype <-as.character(cpfull$morphotype)
+
 # remove ip
-cpfull_noip <- cpfull[-grep("aran|mant", cpfull$morphotype), ]
-cpfull_noip$morphotype <- as.character(cpfull_noip$morphotype)
+cpfull_noip <- cpfull
 
 # For each block get species which are comparable
 # bl <- "g1"
 
 slgfulldat <- data.frame()
+
+# bl <- unique(cpfull_noip$block)[1]
+
+`%notin%` <- Negate(`%in%`)
+
 for(bl in unique(cpfull_noip$block)){
   subbl <- cpfull_noip[cpfull_noip$block == bl,]
   psite <- treats[treats$block == bl & treats$treat == "predator", ]$codes
@@ -37,7 +42,6 @@ for(bl in unique(cpfull_noip$block)){
   #stayed
   stayed <- colnames(cmat)[colnames(cmat) %in% colnames(pmat)]
   #lost
-  `%notin%` <- Negate(`%in%`)
   lost <- colnames(cmat)[colnames(cmat) %notin% colnames(pmat)]
   #gained
   gained <- colnames(pmat)[colnames(pmat) %notin% colnames(cmat)]
@@ -45,12 +49,17 @@ for(bl in unique(cpfull_noip$block)){
   allnames <- length(unique(c(colnames(pmat), colnames(cmat))))
   length(c(stayed, lost, gained)) == allnames # do we have all of them?
   
+  # Check for NAs
+  dbs <- diet_breadth[stayed][!is.na(diet_breadth[stayed])]
+  dbl <- diet_breadth[lost][!is.na(diet_breadth[lost])]
+  dbg <- diet_breadth[gained][!is.na(diet_breadth[gained])]
+  
   # pdi
-  staydf <- data.frame(pdi = diet_breadth[stayed],
+  staydf <- data.frame(pdi = dbs,
                        type = "stayed")
-  lostdf <- data.frame(pdi = diet_breadth[lost],
+  lostdf <- data.frame(pdi = dbl,
                        type = "lost")
-  gainedf <- data.frame(pdi = diet_breadth[gained],
+  gainedf <- data.frame(pdi = dbg,
                         type = "gained")
   slgdat <- rbind(staydf, lostdf, gainedf)
   slgdat$block <- bl
@@ -71,6 +80,7 @@ for(bl in unique(treats$block)){
   
   # Any species, that was found in pred and control site in any block
   subbl <- cpfull_noip[cpfull_noip$block == bl,]
+  amount <- subbl$amount
   psite <- treats[treats$block == bl & treats$treat == "predator", ]$codes
   csite <- treats[treats$block == bl & treats$treat == "control", ]$codes
   
@@ -78,7 +88,8 @@ for(bl in unique(treats$block)){
   cn <- gardnets[[csite]]
   
   mtnms <- colnames(cn)[colnames(cn) %in% colnames(pn)]
-  ratios <- colSums(pn[,mtnms])/colSums(cn[,mtnms])
+  # High abundance in predatry exclosure suggest strong effect of predators
+  ratios <- colSums(cn[,mtnms])/colSums(pn[,mtnms])
   dbs <- diet_breadth[mtnms]
   plot(log(ratios)~dbs)
   bldf <- data.frame(spec = mtnms, ratio = ratios, pdi = dbs, block = bl)
@@ -93,6 +104,8 @@ library(lmerTest)
 # weights
 ins_bio$morphotype <- as.character(ins_bio$morphotype)
 morphbios  <- tapply(ins_bio$totbio, ins_bio$morphotype, sum, na.rm=T)
+morphbios  <- tapply(ins_bio$amount, ins_bio$morphotype, sum, na.rm=T)
+
 compdf_niop$bio <- morphbios[compdf_niop$spec] 
 library(RColorBrewer)
 library(ggplot2)
@@ -114,14 +127,102 @@ compdf_niop$shift <- shiftDf[compdf_niop$spec,]$shift
 
 # PDI and lratio ----
 plot(lratio~pdi, data = compdf_niop, 
-     pch = 19, col = block, cex = log(compdf_niop$bio*10))
+     pch = 19, col = rgb(180,180,180,80,maxColorValue = 255), 
+     cex = log(compdf_niop$bio*10))
 
+# Why is that?
+lm1  <- lm(lratio~pdi, 
+           weights = bio,
+           data =compdf_niop)
+summary(lm1)
 lmer1 <- lmer(lratio~pdi+(1|block), 
      data = compdf_niop,
      weights = bio)
 
-summary(lmer1)
+# Example
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
+# Full model
+lmer1b <- lmer(lratio~pdi+(pdi|block), 
+               data = compdf_niop,
+               weights = bio)
+as.data.frame(VarCorr(lmer1b))
+as.data.frame(VarCorr(lmer2))
+
+summary(lmer1b)
+summary(fm1)
+
+#nlme model: should I use intercept 0 ???
+lme1a <- nlme::lme(lratio~pdi, random = ~ 1|block, 
+                   data = compdf_niop)
+summary(lme1a)
+lme1b <- nlme::lme(lratio~pdi, random = ~ pdi|block, 
+                  data = compdf_niop)
+summary(lme1b)
+VarCorr(lme1b)
+
+attach(compdf_niop)
+names(compdf_niop) <- c("spec","ratio", "pdi", "block", "w", 
+                        "lratio", "alratio", "shift" )
+lme1c <- nlme::lme(lratio~pdi, random = ~ pdi|block, 
+               data = compdf_niop,
+               weights = ~ as.vector(w))
+detach(compdf_niop)
+summary(lme1c)
+VarCorr(lme1c)
+plot(lme1c)
+
+library(ggeffects)
+lme_pred <- ggpredict(lme1c, terms = c("pdi"), type = "random")
+plot(lme_pred)
+lme_pred_block <- ggpredict(lme1c, terms = c("block"), type = "random")
+plot(lme_pred_block)
+
+#https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf
+# Unconstrained slopes!
+lmer2 <- lmer(lratio~pdi+(1|block)+(0+pdi|block), 
+              data = compdf_niop,
+              weights = bio)
+
+
+
+anova(lmer1, lmer2) # lmer2 is an improvement
+summary(lmer2)
+
+summary(lmer1b)
+
+
+plot(lmer1, type = c("p", "smooth"))
+
+# Within each block there is another 
+# for(bl in unique(compdf_niop$block)){
+#   print(bl)
+#   subs <- compdf_niop[compdf_niop$block == bl, ]
+#   fitbl <- lm(lratio~pdi, data=subs)
+#   print(summary(fitbl))
+# }
+
+# library(brms)
+# brm2 <- brm(lratio|weights(bio)~pdi+(1+pdi|block), 
+#               data = compdf_niop, 
+#             control = list(adapt_delta = 0.99))
+# plot(brm2)
+
+# When weighted by abundance (lookup 'morphbios') we are getting highly significant effect
+# summ1 <- summary(lmer1)
+
+library(ggeffects)
+# pr <- ggpredict(lmer1, "pdi")
+# pr <- ggpredict(lmer1, "pdi", type = "random", condition = c(block = factor("g1")))
+# 
+# 
+# plot(pr)
+
+me <- ggpredict(lmer2, terms = c("pdi"), type = "random")
+plot(me)
+me <- ggpredict(lmer2, terms = c("pdi", "block"), type = "random")
+plot(me)
+# Ther is no evidence that herbivores' shift in diet affect their log-ratio response
 plot(lratio~shift,data=compdf_niop)
 lratio_shift <- lmer(lratio~shift+(1|block), data=compdf_niop)
 summary(lratio_shift)
@@ -211,3 +312,4 @@ pdimat
 # 3. See wether species reduced or switched its resources
 
 # 4. How abundance changed depending on plant quality.
+

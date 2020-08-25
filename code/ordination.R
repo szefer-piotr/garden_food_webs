@@ -98,7 +98,7 @@ treats_trimmed$ipbio <- IPbiomass[treats_trimmed$sites]
 treats_trimmed$ipdiv <- IPdiversity[treats_trimmed$sites]
 treats_trimmed$ipric <- IPrichness[treats_trimmed$sites]
 
-# 1.Plants ordination ----
+# 1. Plants ordination ----
 formula_string <- paste("plants_trimmed~", 
                     paste(paste(treats_to_formula,
                           collapse = "+"), 
@@ -116,6 +116,7 @@ summary(plantTreat)
 
 
 # This maybe represents the variability well... for meany of these plants, standard deviation is zero.
+
 
 # 2. Herbivore community ordination ----
 
@@ -147,7 +148,7 @@ herbTreat <- rda(rda_formula, data = treats_trimmed)
 anova(herbTreat, by="terms")
 # plot(herbTreat)
 
-# 3a. Removing effect of plant community PLANT pPCA ----
+# 2a. Removing effect of plant community PLANT pPCA ----
 
 # Bosc suggested conditioning only on block (Appendix S1). 
 pPCA <- rda(plants_trimmed ~ Condition(block), data=treats_trimmed)
@@ -156,16 +157,35 @@ pPCA <- rda(plants_trimmed ~ Condition(block), data=treats_trimmed)
 ort_sites <- pPCA$CA$u
 ort_sites <- as.data.frame(ort_sites)
 
-selectOrthogonalVars <- function(maxa, 
+#NOT RUN
+# focal_dataset <- abumat_trimmed
+# maxa <- 14
+# additional_variables = NULL
+
+selectOrthogonalVars <- function(maxa,
+                                 focal_dataset,
                                  ort_sites, 
                                  additional_variables = NULL){
+  
+  # focal data set <- set to which ort_sites will be fitted
   
   # Orthogonal axes selection on herbivore dataset (no ip)
   # maxa <- 14 # 14 is maximal... why?
   pcs <- paste("PC", seq(1:maxa), sep="")
   pcseq <- paste(pcs, collapse="+")
   a_vars <- paste(additional_variables, collapse="+")
-  form <- paste("biomat_trimmed", "~", pcseq,"+",a_vars, sep="")
+  
+  if(is.null(additional_variables)){
+    form <- paste(deparse(quote(focal_dataset)), 
+                  "~", pcseq,
+                  sep="")
+  }else{
+    form <- paste(deparse(quote(focal_dataset)), 
+                  "~", pcseq,
+                  "+",a_vars, 
+                  sep="")
+  }
+  
   rdaform <- with(ort_sites, {as.formula(form)})
 
   # Combine treatments with PC axes
@@ -174,7 +194,7 @@ selectOrthogonalVars <- function(maxa,
   # See which axes of plant variability influence herbivore community based
   # of abundance
 
-  nullRDA <- rda(abumat_trimmed ~ 1 +
+  nullRDA <- rda(focal_dataset ~ 1 +
                    Condition(block+treat),
                  data = treats_pc)
 
@@ -192,7 +212,10 @@ selectOrthogonalVars <- function(maxa,
               selected = fselbioins))
 }
 
-fselbioins <- selectOrthogonalVars(maxa = 14, ort_sites)
+fselbioins <- selectOrthogonalVars(maxa = 14, 
+                                   focal_dataset =  abumat_trimmed, 
+                                   ort_sites = ort_sites,
+                                   additional_variables = NULL)
 
 # With 14 PCs 2 are significant: PC2,PC1 for abundance
 # PC1 and PC2 are significant for abundance
@@ -206,7 +229,7 @@ par(mfrow=c(1,2))
 # plot(pPCA, choices = c(7, 10), display = "species")
 par(mfrow=c(1,1))
 
-# 3b. Intermediate Predator PCA ----
+# 2b. Intermediate Predator PCA ----
 # ipppPCA <- rda(ipbio_trimmed ~ Condition(block), data=treats_trimmed)
 ipppPCA <- rda(ipabu_trimmed ~ Condition(block), data=treats_trimmed)
 
@@ -264,8 +287,70 @@ points(herbAbuConditioned, display="cn", scaling = 3,
 text(herbAbuConditioned, display="cn", scaling = 3,
      col = "red")
 
+# 3. IPs ordiantion ----
 
-# Pairwise comparisons
+ipabu_trimmed
+
+# 4. Insect ordiantion: Pairwise comparisons ----
+dim(abumat_trimmed)
+dim(ipabu_trimmed)
+abumat_arthropod <- cbind(abumat_trimmed, ipabu_trimmed)
+
+arthropca <- rda(abumat_arthropod ~ Condition(block), data = treats_trimmed)
+plot(arthropca, display = "species")
+text(arthropca, display = "species")
+
+# 5. Correlation plot for families ----
+abuFamOrig <- contingencyTable2(ins_bio,"plot","family","amount")
+bioFamOrig <- contingencyTable2(ins_bio,"plot","family","totbio")
+
+abuFam <- decostand(abuFamOrig, method = "hel")
+bioFam <- decostand(bioFamOrig, method = "hel")
+
+abuFam_trimmed <- abuFam[treats_trimmed$codes, ]
+bioFam_trimmed <- bioFam[treats_trimmed$codes, ]
+
+artFampca <- rda(abuFam_trimmed ~ Condition(block+treat), data = treats_trimmed)
+
+bioartFampca <- rda(bioFam_trimmed ~ Condition(block+treat), data = treats_trimmed)
+
+par(mfrow=c(1,2))
+biplot(artFampca, display = "species")
+summary(artFampca)
+
+biplot(bioartFampca,display = "species")
+summary(bioartFampca)
+par(mfrow=c(1,1))
+
+panel.cor <- function(x, y){
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- round(cor(x, y), digits=2)
+  txt <- paste0("R = ", r)
+  cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt)
+}
+# Customize upper panel
+upper.panel<-function(x, y){
+  points(x,y, pch = 19)
+}
+# Create the plots
+# pairs(abuFam_trimmed, 
+#       lower.panel = panel.cor,
+#       upper.panel = upper.panel)
+
+# pairs(abuFam_trimmed)
+
+abuFam_trim_paired <- abuFamOrig[treats_trimmed$codes, ]
+bioFam_trim_paired <- bioFamOrig[treats_trimmed$codes, ]
+
+library(psych)
+pairs.panels(log(abuFam_trim_paired+1), 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+)
 
 # Predator as base
 # final_herg_abu_formula <- paste("abumat_trimmed", "~", 
@@ -299,6 +384,9 @@ text(herbAbuConditioned, display="cn", scaling = 3,
 #                          data=fselbioins$treatments)
 # 
 # anova(herbAbuConditioned, by="terms", permutations = 9999)
+
+# Correlations between species and families
+abumat_trimmed
 
 # BIRD EFFECT ----
 biomat_bef <- biomat[treats_trimmed$sites, ]

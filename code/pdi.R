@@ -35,7 +35,7 @@ PDI(rawvals,normalise = T, log = T)
 PDI(nona_vals,normalise = T, log = T)
 
 
-diet_breadth <- PDI(pdimat, normalise = T, log = T)
+diet_breadth <- PDI(pdimat, normalise = F, log = T)
 
 # dbnorm <- PDI(pdimat, normalise = T, log = T)
 # dbrel <- PDI(pdimat, normalise = F, log = T)
@@ -56,8 +56,8 @@ diet_breadth <- diet_breadth[!(diet_breadth==0)]
 diet_breadth[diet_breadth==1]
 
 # I need to remove zeros
-pdimat[, "cole014"]
+# pdimat[, "cole014"]
 
-diet_breadth["orth037"]
-pdimat[, "orth037"]
+# diet_breadth["orth037"]
+# pdimat[, "orth037"]
 # pdimat[, "orth092"]

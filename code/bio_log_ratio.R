@@ -125,27 +125,27 @@ for(block in unique(genllratio$bl)){
 #              ellipses = FALSE # show correlation ellipses
 # )
 
-par(mfrow=c(1,3))
-with(generallr, 
-     plot(H,P, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
-
-with(generallr, 
-     plot(IP,P, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
-
-with(generallr, 
-     plot(IP,H, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
+# par(mfrow=c(1,3))
+# with(generallr, 
+#      plot(H,P, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
+# 
+# with(generallr, 
+#      plot(IP,P, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
+# 
+# with(generallr, 
+#      plot(IP,H, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
 
 
 # * 2.1.2 General log ratio for abundances ----
@@ -248,27 +248,27 @@ for(block in unique(genllratio$bl)){
 #              ellipses = FALSE # show correlation ellipses
 # )
 
-par(mfrow=c(1,3))
-with(generallr, 
-     plot(H,P, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
-
-with(generallr, 
-     plot(IP,P, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
-
-with(generallr, 
-     plot(IP,H, pch=19, cex=1.5, main=))
-abline(h=0)
-abline(v=0)
-abline(0,1, lty =2)
-abline(0, -1, lty = 2)
+# par(mfrow=c(1,3))
+# with(generallr, 
+#      plot(H,P, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
+# 
+# with(generallr, 
+#      plot(IP,P, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
+# 
+# with(generallr, 
+#      plot(IP,H, pch=19, cex=1.5, main=))
+# abline(h=0)
+# abline(v=0)
+# abline(0,1, lty =2)
+# abline(0, -1, lty = 2)
 
 # * 2.1.3 Herbivore families log ratio responses -----
 
@@ -294,15 +294,17 @@ for(fam in unique(biollcp$nms)){
   datfam <- rbind(datfam, blockdat)
 }
 
+# Figure biomass for insect groups ----
+
 library("ggplot2")
-# datfam_nozero <- datfam[datfam$val != 0, ]
-# ggplot(datfam_nozero, aes(x = trt, y=log(val))) + 
-#   geom_jitter(width = 0.1) +
-#   stat_summary(fun = mean, geom = "point", col="red")+
-#   stat_summary(fun.data = "mean_cl_normal",
-#                geom = "errorbar",
-#                width=0.3, col="red") +
-#   facet_grid(~fam)
+datfam_nozero <- datfam[datfam$val != 0, ]
+ggplot(datfam_nozero, aes(x = trt, y=log(val))) +
+  geom_jitter(width = 0.1) +
+  stat_summary(fun = mean, geom = "point", col="red")+
+  stat_summary(fun.data = "mean_cl_normal",
+               geom = "errorbar",
+               width=0.3, col="red") +
+  facet_grid(~fam)
 
 herbfams <- unique(biollcp$nms)[-grep("aran|mant", unique(biollcp$nms))]
 herbfams <- as.character(herbfams)
@@ -394,11 +396,11 @@ lratioFam <-function(family){
 
 # par(mfrow=c(2,3))
 
-# colelr <- lratioFam(herbfams[1])
-# hemilr <- lratioFam(herbfams[2])
-# homolr <- lratioFam(herbfams[3])
-# lepilr <- lratioFam(herbfams[4])
-# orthlr <- lratioFam(herbfams[5])
+colelr <- lratioFam(herbfams[1])
+hemilr <- lratioFam(herbfams[2])
+homolr <- lratioFam(herbfams[3])
+lepilr <- lratioFam(herbfams[4])
+orthlr <- lratioFam(herbfams[5])
 
 # famdat <- Reduce(function(x, y) merge(x, y, by = "bl"), 
 #        list(colelr,

@@ -9,7 +9,7 @@
 library("bipartite")
 library("vegan")
 # source("code/bio_log_ratio.R")
-source("code/data_processing_code.R")
+# source("code/data_processing_code.R")
 
 
 # This shift maybe should be beased on abundance rather than like in the plot
@@ -38,7 +38,7 @@ contsites <- treats[treats$treat == "CONTROL",]$codes
 
 ips <- grep("aran|mant", ins_bio$morphotype)
 
-ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
+ins_bioOrig <- ins_bio
 ins_bio <- ins_bio[-ips, ]
 
 # Contingency tables for predator and control sites

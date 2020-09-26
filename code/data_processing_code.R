@@ -8,13 +8,18 @@
 
 # This function creates a contingency table for a given row category
 # column categoory and sums values.
-contingencyTable2 <- function(dataset, ROW, COL, VALUE){
+contingencyTable2 <- function(dataset, ROW, COL, VALUE,rm.null=TRUE){
   # Get rid of the empty factors
   dataset[, colnames(dataset) == ROW] <- as.character(dataset[, colnames(dataset) == ROW])
   dataset[, colnames(dataset) == COL] <- as.character(dataset[, colnames(dataset) == COL])
   # Make a table, get rid of the empty rows and columns
   plants <- table(dataset[, colnames(dataset) == ROW], dataset[, colnames(dataset) == COL])
-  plants <- plants[rowSums(plants) != 0, colSums(plants) != 0]
+  
+  if(rm.null){
+    plants <- plants[rowSums(plants) != 0, colSums(plants) != 0]
+  }
+  
+  if(is.null(dim(plants))){plants <- t(plants)}
   # See where to insert values
   allSpecCodes <- colnames(plants)
   allPlotCodes <- rownames(plants)
@@ -168,7 +173,7 @@ main_biomass <- main[,c("CODE","PLOT","BLOCK","TREAT","SPEC","SP_CODE","LIFE.FOR
 
 # Food webs
 
-source("code/contingencyTable.R")
+# source("code/contingencyTable.R")
 library("bipartite")
 library("igraph")
 

@@ -52,7 +52,7 @@ treats_dummy$block <- substr(rownames(treats_dummy), 3,4)
 
 
 treats_to_plot <- as.character(unique(treats$treat))[c(3,4,2)]
-treats_to_plot <- as.character(unique(treats$treat))[c(3,4,5,2)]
+treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)] # insecticide as well
 
 # Predator vs control only
 treats_trimmed <- treats[(treats$treat %in% treats_to_plot), ]
@@ -93,6 +93,21 @@ IPdiversity <- vegan::diversity(abumatOrig[,grep("aran|mant",
 IPrichness <-  rowSums(abumatOrig[,grep("aran|mant", 
                                         colnames(abumatOrig))] > 0)
 
+# Herbivore community descriptors
+Habundance <- rowSums(abumatOrig[,-grep("aran|mant", 
+                                        colnames(abumatOrig))])
+Hbiomass <- rowSums(biomatOrig[,-grep("aran|mant", 
+                                      colnames(biomatOrig))])
+Hdiversity <- vegan::diversity(abumatOrig[,-grep("aran|mant", 
+                                                 colnames(abumatOrig))], MARGIN = 1)
+Hrichness <-  rowSums(abumatOrig[,-grep("aran|mant", 
+                                        colnames(abumatOrig))] > 0)
+
+treats_trimmed$habu <- Habundance[treats_trimmed$sites]
+treats_trimmed$hbio <- Hbiomass[treats_trimmed$sites]
+treats_trimmed$hdiv <- Hdiversity[treats_trimmed$sites]
+treats_trimmed$hric <- Hrichness[treats_trimmed$sites]
+
 treats_trimmed$ipabu <- IPabundance[treats_trimmed$sites]
 treats_trimmed$ipbio <- IPbiomass[treats_trimmed$sites]
 treats_trimmed$ipdiv <- IPdiversity[treats_trimmed$sites]
@@ -108,56 +123,36 @@ formula_string <- paste("plants_trimmed~",
 rda_formula <- formula(formula_string)
 plantTreat <- rda(rda_formula, data = treats_trimmed)
 
-anova(plantTreat, by="terms")
+# Pairwise
+# plantTreat <- rda(plants_trimmed ~ CONTROL + PREDATOR + WEEVIL25 + Condition(block)
+# , data = treats_trimmed)
+# anova(plantTreat, by="terms")
+# 
+# plantTreat <- rda(plants_trimmed ~ WEEVIL125 + CONTROL + WEEVIL25 + Condition(block), data = treats_trimmed)
+# anova(plantTreat, by="terms")
+# 
+# plantTreat <- rda(plants_trimmed ~ WEEVIL125 + PREDATOR + CONTROL + Condition(block), data = treats_trimmed)
+# anova(plantTreat, by="terms")
+
+anova(plantTreat, by="terms") # as previously we have significant insecticide
 # plot(plantTreat)
-plantFit <- envfit(plantTreat, plants_trimmed)
+
+# plantFit <- envfit(plantTreat, plants_trimmed)
 
 summary(plantTreat)
-
-
 # This maybe represents the variability well... for meany of these plants, standard deviation is zero.
 
+# 1b. Removing effect of herbivores on plants ----
 
-# 2. Herbivore community ordination ----
-
-# Same formula for herbivores
-formula_string <- paste("biomat_trimmed~", 
-                        paste(paste(treats_to_formula,
-                                    collapse = "+"), 
-                              "Condition(block)", 
-                              sep = "+"), 
-                        sep="")
-rda_formula <- formula(formula_string)
-
-herbTreat <- rda(rda_formula, data = treats_trimmed)
-anova(herbTreat, by="terms")
-# plot(herbTreat)
-
-# See which herbivores respond to treatments
-herbFit <- envfit(herbTreat, biomat_trimmed)
-
-# Abundance based ordination for herbivores
-formula_string <- paste("abumat_trimmed~", 
-                        paste(paste(treats_to_formula,
-                                    collapse = "+"), 
-                              "Condition(block)", 
-                              sep = "+"), 
-                        sep="")
-rda_formula <- formula(formula_string)
-herbTreat <- rda(rda_formula, data = treats_trimmed)
-anova(herbTreat, by="terms")
-# plot(herbTreat)
-
-# 2a. Removing effect of plant community PLANT pPCA ----
-
-# Bosc suggested conditioning only on block (Appendix S1). 
-pPCA <- rda(plants_trimmed ~ Condition(block), data=treats_trimmed)
+# Below migh be unnecessary as we don't anticipate that herbivores controll plant community
+abumat_trimmed_no_cole <- abumat_trimmed[, colnames(abumat_trimmed) != "cole001"]
+herbpPCA <- rda(abumat_trimmed_no_cole ~ Condition(block), data=treats_trimmed)
 
 # Site axes
-ort_sites <- pPCA$CA$u
-ort_sites <- as.data.frame(ort_sites)
+herb_ort_sites <- herbpPCA$CA$u
+herb_ort_sites <- as.data.frame(herb_ort_sites)
 
-#NOT RUN
+#NOT tested yet
 # focal_dataset <- abumat_trimmed
 # maxa <- 14
 # additional_variables = NULL
@@ -187,24 +182,24 @@ selectOrthogonalVars <- function(maxa,
   }
   
   rdaform <- with(ort_sites, {as.formula(form)})
-
+  
   # Combine treatments with PC axes
   treats_pc <- cbind(treats_trimmed, ort_sites[,1:maxa])
-
+  
   # See which axes of plant variability influence herbivore community based
   # of abundance
-
+  
   nullRDA <- rda(focal_dataset ~ 1 +
                    Condition(block+treat),
                  data = treats_pc)
-
+  
   scopeRDA <- rda(update.formula(rdaform, . ~ . + Condition(block+treat)),
                   data = treats_pc)
-
+  
   # Forward secelction
   fselbioins <- ordiR2step(nullRDA, scope = scopeRDA,
                            direction = "forward")
-
+  
   fselbioins$anova
   pca_plants_formula <- fselbioins$call$formula
   print(pca_plants_formula)
@@ -212,21 +207,134 @@ selectOrthogonalVars <- function(maxa,
               selected = fselbioins))
 }
 
-fselbioins <- selectOrthogonalVars(maxa = 14, 
-                                   focal_dataset =  abumat_trimmed, 
-                                   ort_sites = ort_sites,
-                                   additional_variables = NULL)
+plants_sel_form <- selectOrthogonalVars(maxa = 10,
+                                   focal_dataset =  plants_trimmed,
+                                   ort_sites = herb_ort_sites,
+                                   additional_variables = c("hbio",
+                                                            "hdiv",
+                                                            "habu",
+                                                            "hric"))
+# Herbivores PC2, PC3, PC1 and PC8
+par(mfrow=c(1,2))
+plot(herbpPCA, choices = c(1,2), display="species")
+text(herbpPCA, choices = c(1,2), display="species")
 
-# With 14 PCs 2 are significant: PC2,PC1 for abundance
-# PC1 and PC2 are significant for abundance
+plot(herbpPCA, choices = c(3,8), display="species")
+text(herbpPCA, choices = c(3,8), display="species")
+
+plot(herbpPCA, display="species")
+text(herbpPCA, display="species")
+
+hform <- plants_sel_form$selected$call$formula
+hformula_string <- as.character(hform)[3]
+hsplitted_formula <- strsplit(hformula_string, split=" ")
+horthogonal_axes <- hsplitted_formula[[1]][grep("PC", hsplitted_formula[[1]])]
+hfinal_herg_abu_formula <- paste("plants_trimmed", "~",
+                                "PREDATOR+WEEVIL125+WEEVIL25+INSECTICIDE", 
+                                "+Condition(block+", 
+                                paste(horthogonal_axes, 
+                                      collapse = "+"), ")", sep = "")
+
+# # Treatment effect on herbivorous communities conditioned on plant composition.
+# # There was also no effect of IPs community on herbivore communities.
+# 
+plantAbuConditioned <-rda(formula(hfinal_herg_abu_formula),
+                         data=plants_sel_form$treatments)
+anova(plantAbuConditioned, by="terms", permutations = 999)
+
+# if we include Insecticide we obtain significance of w125
+
+# 2. Herbivore community ordination ----
+# Same formula for herbivores
+
+biomat_trimmed_no_cole <- biomat_trimmed[, colnames(biomat_trimmed) != "cole001"]
+
+formula_string <- paste("biomat_trimmed_no_cole~", 
+                        paste(paste(treats_to_formula,
+                                    collapse = "+"), 
+                              "Condition(block)", 
+                              sep = "+"), 
+                        sep="")
+rda_formula <- formula(formula_string)
+
+herbTreatBio <- rda(rda_formula, data = treats_trimmed)
+anova(herbTreatBio, by="terms")
+# withouth conditioning, and withouth cole001
+# we obtain significant w125 on herbivore biomass.
+
+# See which herbivores respond to treatments
+# herbFit <- envfit(herbTreat, biomat_trimmed)
+
+# Abundance based ordination for herbivores
+formula_string <- paste("abumat_trimmed_no_cole~", 
+                        paste(paste(treats_to_formula,
+                                    collapse = "+"), 
+                              "Condition(block)", 
+                              sep = "+"), 
+                        sep="")
+rda_formula <- formula(formula_string)
+herbTreatAbu <- rda(rda_formula, data = treats_trimmed)
+anova(herbTreatAbu, by="terms")
+
+addNamesAndPlot <- function(ipsResponses,ipsRDA,treats){
+  sigIps <- names(ipsResponses$vectors$pvals)[ipsResponses$vectors$pvals <= 0.05]
+  # Plot the graph
+  plot(ipsRDA, type="n")
+  points(ipsRDA, display = "sites",
+         scaling = 2, pch=19, cex = 1.5,
+         col = treats$treat)
+  text(ipsRDA, display = "species",
+       scaling = 1, select = sigIps)
+  points(ipsRDA, display="cn", scaling = 3,
+         col = "red",
+         pch = 25)
+  text(ipsRDA, display="cn", scaling = 3,
+       col = "red")
+} 
+
+herbFitBio <- envfit(herbTreatBio, biomat_trimmed_no_cole)
+herbFitAbu <- envfit(herbTreatAbu, abumat_trimmed_no_cole)
+
+addNamesAndPlot(herbFitAbu, herbTreatAbu, treats_trimmed)
+addNamesAndPlot(herbFitBio, herbTreatBio, treats_trimmed)
+
+# ADD NAMES!!!
+plot(herbTreatAbu)
+text(herbTreatAbu, display="species", scaling=1)
+plot(herbTreatBio)
+
+
+
+
+# 2a. Removing effect of plant community PLANT pPCA ----
+# Bosc suggested conditioning only on block (Appendix S1). 
+pPCA <- rda(plants_trimmed ~ Condition(block), data=treats_trimmed)
+
+# Site axes
+ort_sites <- pPCA$CA$u
+ort_sites <- as.data.frame(ort_sites)
+
+fselbioins <- selectOrthogonalVars(maxa = 10, 
+                                   focal_dataset =  biomat_trimmed_no_cole, 
+                                   ort_sites = ort_sites,
+                                   additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
+# nothing significant for biomass
+
+fselbioins <- selectOrthogonalVars(maxa = 10, 
+                                   focal_dataset =  abumat_trimmed_no_cole, 
+                                   ort_sites = ort_sites,
+                                   additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
+
+# With 10PCs and additional intermediate predator variables
+# 4 are significant: PC2,PC1,PC3,PC7 for abundance
 
 # Only PC4 is significant for biomass
 # But only if I use first 4 PC's
 
-# See which species were responsible for PC7 and PC10 axis
+# See which species were responsible for PC axes
 par(mfrow=c(1,2))
-# plot(pPCA, choices = c(1, 2), display = "species")
-# plot(pPCA, choices = c(7, 10), display = "species")
+plot(pPCA, choices = c(1, 2), display = "species", scaling =1)
+plot(pPCA, choices = c(3, 7), display = "species")
 par(mfrow=c(1,1))
 
 # 2b. Intermediate Predator PCA ----
@@ -244,29 +352,35 @@ ipppPCA <- rda(ipabu_trimmed ~ Condition(block), data=treats_trimmed)
 ipPCsites <- ipppPCA$CA$u
 ipPCsites <- as.data.frame(ipPCsites)
 
-selectOrthogonalVars(10, ort_sites = ipPCsites,
+fselbioips <- selectOrthogonalVars(10, focal_dataset = abumat_trimmed_no_cole,
+                     ort_sites = ipPCsites,
                      additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
 
-# No effect of IPs PCs, nor general descriptors on herbivore community
+# Effect of IPs diversity on herbivore community, but withouth accounting for plant effect
 
-# Partial RDA for herbivores abundance ----
+# 2c. Partial RDA for herbivores abundance ----
 form <- fselbioins$selected$call$formula
 formula_string <- as.character(form)[3]
 splitted_formula <- strsplit(formula_string, split=" ")
 orthogonal_axes <- splitted_formula[[1]][grep("PC", splitted_formula[[1]])]
-final_herg_abu_formula <- paste("abumat_trimmed", "~", 
-                                 "PREDATOR+WEEVIL125+WEEVIL25", "+Condition(block+", paste(orthogonal_axes, collapse = "+"), ")", sep = "")
+final_herb_abu_formula <- paste("abumat_trimmed_no_cole", "~", 
+                                 "PREDATOR+WEEVIL125+WEEVIL25+INSECTICIDE", 
+                                "+Condition(block+", paste(orthogonal_axes, collapse = "+"), ")", sep = "")
 
 # Treatment effect on herbivorous communities conditioned on plant composition.
 # There was also no effect of IPs community on herbivore communities.
 
-herbAbuConditioned <-rda(formula(final_herg_abu_formula),
+# remove cole001 from the dataset
+# abumat_trimmed <- abumat_trimmed[, -which(colnames(abumat_trimmed) == "cole001")]
+
+herbAbuConditioned <-rda(formula(final_herb_abu_formula),
                          data=fselbioins$treatments)
 
 anova(herbAbuConditioned, by="terms", permutations = 999)
 
 herbivoresResponses <- envfit(herbAbuConditioned, abumat_trimmed)
 
+# NAME ADDING LINE 
 sigHerbs <- names(herbivoresResponses$vectors$pvals)[herbivoresResponses$vectors$pvals <= 0.05]
 herbivoresResponses$vectors$control
 
@@ -289,7 +403,65 @@ text(herbAbuConditioned, display="cn", scaling = 3,
 
 # 3. IPs ordiantion ----
 
-ipabu_trimmed
+# Removing effect of plants and herbivores on ips
+selips <- selectOrthogonalVars(10, 
+                     focal_dataset = ipabu_trimmed,
+                     ort_sites = ort_sites,
+                     additional_variables = c("habu","hbio","hdiv","hric"))
+
+# GENERAL FUNCTION FOR OBTAINING THE FORMULA
+getFormula <- function(focalDS = "abumat_trimmed_no_cole",
+                       treats_to_formula,
+                       selectionFormula = fselbioins){
+  form <- fselbioins$selected$call$formula
+  formula_string <- as.character(form)[3]
+  splitted_formula <- strsplit(formula_string, split=" ")
+  orthogonal_axes <- splitted_formula[[1]][grep("PC", splitted_formula[[1]])]
+  final_herb_abu_formula <- paste(focalDS, "~", 
+                                  paste(treats_to_formula, collapse = "+"), 
+                                  "+Condition(block+", 
+                                  paste(orthogonal_axes, 
+                                        collapse = "+"), ")", sep = "")
+  return(final_herb_abu_formula)
+}
+
+ipspRDAform <- getFormula(focalDS = "ipabu_trimmed",
+           treats_to_formula = treats_to_formula,
+           selectionFormula = selips)
+
+ipsRDA <- rda(formula(ipspRDAform),
+              data = selips$treatments)
+# ipspca <- rda(ipabu_trimmed~CONTROL+WEEVIL125+WEEVIL25+Condition(block + PC6), 
+#               data = treats_trimmed)
+anova(ipsRDA, by="terms")
+# There is an effect of w25
+
+#####*************
+
+ipsResponses <- envfit(ipsRDA, ipabu_trimmed)
+
+# NAME ADDING LINE 
+sigIps <- names(ipsResponses$vectors$pvals)[ipsResponses$vectors$pvals <= 0.05]
+
+# Plot the graph
+plot(ipsRDA, type="n")
+points(ipsRDA, display = "sites",
+       scaling = 2, pch=19, cex = 1.5,
+       col = selips$treatments$treat)
+text(ipsRDA, display = "species",
+     scaling = 1, select = sigIps)
+points(ipsRDA, display="cn", scaling = 3,
+       col = "red",
+       pch = 25)
+text(ipsRDA, display="cn", scaling = 3,
+     col = "red")
+
+
+#####*************
+
+plot(ipsRDA, display="species")
+plot(ipsRDA)
+anova(ipspca, by="terms")
 
 # 4. Insect ordiantion: Pairwise comparisons ----
 dim(abumat_trimmed)
@@ -311,12 +483,16 @@ abuFam_trimmed <- abuFam[treats_trimmed$codes, ]
 bioFam_trimmed <- bioFam[treats_trimmed$codes, ]
 
 artFampca <- rda(abuFam_trimmed ~ Condition(block+treat), data = treats_trimmed)
-
+artFamRDA <- rda(abuFam_trimmed ~ PREDATOR+WEEVIL125+WEEVIL25 + Condition(block), data = treats_trimmed)
 bioartFampca <- rda(bioFam_trimmed ~ Condition(block+treat), data = treats_trimmed)
 
 par(mfrow=c(1,2))
 biplot(artFampca, display = "species")
 summary(artFampca)
+
+anova(artFamRDA, by="terms")
+plot(artFamRDA, display="species")
+plot(artFamRDA)
 
 biplot(bioartFampca,display = "species")
 summary(bioartFampca)
@@ -387,6 +563,47 @@ pairs.panels(log(abuFam_trim_paired+1),
 
 # Correlations between species and families
 abumat_trimmed
+
+# 6. Herbivore family ordination ----
+insfam_mat_abu <- contingencyTable2(ins_bio, "plot", "family", "amount")
+herbfam_mat_abu <- insfam_mat_abu[, -grep("aran|mant", colnames(insfam_mat_abu))]
+
+herbfam_mat_abu_trim <- herbfam_mat_abu[rownames(treats_trimmed), ]
+
+famRda <- rda(herbfam_mat_abu_trim~PREDATOR+WEEVIL125+WEEVIL25+Condition(block),
+              treats_trimmed)
+anova(famRda, by = "terms")
+plot(famRda)
+
+# remove effect of plants on orders
+conditionalPCs <- selectOrthogonalVars(10, herbfam_mat_abu_trim,
+                     ort_sites = ort_sites,
+                     additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
+
+famRda <- rda(herbfam_mat_abu_trim~PREDATOR+WEEVIL125+WEEVIL25+ Condition(block+ipric + PC2), conditionalPCs$treatments)
+anova(famRda, by = "terms")
+plot(famRda)
+
+# 6b. Biomass based herbivore family ordination ----
+insfam_mat_abu <- contingencyTable2(ins_bio, "plot", "family", "totbio")
+herbfam_mat_abu <- insfam_mat_abu[, -grep("aran|mant", colnames(insfam_mat_abu))]
+
+herbfam_mat_abu_trim <- herbfam_mat_abu[rownames(treats_trimmed), ]
+
+famRda <- rda(herbfam_mat_abu_trim~PREDATOR+WEEVIL125+WEEVIL25+Condition(block),
+              treats_trimmed)
+anova(famRda, by = "terms")
+plot(famRda)
+
+# remove effect of plants on orders
+conditionalPCs <- selectOrthogonalVars(10, herbfam_mat_abu_trim,
+                                       ort_sites = ort_sites,
+                                       additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
+
+famRda <- rda(herbfam_mat_abu_trim~PREDATOR+WEEVIL125+WEEVIL25+ Condition(block+ipric), conditionalPCs$treatments)
+anova(famRda, by = "terms")
+plot(famRda, display="species")
+text(famRda, display="cn")
 
 # BIRD EFFECT ----
 biomat_bef <- biomat[treats_trimmed$sites, ]

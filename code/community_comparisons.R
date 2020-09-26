@@ -8,7 +8,7 @@ source("code/data_processing_code.R")
 # [3] "CONTROL"     [4] "PREDATOR"   
 # [5] "WEEVIL25"    [6] "INSECTICIDE"
 
-treats_to_plot <- as.character(unique(treats$treat))[c(3,4,5,2)]
+treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
 # groups_to_plot <- 
 
 # Herbivores and IPS diversity, abumdnace, richness in different treatments
@@ -208,11 +208,16 @@ analyzeAndAppend2(Conditions = (herb & bio & trtsel),
                  family = gaussian(link="log"))
 
 ## 1B. IPs - biomass ----
+# analyzeAndAppend2( 
+#   Conditions = (ips & bio & trtsel),
+#   FUN = glmer,
+#   formula = value~treat+(1|block),
+#   family = gaussian(link="log"))
+
 analyzeAndAppend2( 
   Conditions = (ips & bio & trtsel),
-  FUN = glmer,
-  formula = value~treat+(1|block),
-  family = gaussian(link="log"))
+  FUN = lmer,
+  formula = value~treat+(1|block))
 
 ## 2A. Herbivore - Abundance ----
 # no random effects because I was getting singular var-cov matrix
@@ -398,7 +403,11 @@ dispersiontest(rd,trafo=1)
 
 
 # 2. Plots ----
+
+treats_to_plot
 library(ggplot2)
+panelData$treat <- factor(panelData$treat,
+                          levels = treats_to_plot)
 ggplot(panelData[panelData$treat %in% treats_to_plot,], 
        aes(x = treat, 
            y = value,

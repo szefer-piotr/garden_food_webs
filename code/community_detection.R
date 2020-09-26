@@ -117,3 +117,4 @@ print(MOD1information$realized_modularity)
 
 print(MOD1information$RowNodesInModules)  # Shows row nodes per module
 print(MOD1information$ColNodesInModules)  # Shows column nodes per module
+

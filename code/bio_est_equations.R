@@ -1,20 +1,23 @@
-# Insects analysis
-source("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\code\\Data_Processing_Script_v2.R")
-setwd("C:\\Users\\Piotr Szefer\\Desktop\\Work\\garden experiment\\datasets\\wng_insects")
-insects <- read.table("csv_wng_arthropods.csv", sep=",", header=T, skip=2)
-insects$group <- substr(insects$Morphotype,1,4)
+# Script estimates biomasses of insects for each garden based on 
+# available lenght-body mass equation for insects.
 
-sizes <- read.table("csv_measuments.csv", sep=",", header=T)
-sizes$length <- sizes$Size*sizes$scl
-sizes$group <- substr(sizes$morphotype,1,4)
+# 1. Load datasets (built using data_processing_code.R) ----
+insects <- read.table("datasets/wng_arthro_clean.txt")
+treats  <- read.table("datasets/treats_clean.txt")
+plants  <- read.table("datasets/wng_main_bio.txt")
+sizes <-  read.csv("datasets/corrected_measurements.csv", header=T)
 
-head(insects)
-head(sizes)
+plants$SP_CODE <- tolower(plants$SP_CODE)
+insects$tree <- as.character(insects$tree)
 
-# Size dataset
-size <- tapply(sizes$length, sizes$morphotype, mean)
+# 2. Estimate insect sizes ----
+# Size dataset, each morphotype's average size
+size <- tapply(sizes$r_cm_size, sizes$morph, mean)
+mft <- names(size)
 group <- substr(names(size),1,4)
-size_dat <- cbind(size,group)
+size_dat <- data.frame(morph = mft,
+                       size = as.numeric(size),
+                       group = group)
 
 # Models used to estimate biomass
 # Ganihar 1997
@@ -26,337 +29,214 @@ size_dat <- cbind(size,group)
 
 # Wardhough 
 # (power model ln(weight) = ln(a) + b * length )
-# Mantodea:   a=-6.34(0.72);b=3.01(0.27)
-# Araneae:    a=-2.13(0.15);b=2.23(0.11)
-# Orthoptera: a=-3.17(0.19);b=2.61(0.09)
-# Hemiptera:  a=-3.01(0.17);b=2.59(0.09)
-# Homoptera: 
-# Coleoptera: a=-3.2(0.14); b=2.56(0.08)
+# weight <- exp(a) * size^b
+# Mantodea:    a=-6.34(0.72);b=3.01(0.27)
+# Araneae:     a=-2.13(0.15);b=2.23(0.11)
+# Orthoptera:  a=-3.17(0.19);b=2.61(0.09)
+# Hemiptera:   a=-3.01(0.17);b=2.59(0.09)
+# Homoptera:   a=-3.20(0.12);b=2.35(0.08) (Ganihar 1997)
+# Coleoptera:  a=-3.2(0.14); b=2.56(0.08)
+# Lepidoptera: a=-5.44(); b=2.55
 
-# Test the equations for Mantodea
-mant <- sizes[sizes$group == "mant", ]
-aran <- sizes[sizes$group == "aran", ]
-homo <- sizes[sizes$group == "homo", ]
-hemi <- sizes[sizes$group == "hemi", ]
-cole <- sizes[sizes$group == "cole", ]
+# Power model parameters for each family
+allo_params <- data.frame(group = unique(size_dat$group),
+                          a = c(-2.13,-3.2,-3.01,-3.20,-5.44,-6.34,-3.17),
+                          b = c( 2.23,2.56, 2.59, 2.35, 2.55, 3.01, 2.61))
 
-aran$morphotype <- as.character(aran$morphotype)
-mant$morphotype <- as.character(mant$morphotype)
-homo$morphotype <- as.character(homo$morphotype)
-hemi$morphotype <- as.character(hemi$morphotype)
-cole$morphotype <- as.character(cole$morphotype)
-
-aran_size <- tapply(aran$length, aran$morphotype, mean)
-mant_size <- tapply(mant$length, mant$morphotype, mean)
-homo_size <- tapply(homo$length, homo$morphotype, mean)
-hemi_size <- tapply(hemi$length, hemi$morphotype, mean)
-cole_size <- tapply(cole$length, cole$morphotype, mean)
-
-# T0 estimate the body size use equations on the individuals!
-mant_ind <- insects[insects$group == "mant", ]
-extra_row <- mant_ind[1,]
-extra_row$Plot <- "w1g4p1"
-extra_row$Amount <- 0
-mant_ind <- rbind(mant_ind, extra_row)
-mant_ind[which(mant_ind$Plot == "wg3p6"),]$Plot <- "w1g3p6"
-mant_ind$Plot <- as.character(mant_ind$Plot)
-mant_ind$bio <- 0
-mant_bio <- exp(-6.34)*mant_size^3.01
-for (morph in names(mant_bio)){
-  mant_ind[mant_ind$Morphotype==morph,]$bio <- mant_bio[which(names(mant_bio) == morph)]
+# Size of an average individual
+size_dat$a <- 0
+size_dat$b <- 0
+for (grp in unique(allo_params$group)){
+  aval <- allo_params[allo_params$group == grp, ]$a
+  bval <- allo_params[allo_params$group == grp, ]$b
+  size_dat[size_dat$group == grp, ]$a <- aval 
+  size_dat[size_dat$group == grp, ]$b <- bval
 }
-# calculate biomass
-mant_ind$est_bio <- mant_ind$Amount * mant_ind$bio
 
-# Prepare the dataset with gardens and plots
-mant_plot <- tapply(mant_ind$est_bio,mant_ind$Plot,sum, na.rm=TRUE)
-mant_gard <- names(mant_plot)
-mant_data <- data.frame(code = mant_gard, bio = mant_plot)
-mant_data$block <- substr(mant_data$code, 3,4)
-mant_data <- cbind(mant_data, WNGtreat[-c(6),c(3,4)])
-mant_data[18,]$bio <- 0.01
+size_dat$bio <- exp(size_dat$a) * size_dat$size^size_dat$b
+# write.table(size_dat, "datasets/size_dat_bio.txt")
 
-# Logged values of total biomass
-mant_bio <- ggplot(mant_data, aes(x = TREATMENT, y=log(bio), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-mant_bio
+# Size distributions
+library(ggplot2)
+bio_dist <- ggplot(size_dat, aes(x = log(bio), fill=group))
+bio_dist + geom_histogram(binwidth=0.5)
 
 
+# Biomass based networks
 
-# # weevil addition 125 "destabilized" the community of arachnids the most
+# 3. Plant species names corrections ----
+
+examine <- function(plt){
+  #example plot
+  sdp <- plants[plants$CODE == plt,]
+  # see which plants are in the same 
+  sdi <- insects[insects$plot == plt, ]
+  sdp$SP_CODE
+  unique(sdi$tree)
+  # sdp[, c("WEIGHT","SP_CODE")]
+  bool <- sum(unique(sdp$SP_CODE) %in% unique(sdi$tree)) == length(unique(sdi$tree))
+  return(list(bool, sdp$SP_CODE, unique(sdi$tree)))
+}
+
+pcodes <- unique(plants$CODE)
+
+plotnames <- c()
+for(int in 1:length(pcodes)){
+  ee <- examine(as.character(pcodes[int]))
+  print(as.character(pcodes[int]))
+  print(ee[[1]])
+  if (ee[[1]] == FALSE){plotnames <- c(plotnames, as.character(pcodes[int]))}
+}
+
+# Names of plots where insect tree labels dont match ones from the plant dataset
+plotnames
+
+# w1g1p1
+# what could this be?
+examine("w1g1p1")
+# insects[(insects$tree == "solatu" & insects$plot == "w1g1p1"), ]$tree # <- "melamu" 
+# it has to be melamu the most abundant on the plot
+insects[(insects$tree == "trems1" & insects$plot == "w1g1p1"), ]$tree  <- "tremor" 
+#RESOLVED
+
+# w1g1p2
+# insects[insects$tree == "mimodi", ] #this doesn't appear in the plant dataset
+# plants[plants$CODE == "w1g1p2", ]
+# unique(plants$SPEC)
 # 
+# # Check if there are othher plots with this plant
+# plants[plants$SP_CODE == "breyce", ]
+# insects[insects$tree == "breyce", ]
+# insects[insects$tree == "tricpl", ]
 
-# Araneae biomass
-aran_ind <- insects[insects$group == "aran", ]
-aran_ind$Plot <- as.character(aran_ind$Plot)
-aran_ind$bio <- 0
-aran_bio <- exp(-2.13)*aran_size^2.23
-for (morph in names(aran_bio)){
-  aran_ind[aran_ind$Morphotype==morph,]$bio <- aran_bio[which(names(aran_bio) == morph)]
-}
+# mimodi is either breyce or tricpl, I can also remove insects and the plant,
+# or i can assign these insects to a second most abundant species which is 
+# tricpl (I will assign to tricpl)
+examine("w1g1p2")
+insects[(insects$tree == "mimodi" & insects$plot == "w1g1p2"), ]$tree <- "tricpl"
+insects[(insects$tree == "trems1" & insects$plot == "w1g1p2"), ]$tree <- "tremor"
+# RESOLVED
 
-# calculate biomass
-aran_ind$est_bio <- aran_ind$Amount * aran_ind$bio
+# w1g1p3
+examine("w1g1p3")
+insects[(insects$tree == "trems1" & insects$plot == "w1g1p3"), ]$tree <- "tremor"
+# RESOLVED
 
-# Prepare the dataset with gardens and plots
-aran_plot <- tapply(aran_ind$est_bio,aran_ind$Plot,sum, na.rm=TRUE)
-aran_gard <- names(aran_plot)
-aran_data <- data.frame(code = aran_gard, bio = aran_plot)
-aran_data$block <- substr(aran_data$code, 3,4)
-aran_data <- cbind(aran_data, WNGtreat[-6,c(3,4)])
+# "w1g1p4"
+examine("w1g1p4")
+insects[(insects$tree == "trems1" & insects$plot == "w1g1p4"),  ]$tree <- "tremor"
+# RESOLVED
 
-# Logged values of total biomass
-aran_bio <- ggplot(aran_data, aes(x = TREATMENT, y=log(bio), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-aran_bio
+# "w1g1p5" 
+examine("w1g1p5")[[3]][!(examine("w1g1p5")[[3]] %in% examine("w1g1p5")[[2]])]
+insects[(insects$tree == "trems1" & insects$plot == "w1g1p5"),  ]$tree <- "tremor"
+# RESOLVED
 
+# "w1g3p2" 
+cd <- "w1g3p2"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+plants[plants$CODE == cd, ]
+insects[insects$plot == cd, ]
+insects[(insects$tree == "ficuco" & insects$plot == cd),  ]$tree <- "ficucp"
+# RESOLVED
 
+# "w1g3p3" 
+cd <- "w1g3p3"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "ficuco" & insects$plot == cd),  ]$tree <- "ficucp"
+# RESOLVED
 
-# weevil addition 125 destabilized the community of arachnids the most
+# "w1g3p4" 
+cd <- "w1g3p4"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "ficucg" & insects$plot == cd),  ]$tree <- "ficuco"
+# RESOLVED
 
-# Investigate the zero values 
-# No mantoids in w1g4p1 plot biomass value is 0,replaced with 0.01
+# "w1g3p6"
+cd <- "w1g3p6"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "ficuco" & insects$plot == cd),  ]$tree <- "ficupa"
+# RESOLVED
 
-predator <- cbind(mant_data, aran_data$bio)
-predator$sum <- predator$bio+predator$'aran_data$bio'
+# "w1g4p6"
+cd <- "w1g4p6"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects <- insects[!(insects$tree == "karipa"),  ]
+# RESOLVED
 
-pred_bio <- ggplot(predator, aes(x = TREATMENT, y=log(sum), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-pred_bio
+# "w1g5p2" 
+cd <- "w1g5p2"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "solatu" & insects$plot == cd),  ]$tree <- "solas1"
+insects[(insects$tree == "trems1" & insects$plot == cd),  ]$tree <- "tremor"
+# RESOLVED
 
+# "w1g5p3"
+cd <- "w1g5p3"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "premob" & insects$plot == cd),  ]$tree <- "prems1"
+# RESOLVED
 
-# Herbivores
-# Homopterans biomass
-homo_ind <- insects[insects$group == "homo", ]
-homo_ind$Plot <- as.character(homo_ind$Plot)
-homo_ind$bio <- 0
-homo_bio <- exp(-3.1984)*homo_size^2.3487 #b0=-3.1984(0.1174);b1=2.3487(0.0779)
-for (morph in names(homo_bio)){
-  homo_ind[homo_ind$Morphotype==morph,]$bio <- homo_bio[which(names(homo_bio) == morph)]
-}
+# "w1g5p5" 
+cd <- "w1g5p5"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "ficucg" & insects$plot == cd),  ]$tree <- "ficuco"
+# RESOLVED
 
-# calculate biomass
-homo_ind$est_bio <- homo_ind$Amount * homo_ind$bio
+# "w1g2p2"
+cd <- "w1g2p2"
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+plants[plants$CODE == cd, ]
+plants[plants$SP_CODE == "viteco",]
+insects[insects$plot == cd, ]
+# Figure out where these plants are
+# plants[plants$SP_CODE ==  "viteco", ]$CODE # ok... there is only one place w1g2p6 
+# plants[plants$SP_CODE ==  "macata", ]$CODE 
+# # it is everywhere :/ but within the same garden it would be in w1g2p6
+# 
+# plants[plants$SP_CODE ==  "melamu", ]$CODE # might go there? -> w1g2p6
+insects[(insects$tree %in% c("macata","viteco","melamu") & insects$plot == cd),  ]$plot <- "w1g2p6"
+cd <- "w1g2p6"
+examine(cd)
+# RESOLVED
 
-# Prepare the dataset with gardens and plots
-homo_plot <- tapply(homo_ind$est_bio,homo_ind$Plot,sum, na.rm=TRUE)
-homo_gard <- names(homo_plot)
-homo_data <- data.frame(code = homo_gard, bio = homo_plot)
-homo_data$block <- substr(homo_data$code, 3,4)
-homo_data <- cbind(homo_data, 
-                   WNGtreat[rownames(WNGtreat) %in% toupper(gsub("w1","w",
-                                                                 homo_data$code)),
-                            c(3,4)])
+# "w1g6p4"
+cd <- "w1g6p4"
+examine(cd)
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+# how big of a deal is it?
+insects <- insects[!(insects$tree %in% c("breyce", "piptar") & insects$plot == cd),  ] #only few ind
+# I could remove it
+# ??? breyce piptar
+# RESOLVED
 
-# Logged values of total biomass
-homo_bio <- ggplot(homo_data, aes(x = TREATMENT, y=log(bio), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-homo_bio
-
-
-
-# Hemiptera
-hemi_ind <- insects[insects$group == "hemi", ]
-hemi_ind$Plot <- as.character(hemi_ind$Plot)
-hemi_ind$Morphotype <- as.character(hemi_ind$Morphotype)
-hemi_ind[hemi_ind$Morphotype == "hemi29",]$Morphotype <- "hemi029" 
-hemi_ind$bio <- 0
-hemi_bio <- exp(-3.01)*hemi_size^2.59 #-3.01(0.17);b=2.59(0.09)
-for (morph in names(hemi_bio)){
-  if(dim(hemi_ind[hemi_ind$Morphotype == morph,])[1] != 0){
-    hemi_ind[hemi_ind$Morphotype==morph,]$bio <- hemi_bio[which(names(hemi_bio) == morph)]
-    print("done")
-  }
-}
-
-# calculate biomass
-hemi_ind$est_bio <- hemi_ind$Amount * hemi_ind$bio
-
-# Prepare the dataset with gardens and plots
-hemi_plot <- tapply(hemi_ind$est_bio,hemi_ind$Plot,sum, na.rm=TRUE)
-hemi_gard <- names(hemi_plot)
-hemi_data <- data.frame(code = hemi_gard, bio = hemi_plot)
-hemi_data$block <- substr(hemi_data$code, 3,4)
-hemi_data <- cbind(hemi_data, 
-                   WNGtreat[rownames(WNGtreat) %in% toupper(gsub("w1","w",
-                                                                 hemi_data$code)),
-                            c(3,4)])
-
-# Logged values of total biomass
-hemi_bio <- ggplot(hemi_data, aes(x = TREATMENT, y=log(bio), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-hemi_bio
-
-summary(lmer(log(bio)~TREATMENT+(1|block),data=hemi_data))
-
-#################### Coleoptera ##########################################
-# Coleoptera
-cole_ind <- insects[insects$group == "cole", ]
-cole_ind$Plot <- as.character(cole_ind$Plot)
-cole_ind$Morphotype <- as.character(cole_ind$Morphotype)
-cole_ind$bio <- 0
-cole_bio <- exp(-3.2)*cole_size^2.56 #a=-3.2(0.14); b=2.56(0.08)
-for (morph in names(cole_bio)){
-  if(dim(cole_ind[cole_ind$Morphotype == morph,])[1] != 0){
-    cole_ind[cole_ind$Morphotype==morph,]$bio <- cole_bio[which(names(cole_bio) == morph)]
-    print("done")
-  }
-}
-
-# calculate biomass
-cole_ind$est_bio <- cole_ind$Amount * cole_ind$bio
-
-# Prepare the dataset with gardens and plots
-cole_plot <- tapply(cole_ind$Amount,cole_ind$Plot,sum, na.rm=TRUE)
-cole_gard <- names(cole_plot)
-cole_data <- data.frame(code = cole_gard, bio = cole_plot)
-cole_data$block <- substr(cole_data$code, 3,4)
-cole_data <- cbind(cole_data, 
-                   WNGtreat[rownames(WNGtreat) %in% toupper(gsub("w1","w",
-                                                                 cole_data$code)),
-                            c(3,4)])
-
-# Logged values of total biomass
-cole_bio <- ggplot(cole_data, aes(x = TREATMENT, y=bio, group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-cole_bio
-
-summary(lmer(log(bio)~TREATMENT+(1|block),data=cole_data))
+# "w1g2p3" 
+cd <- "w1g2p3"
+examine(cd)[[3]][!(examine(cd)[[3]] %in% examine(cd)[[2]])]
+insects[(insects$tree == "trems1" & insects$plot == cd),  ]$tree <- "tremor"
+plants[plants$CODE == cd, ]
+insects[insects$plot == cd, ]
+insects[(insects$tree %in% c("cordte") & insects$plot == cd),  ]
+# definietly remove
+insects <- insects[!(insects$tree == "cordte" & insects$plot == cd),  ]
+# ??? cordte
+# RESOLVED
 
 
+write.table(insects, "datasets/arthropods_clean.txt")
+write.table(treats,  "datasets/treatments_clean.txt")
+write.table(plants,  "datasets/plants_clean.txt")
+write.table(sizes,   "datasets/sizes_clean.txt")
 
-##########################################################################
+
+# 4. Biomass for plants at each plot ----
 
 
-# Cumulative (need to oknow which are zeros and which are missing. Seems like only g1p6 is missing)
-# g2p6 and g6p6 exist, missing is g1p6 
-dim(hemi_data)
-dim(homo_data)
-
-hemi_data$code <- as.character(hemi_data$code)
-homo_data$code <- as.character(homo_data$code)
-
-herbivores <- vector()
-for(row in 1:dim(hemi_data)[1]){
-  plot <- hemi_data[row,]$code
-  print(plot)
-  he <- as.numeric(hemi_data[hemi_data==plot,]$bio)
-  ho <- as.numeric(homo_data[homo_data==plot,]$bio)
-  print(c(he,ho))
-  print(he+ho)
-  if(dim(as.matrix(ho))[1] == 0){
-    herbivores <- c(herbivores, he)
-  }
-  herbivores <- c(herbivores, (he+ho))
-}
-
-hemi_data$cumulative <- herbivores
-herb_bio <- ggplot(hemi_data, aes(x = TREATMENT, y=log(cumulative), group=block))+
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-herb_bio
-summary(lmer(log(cumulative)~TREATMENT+(1|block),data=hemi_data))
-
-par(mfrow=c(1,1))
-
-#windows(800,600)
-#pdf("insects.pdf", height = 800,width=800)
-require(cowplot)
-plot_grid(aran_bio, mant_bio,
-          pred_bio, hemi_bio,
-          homo_bio,herb_bio,
-          labels = c('Arachnids', 'Mantoids',
-                     'All predators','Hemipterans',
-                     'Homopterans','All herbivores'),las=2)
-#dev.off()
-predator$bio <- predator$sum
-pred_data <- predator[,1:5]
-herb_data <- hemi_data
-herb_data$bio <- herbivores
-
-herb_ggplot <- rbind(aran_data,mant_data,pred_data,
-                     hemi_data[1:5],homo_data,herb_data[1:5])
-herb_ggplot$plot <- rep(c("Aranea","Mantoidea",
-                          "Predators","Hemiptera",
-                          "Homoptera","Herbivores"), 
-                        c(dim(aran_data)[1],dim(mant_data)[1],dim(pred_data)[1],
-                          dim(hemi_data[1:5])[1],dim(homo_data)[1],dim(herb_data[1:5])[1]))
-
-p <- ggplot(herb_ggplot, aes(x = TREATMENT, y = log(bio), group=block)) + 
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-p + facet_wrap(~plot, scales="free", drop=TRUE) +
-  theme_bw() + 
-  theme(axis.text.x=element_text(angle=90, hjust=1))
-
-# Something is not ok in the garden 6 control plot. There are only some
-# hemipterans there, not... i dont know... seems unprobable...
-#herb_ggplot[herb_ggplot$plot == "Herbivores" & herb_ggplot$TREATMENT == "CONTROL",]
-herb_ggplot <- herb_ggplot[!(herb_ggplot$plot == "Herbivores" & herb_ggplot$TREATMENT == "CONTROL"), ]
-
-# Test for herbivores and predators (trophic levels)
-Herb <- herb_ggplot[herb_ggplot$plot == "Herbivores",]
-
-herb_plot <- ggplot(Herb, aes(x = TREATMENT, y = log(bio), group=block)) + 
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-herb_plot
-
-lmer_herb <- lmer(log(bio)~TREATMENT + (1|block), data=Herb)
-summary(lmer_herb)
-
-Pred <- herb_ggplot[herb_ggplot$plot == "Predators",]
-
-pred_plot <- ggplot(Pred, aes(x = TREATMENT, y = log(bio), group=block)) + 
-  geom_line(aes(linetype = block), size = 0.5, alpha=0.5)+
-  geom_jitter(width = 0.1, size=1.5)
-pred_plot
-
-lmer_pred <- lmer(log(bio)~TREATMENT + (1|block), data=Pred)
-summary(lmer_pred)
-
-kable(summary(lmer(log(bio)~TREATMENT+(1|block),data=aran_data))$coef)
-summary(lmer(log(bio)~TREATMENT+(1|block),data=mant_data))
-summary(lmer(log(sum)~TREATMENT+(1|block),data=predator))
-summary(lmer(log(bio)~TREATMENT+(1|block),data=homo_data))
-summary(lmer(log(bio)~TREATMENT+(1|block),data=hemi_data))
-summary(lmer(log(cumulative)~TREATMENT+(1|block),data=hemi_data))
-
-plot(lmer(log(bio)~TREATMENT+(1|block),data=mant_data))
-plot(lmer(log(sum)~TREATMENT+(1|block),data=predator))
-plot(lmer(log(bio)~TREATMENT+(1|block),data=homo_data))
-plot(lmer(log(bio)~TREATMENT+(1|block),data=hemi_data))
-plot(lmer(log(cumulative)~TREATMENT+(1|block),data=hemi_data))
-
-# Is low herbivore load correlated with descriptors of plants?
-bio_data <- fig1data[fig1data$TYPE == "Biomass",]
-
-dim(herb_data)
-x <- herb_data$bio
-
-how <- order(bio_data$PLOT_CODE)
-bio_data <- bio_data[how,]
-
-dim(bio_data[-6,])
-y <- bio_data[-6,]$VALUE
-
-plot(log(herb_data$bio)~bio_data[-6,]$VALUE)
-abline(lm(log(herb_data$bio)~bio_data[-6,]$VALUE))
-summary(lm(log(herb_data$bio)~bio_data[-6,]$VALUE))
-
-multi <- data.frame("herb" = log(herb_data$bio),
-                    "bio" = bio_data[-6,]$VALUE)
-multi$treat <- herb_data$TREATMENT
-multi$gard <- herb_data$block
-
-multi_reg <- ggplot(multi, aes(x =bio, y = herb, col=treat))
-multi_reg + geom_point() + geom_smooth(aes(x = bio,y = herb, col=treat), 
-                               method=lm, se=F)
-glm_herb <- glm(herb~bio*treat, data=multi)
-summary(glm_herb)

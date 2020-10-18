@@ -1,5 +1,4 @@
 # Network descriptors ----
-
 rm(list=ls())
 
 insects <- read.table("datasets/arthropods_clean.txt")
@@ -13,6 +12,9 @@ library(lmerTest)
 library(emmeans)
 library(multcomp)
 library(glmmTMB)
+library(ggplot2)
+
+# Modularity sourcer code
 # source("code/bio_log_ratio.R")
 source("code/data_processing_code.R")
 source("code/contingencyTable.R")
@@ -21,22 +23,23 @@ source("code/weighted-modularity-LPAwbPLUS/code/R/MODULARPLOT.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/convert2moduleWeb.R")
 source("code/weighted-modularity-LPAwbPLUS/code/R/GetModularInformation.R")
 
+# Save original list of networks
 gardnetsorrig <- gardnets
 # gardnets - networks in individual plots
 # biofulldf biomass of all insects and trees
 
-# Is it possible to study average number of plants per herbivore species using raw data?
-# That could be done for arthropod species present in both predator and control plots. That would be problematic if there are differences in plant communities between blocks
-
-# Remove intermediate predators from the networks
-gardnets <- gardnetsorrig
+# Switch datasets
+# gardnets <- gardnetsorrig
 gardnets <- abugardnets # abundance based networks
-# garden <- "w1g2p4"
+
+
+# Dont run this - it will be taken care of later
+# Remove intermediate predators from the networks
 # for(garden in names(gardnets)){
 #   subnet <- as.matrix(gardnets[[garden]])
 #   colstorem <- grep(c("mant|aran"),colnames(subnet))
 #   cnms <- colnames(subnet)[!(1:dim(subnet)[2] %in% colstorem)]
-#   
+# 
 #   if(length(colstorem) == 0){
 #     subnet <- subnet
 #   } else {subnet <- (as.matrix(subnet[,cnms]))}
@@ -47,34 +50,6 @@ gardnets <- abugardnets # abundance based networks
 # gardnets[["w1g2p4"]] <- t(gardnets[["w1g2p4"]])
 
 # Remove cole001 from sampled networks! This should be done in order to alalyse effect of weevils on the REST of the community! It might be bad idea to do this if cole001 is some kind of key species in the network
-
-# *************************************************************
-
-## Function "cnpc": cross-network partner constancy
-## "x" must be a table giving the interactions of one species (e.g. herbivore) with species of 
-## another trophic level (partners; e.g. plants) in different networks (e.g. locations for networks replicated in space).
-## Partner species must be provided as rows and networks (e.g. locations) as columns. Cell values are interaction strengths. 
-## "nbQdtPtnr" is a vector giving the number of networks occupied by each partner (e.g. plant) species. 
-
-cnpc <- function(x, nbQdtPtnr){
-  if (any(is.na(match(rownames(x), names(nbQdtPtnr)))))
-    stop("rownames(x) must match names(nbQdtPtnr)")
-  x2     <- x[rowSums(x)>0,, drop=FALSE]   ## remove empty rows (unused partners)
-  x2bin  <- x2
-  x2bin[x2bin>0]  <- 1       ## create binary table
-  
-  prop_usedmin <- 1/nbQdtPtnr[rownames(x2)]         #minimum possible use (or occupancy) of partners across networks 
-  prop_usedmax <- nbQdtPtnr[rownames(x2)]/nbQdtPtnr[rownames(x2)]  #maximum possible use of partners across networks 
-  prop_used <- rowSums(x2bin)/nbQdtPtnr[rownames(x2)]        #observed use of partners across networks 
-  prop_usednorm <- (prop_used-prop_usedmin)/(prop_usedmax-prop_usedmin)  #normalised prop_used
-  
-  cnpc <- weighted.mean(prop_usednorm, w = rowSums(x2))    #mean of prop_usednorm, weighted with interaction strengths (row margins)
-  #cnpc = cross-network partner constancy
-  return(cnpc)
-}  
-
-# *************************************************************
-
 treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
 treats_to_remove_cole <- as.character(unique(treats$treat)[c(2,3,4,5)])
 treats_to_remove_cole <- treats_to_plot
@@ -82,6 +57,7 @@ sites_to_remove_cole <- treats[treats$treat %in% treats_to_remove_cole, ]$codes
 strc <- as.character(sites_to_remove_cole)
 gardnets_nocole <- gardnets
 
+# Removing cole001 from all networks
 for (net in names(gardnets_nocole)){
   if(net %in% strc){
     subnet <- gardnets_nocole[[net]]
@@ -94,13 +70,95 @@ gardnets[["w1g2p4"]] <- t(gardnets[["w1g2p4"]])
 gardnets <- gardnets[names(gardnets) != "w1g1p6"]
 gardnets <- gardnets[names(gardnets) != "w1g2p5"]
 
-# Simple vulnerability and generality patterns in networks ----
+# Dataset with descriptors ----
 gnames <- as.character(treats$codes)
+
+
+# See which network has only one plant species and whether randomization would work on them
+# for(grd in names(gardnets)){
+#   print(grd)
+#   print(dim(gardnets[[grd]]))
+# }
+# 
+# vaznull(10, gardnets[["w1g2p4"]])
+# One line netwrok can also be randomized
+
+randomizations <- 10
 genvuldf <- data.frame()
-for(gname in gnames){
+
+# gname <- "w1g2p3"
+gname <- names(gardnets)[[2]]
+
+# CALCULATE ----
+for(gname in names(gardnets)){
+  
   print(gname)
   
+  # Create a list of randomized networks
   MAT <- gardnets[[gname]]
+  
+  # Randomization!
+  RandMAT <- vaznull(randomizations, MAT)
+  
+  randomAverageData <- data.frame()
+
+  # Calculate indices for randomized networks
+  for(net in 1:length(RandMAT)){
+    rMAT <- RandMAT[[net]]
+
+    # rownames(rMAT) <- rownames(MAT)
+    colnames(rMAT) <- colnames(MAT)
+
+    rMAT_noip <- rMAT[,-grep(c("mant|aran"),
+                             colnames(rMAT))]
+
+    tt <- tryCatch(networklevel(rMAT,
+                                index = "vulnerability"),
+                   error=function(e) e,
+                   warning=function(w) w)
+    ifelse(is(tt,"warning"),
+           next,
+           print(net))
+
+    if(is.null(gardnets[[gname]])){
+      next
+    }
+
+    nlres <- networklevel(rMAT_noip, index = "vulnerability")
+    pdi <- mean(PDI(rMAT_noip, normalise = F, log=T))
+    con <-  networklevel(rMAT_noip, index = "connectance")
+
+    # Randomized
+    mod1 = DIRT_LPA_wb_plus(rMAT_noip)
+    MODinformation = GetModularInformation(rMAT_noip,mod1)
+    mod = MODinformation$normalised_modularity
+
+    ispp = ncol(rMAT[, substr(colnames(rMAT),
+                              1,
+                              4) %in% c("aran",
+                                        "mant")])
+    isph = ncol(rMAT) - ispp
+
+    ntd = networklevel(rMAT_noip, index = "nestedness")
+    asym = networklevel(rMAT_noip, index = "web asymmetry")
+
+    rsubgvdf <- data.frame(plot = gname,
+                          gen = nlres[1],
+                          vul = nlres[2],
+                          pdi = pdi,
+                          con = con,
+                          mod = mod,
+                          isph=isph,
+                          ispp = ispp,
+                          nestedness = ntd,
+                          asym = asym)
+    randomAverageData <- rbind(randomAverageData, rsubgvdf)
+
+  }
+
+  rAD <- apply(randomAverageData[, -1],
+                             2,
+                             mean)
   
   # Remove ips
   MAT_noip <- MAT[,-grep(c("mant|aran"),colnames(MAT))]
@@ -119,26 +177,82 @@ for(gname in gnames){
   
   mod1 = DIRT_LPA_wb_plus(MAT_noip)
   MODinformation = GetModularInformation(MAT_noip,mod1)
-  mod = MODinformation$realized_modularity
+  mod = MODinformation$normalised_modularity
+  
   # https://royalsocietypublishing.org/doi/full/10.1098/rsos.140536
   # 1 when all links exists between modules
+  
   ispp = ncol(MAT[, substr(colnames(MAT),1,4) %in% c("aran", "mant")])
   isph = ncol(MAT) - ispp
-  ntd = networklevel(MAT_noip, index = "nestedness")
   
-  subgvdf <- data.frame(plot = gname, gen = nlres[1], vul = nlres[2], 
-                        pdi = pdi, con = con, mod = mod, isph=isph,
-                        ispp = ispp, nestedness = ntd)
+  ntd = networklevel(MAT_noip, index = "nestedness")
+  asym = networklevel(MAT_noip, index = "web asymmetry")
+  
+  
+  subgvdf <- data.frame(plot = gname, 
+                        gen = nlres[1],
+                        vul = nlres[2], 
+                        pdi = pdi, 
+                        con = con, 
+                        mod = mod, 
+                        isph=isph,
+                        ispp = ispp, 
+                        nestedness = ntd,
+                        asym = asym, # here
+                        rgen = rAD[1],
+                        rvul = rAD[2], 
+                        rpdi = rAD[3], 
+                        rcon = rAD[4], 
+                        rmod = rAD[5], 
+                        risph= rAD[6],
+                        rispp =rAD[7], 
+                        rnestedness = rAD[8],
+                        rasym = rAD[9])
   genvuldf <- rbind(genvuldf, subgvdf)
 }
+
+#### ------
 
 rownames(treats) <- treats$codes
 genvuldf$trt <- treats[as.character(genvuldf$plot),
                        ]$treat
 genvuldf$block <- substr(genvuldf$plot, 3,4)
 
+genvuldf$rmod_val <- with(genvuldf, {
+  (mod - rmod)/rmod
+})
+genvuldf$rpdi_val <- with(genvuldf, {
+  (pdi - rpdi)/rpdi
+})
+
+genvuldf$mod 
+
+genvuldf$rmod 
+
+# Network size and PDI index ----
+nsizedf <- data.frame()
+for (plt in genvuldf$plot){
+  subnet <- gardnets[[plt]]
+  subnet <- subnet[,-grep(c("mant|aran"),
+                          colnames(subnet))]
+  nsizerow <- data.frame(plants = dim(subnet)[1],
+                         invert = dim(subnet)[2],
+                         pdi = genvuldf[genvuldf$plot == plt, ]$pdi,
+                         treatment = treats[treats$codes == plt, ]$treat )
+  nsizedf <- rbind(nsizedf, nsizerow)
+}
+
+ggplot(nsizedf, aes(x = pdi, y = plants, color = treatment))+
+  geom_point() + 
+  geom_smooth(method="lm")
+
+lm1 <- lm(pdi~plants*treatment, data = nsizedf)
+summary(lm1)
+# PDI doesnt seem to be dependent on the network size
+
+# PLots ----
 # But generality would also change if the number of plant at the plot is smaller!
-library(ggplot2)
+
 
 gen <- genvuldf[,c("plot","gen","trt","block")]
 vul <- genvuldf[,c("plot","vul","trt","block")]

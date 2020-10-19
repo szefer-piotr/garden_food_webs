@@ -248,6 +248,10 @@ ggplot(nsizedf, aes(x = pdi, y = plants, color = treatment))+
 
 lm1 <- lm(pdi~plants*treatment, data = nsizedf)
 summary(lm1)
+lm1 <- lm(pdi~plants, data = nsizedf[nsizedf$treatment == "INSECTICIDE",])
+summary(lm1)
+
+
 # PDI doesnt seem to be dependent on the network size
 
 # PLots ----

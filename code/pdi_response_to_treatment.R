@@ -8,6 +8,8 @@ library(emmeans)
 library(multcomp)
 library(vegan)
 library(bipartite)
+library(lme4)
+library(lmerTest)
 
 
 # gardnets 
@@ -124,22 +126,44 @@ cond1 <- pdi_change_nozero$abu_cont >= 5
 cond2 <- pdi_change_nozero$abu_tret >= 5
 pdi_filtered <- pdi_change_nozero[cond1 & cond2, ]
 
-ggplot(pdi_filtered , aes(x=trt, y = vals, group = species))+
-  geom_jitter(width = 0.1, size = sqrt(abu))+
-  geom_line(lty = 2, lwd=0.1)+
+pdi_filtered$sp_gard <- paste(pdi_filtered$species, pdi_filtered$garden, sep = "_")
+
+# There is some relationship between plant sp richness in C vs I comparison.
+ggplot(pdi_filtered , aes(x=trt, y = vals, 
+                          group = sp_gard, 
+                          colour = sp_gard))+
+  geom_jitter(width = 0.1, 
+              size = log(pdi_filtered$abu), 
+              alpha = 0.4)+
+  geom_line(lty = 2, lwd=0.5,
+            alpha = 0.4)+
   facet_wrap(~comp, scales = "free")+
   ylab("Paired Distance Index (specialization")+
   xlab("Treatment")
 
+# These lines are not representing real trend for species, which were observed accross multile gardens. Line then simply joins them into vertical line before moving accross to the other treatment.
+
+pdi_filtered$fam <- substr(pdi_filtered$species,1,4)
+
+# I think I need to break this dataset into families manually.
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[1], ]
 summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat))
+
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[2], ]
 summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~1 + fam + (1|garden), data=mod_dat)) # ORDERS!!!
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[3], ]
 mod_dat <- mod_dat[is.finite(mod_dat$dupl_lr), ]
 summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat)) # Not different
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[4], ]
-summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Marginally significant...
+summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat)) # Families not different
+
+hist(mod_dat$dupl_lr)
+
+

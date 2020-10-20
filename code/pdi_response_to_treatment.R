@@ -127,15 +127,16 @@ cond2 <- pdi_change_nozero$abu_tret >= 5
 pdi_filtered <- pdi_change_nozero[cond1 & cond2, ]
 
 pdi_filtered$sp_gard <- paste(pdi_filtered$species, pdi_filtered$garden, sep = "_")
+pdi_filtered$fam <- substr(pdi_filtered$species,1,4)
 
 # There is some relationship between plant sp richness in C vs I comparison.
 ggplot(pdi_filtered , aes(x=trt, y = vals, 
                           group = sp_gard, 
-                          colour = sp_gard))+
-  geom_jitter(width = 0.1, 
+                          colour = fam))+
+  geom_jitter(width = 0.05, 
               size = log(pdi_filtered$abu), 
               alpha = 0.4)+
-  geom_line(lty = 2, lwd=0.5,
+  geom_line(lty = 2, lwd=0.9,
             alpha = 0.4)+
   facet_wrap(~comp, scales = "free")+
   ylab("Paired Distance Index (specialization")+
@@ -143,26 +144,27 @@ ggplot(pdi_filtered , aes(x=trt, y = vals,
 
 # These lines are not representing real trend for species, which were observed accross multile gardens. Line then simply joins them into vertical line before moving accross to the other treatment.
 
-pdi_filtered$fam <- substr(pdi_filtered$species,1,4)
-
 # I think I need to break this dataset into families manually.
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[1], ]
-summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
-summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat))
+# summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~0+fam+(1|garden), data=mod_dat)) # Not different  from zero
 
+# Break tests into families to help understand these results
+mdf <- mod_dat[mod_dat$fam == "cole", ]
+summary(lmer(dupl_lr~1+(1|garden), data=mdf))
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[2], ]
-summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
-summary(lmer(dupl_lr~1 + fam + (1|garden), data=mod_dat)) # ORDERS!!!
+# summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~ 0 + fam + (1|garden), data=mod_dat)) # Lepidoptera and orthoptera marginally
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[3], ]
 mod_dat <- mod_dat[is.finite(mod_dat$dupl_lr), ]
-summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
-summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat)) # Not different
+# summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~0+fam+(1|garden), data=mod_dat)) # Not different
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[4], ]
 summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Marginally significant...
-summary(lmer(dupl_lr~1+fam+(1|garden), data=mod_dat)) # Families not different
+summary(lmer(dupl_lr~0+fam+(1|garden), data=mod_dat)) # orthoptera and marginally: cole, hemi, homo.
 
 hist(mod_dat$dupl_lr)
 

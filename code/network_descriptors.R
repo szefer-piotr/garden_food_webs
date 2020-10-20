@@ -315,6 +315,11 @@ logit <- function(x){log(x/(1-x))}
 
 clippedpd <- plotdat[plotdat$trt %in% treats_to_plot,]
 
+sigcol <- rgb(255,0,0,150,maxColorValue = 255)
+nsigcol <- rgb(211,211,211,150,maxColorValue = 255)
+
+clippedpd$colors <- nsigcol
+
 # 1. Connectance - significant somewhat----
 condat <- desStatMod(clippedpd, "Connectance")
 condat$trt <- factor(condat$trt, 
@@ -326,34 +331,35 @@ condat$trt <- factor(condat$trt,
 # conlmer1 <- lmer(logit(ind)~trt+(1|block), condat)
 # conlme1 <- nlme::lme(logit(ind)~trt, random = ~1|block, condat)
 # summary(conlme1)
+
 # Beta distribution
 brrand <- glmmTMB(ind ~ trt + (1|block), data = condat, 
                   family= beta_family(link = "logit"))
-summary(brrand)
+sbrand <- summary(brrand)
 
-inter.test <- emmeans(conlme1, "trt")
-pairwise <- cld(inter.test, Letter="abcdefghijklm")
-plot(logit(ind)~trt,condat)
-# gam
-gradvec <- c(1,2,3,4,5)
-names(gradvec) <- treats_to_plot
-condat$graddat <- gradvec[as.character(condat$trt)]
+# Do it manually
+cond1 <- clippedpd$trt %in% c("WEEVIL25","WEEVIL125")
+cond2 <- clippedpd$type %in% "Connectance"
+clippedpd[cond1 & cond2,]$colors <- sigcol
 
-brrandgrad <- glmmTMB(ind ~ graddat + (1|block), data = condat, 
-                  family= beta_family(link = "logit"))
-summary(brrandgrad)
-
-library(mgcv)
-gam1 <- gam(ind~s(graddat, k=5), data=condat)
-summary(gam1)
-plot(gam1,pages=1,residuals=TRUE)  ## show partial residuals
-plot(gam1,pages=1,seWithMean=TRUE) ## `with intercept' CIs
-## run some basic model checks, including checking
-# ## smoothing basis dimensions...
-gam.check(gam1)
-
-summary(lm(ind ~ poly(graddat, 3), data=condat))
-# linear fits better... 
+# Grradient significance
+# gradvec <- c(1,2,3,4,5)
+# names(gradvec) <- treats_to_plot
+# condat$graddat <- gradvec[as.character(condat$trt)]
+# 
+# brrandgrad <- glmmTMB(ind ~ graddat + (1|block), data = condat, 
+#                   family= beta_family(link = "logit"))
+# summary(brrandgrad)
+# library(mgcv)
+# gam1 <- gam(ind~s(graddat, k=5), data=condat)
+# summary(gam1)
+# plot(gam1,pages=1,residuals=TRUE)  ## show partial residuals
+# plot(gam1,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+# ## run some basic model checks, including checking
+# # ## smoothing basis dimensions...
+# gam.check(gam1)
+# summary(lm(ind ~ poly(graddat, 3), data=condat))
+# # linear fits better... 
 
 # 2. Generality - NOT SIGNIFICANT ----
 library(truncreg)
@@ -467,17 +473,36 @@ summary(vullmer)
 
 # Clipped plot ----
 
+plotdat_filtered <- plotdatrep(, 
+                    each=length(as.character(genvuldf$plot)))
+
 clippedpd$trt <- factor(clippedpd$trt, 
                         levels = treats_to_plot)
-p <- ggplot(clippedpd, aes(x = trt, y = ind))
+
+indices_to_plot <- c("Generality", "Vulnerability", "Specialization PDI", "Connectance", 
+                     "Modularity", "Nestedness")
+
+clippedpd_itp <- clippedpd[clippedpd$type %in% indices_to_plot, ]
+
+sigcolors <- rep(nsigcol, 
+                 length(indices_to_plot)*length(treats_to_plot))
+
+# Connectance sig
+sigcolors[2] <- "black"
+sigcolors[c(4,5)] <- sigcol
+
+p <- ggplot(clippedpd_itp, aes(x = trt, y = ind))
 p + stat_summary(fun.data=mean_cl_boot,
                  geom="pointrange", width=0.1,
-                 color = "red", lwd=1) +
-  stat_summary(fun.y=mean, geom="point", color="red", cex = 2) +
+                 color = sigcolors, lwd=1) +
+  stat_summary(fun.y=mean, 
+               geom="point", 
+               color=sigcolors, cex = 2) +
   geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) +
   theme_bw() +
   theme(axis.text.x=element_text(angle=0, size=5, hjust=0.5))+
-  facet_wrap(~type, scales="free")
+  facet_wrap(~type, scales="free")+
+  ylab("")+xlab("")
 
 # stat_summary(fun.data=mean_cl_boot,
 # geom="pointrange", color= colors, width=0.2, lwd=1.5) +
@@ -533,51 +558,52 @@ colnames(genvuldf)
 # anova(genlme, genlmesr)
 
 #  IP/herb ----
-gardnets
-for(gard in names(gardnets)){
-  print(dim(gardnets[[gard]]))
-}
-
-psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
-csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
-
-pihratio <- data.frame()
-for(gard in psites){
-  print(gard)
-  submat <- gardnets[[gard]]
-  ipcols <- grep("aran|mant", colnames(submat))
-  ipbio <- sum(colSums(submat[, ipcols]))
-  hbio <- sum(colSums(submat[, -ipcols]))
-  iphr <- ipbio/hbio
-  phrow <- data.frame(site = gard, 
-                       trt = "predator",
-                       iphr = iphr)
-  # sum(submat) == ipbio+hbio
-  pihratio <- rbind(pihratio, phrow)
-} 
-
-cihratio <- data.frame()
-for(gard in csites){
-  print(gard)
-  submat <- gardnets[[gard]]
-  ipcols <- grep("aran|mant", colnames(submat))
-  ipbio <- sum(colSums(submat[, ipcols]))
-  hbio <- sum(colSums(submat[, -ipcols]))
-  iphr <- ipbio/hbio
-  chrow <- data.frame(site = gard, 
-                      trt = "control",
-                      iphr = iphr)
-  # sum(submat) == ipbio+hbio
-  cihratio <- rbind(cihratio, chrow)
-} 
-
-iphratio <- rbind(cihratio,pihratio)
-iphratio$block <- substr(iphratio$site, 3, 4)
-library(ggplot2)
-# p <- ggplot(iphratio, aes(x =trt, y = log(iphr)))
-# p + geom_jitter()
-
-plot(log(iphr)~trt, iphratio)
-library(lme4)
-library(lmerTest)
-summary(lmer(log(iphr)~trt+(1|block), iphratio))
+# gardnets
+# for(gard in names(gardnets)){
+#   print(dim(gardnets[[gard]]))
+# }
+# 
+# psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
+# csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
+# 
+# pihratio <- data.frame()
+# for(gard in psites){
+#   print(gard)
+#   submat <- gardnets[[gard]]
+#   ipcols <- grep("aran|mant", colnames(submat))
+#   ipbio <- sum(colSums(submat[, ipcols]))
+#   hbio <- sum(colSums(submat[, -ipcols]))
+#   iphr <- ipbio/hbio
+#   phrow <- data.frame(site = gard, 
+#                        trt = "predator",
+#                        iphr = iphr)
+#   # sum(submat) == ipbio+hbio
+#   pihratio <- rbind(pihratio, phrow)
+# } 
+# 
+# cihratio <- data.frame()
+# for(gard in csites){
+#   print(gard)
+#   submat <- gardnets[[gard]]
+#   ipcols <- grep("aran|mant", colnames(submat))
+#   ipbio <- sum(colSums(submat[, ipcols]))
+#   hbio <- sum(colSums(submat[, -ipcols]))
+#   iphr <- ipbio/hbio
+#   chrow <- data.frame(site = gard, 
+#                       trt = "control",
+#                       iphr = iphr)
+#   # sum(submat) == ipbio+hbio
+#   cihratio <- rbind(cihratio, chrow)
+# } 
+# 
+# iphratio <- rbind(cihratio,pihratio)
+# iphratio$block <- substr(iphratio$site, 3, 4)
+# library(ggplot2)
+# # p <- ggplot(iphratio, aes(x =trt, y = log(iphr)))
+# # p + geom_jitter()
+# 
+# plot(log(iphr)~trt, iphratio)
+# library(lme4)
+# library(lmerTest)
+# summary(lmer(log(iphr)~trt+(1|block), iphratio))
+# 

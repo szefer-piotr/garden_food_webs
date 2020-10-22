@@ -13,6 +13,7 @@ library(emmeans)
 library(multcomp)
 library(glmmTMB)
 library(ggplot2)
+library(truncreg)
 
 # Modularity sourcer code
 # source("code/bio_log_ratio.R")
@@ -65,14 +66,15 @@ for (net in names(gardnets_nocole)){
   }
 }
 
+# What about aran|mant? - these are being handeled as they come in the loop below.
+
 gardnets <- gardnets_nocole
 gardnets[["w1g2p4"]] <- t(gardnets[["w1g2p4"]])
 gardnets <- gardnets[names(gardnets) != "w1g1p6"]
 gardnets <- gardnets[names(gardnets) != "w1g2p5"]
 
-# Dataset with descriptors ----
+# 1. Initiate dataset with descriptors ----
 gnames <- as.character(treats$codes)
-
 
 # See which network has only one plant species and whether randomization would work on them
 # for(grd in names(gardnets)){
@@ -83,13 +85,13 @@ gnames <- as.character(treats$codes)
 # vaznull(10, gardnets[["w1g2p4"]])
 # One line netwrok can also be randomized
 
-randomizations <- 10
+randomizations <- 3
 genvuldf <- data.frame()
 
 # gname <- "w1g2p3"
 gname <- names(gardnets)[[2]]
 
-# CALCULATE ----
+# *1.0 Run the loop ----
 for(gname in names(gardnets)){
   
   print(gname)
@@ -211,8 +213,6 @@ for(gname in names(gardnets)){
   genvuldf <- rbind(genvuldf, subgvdf)
 }
 
-#### ------
-
 rownames(treats) <- treats$codes
 genvuldf$trt <- treats[as.character(genvuldf$plot),
                        ]$treat
@@ -229,7 +229,7 @@ genvuldf$mod
 
 genvuldf$rmod 
 
-# Network size and PDI index ----
+# *1.1 Network size and PDI index ----
 nsizedf <- data.frame()
 for (plt in genvuldf$plot){
   subnet <- gardnets[[plt]]
@@ -254,7 +254,7 @@ summary(lm1)
 
 # PDI doesnt seem to be dependent on the network size
 
-# PLots ----
+# *1.2 Setup for plots ----
 # But generality would also change if the number of plant at the plot is smaller!
 
 
@@ -281,7 +281,7 @@ plotdat$type <- rep(c("Generality", "Vulnerability", "Specialization PDI", "Conn
 
 # clip ds to only C vs P comparison
 
-# Facet plot all descriptors ----
+# *1.3 Facet plot all descriptors ----
 # p <- ggplot(plotdat, aes(x = trt, y = ind))
 # p + stat_summary(fun.data=mean_cl_boot, 
 #                                 geom="pointrange", width=0.1, 
@@ -299,10 +299,12 @@ sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x
 
 plotdat$sr <- sr[plotdat$plot,]
 
-# Test for differences
+# 2. Test for differences ----
 
-# Filter data
+# 2.1 Filter data ----
+
 desStatMod <- function(data, descriptor){
+  # Creates a subset from data for a given descriptor
   print(descriptor)
   subdat <- data[data$type == descriptor, ]
   sublm <- lmer(ind ~ trt + (1|block), data=subdat)
@@ -310,34 +312,41 @@ desStatMod <- function(data, descriptor){
   return(subdat)
 }
 
-library(lmerTest)
+# Create a logit function
 logit <- function(x){log(x/(1-x))}
 
+# Filter only plots that I want to plot
 clippedpd <- plotdat[plotdat$trt %in% treats_to_plot,]
 
+# Assign colors for significant and non-significant differences
 sigcol <- rgb(255,0,0,150,maxColorValue = 255)
 nsigcol <- rgb(211,211,211,150,maxColorValue = 255)
 
+
+# For now its all the same:
 clippedpd$colors <- nsigcol
 
-# 1. Connectance - significant somewhat----
+# 2.2 Connectance - significant somewhat----
 condat <- desStatMod(clippedpd, "Connectance")
+
+# Relevel
 condat$trt <- factor(condat$trt, 
                      levels = c("CONTROL",
                                 "PREDATOR",
                                 "WEEVIL125",
                                 "WEEVIL25",
                                 "INSECTICIDE"))
+
 # conlmer1 <- lmer(logit(ind)~trt+(1|block), condat)
 # conlme1 <- nlme::lme(logit(ind)~trt, random = ~1|block, condat)
 # summary(conlme1)
 
-# Beta distribution
+# Use beta distribution
 brrand <- glmmTMB(ind ~ trt + (1|block), data = condat, 
                   family= beta_family(link = "logit"))
 sbrand <- summary(brrand)
 
-# Do it manually
+# This add colors manually
 cond1 <- clippedpd$trt %in% c("WEEVIL25","WEEVIL125")
 cond2 <- clippedpd$type %in% "Connectance"
 clippedpd[cond1 & cond2,]$colors <- sigcol
@@ -361,28 +370,34 @@ clippedpd[cond1 & cond2,]$colors <- sigcol
 # summary(lm(ind ~ poly(graddat, 3), data=condat))
 # # linear fits better... 
 
-# 2. Generality - NOT SIGNIFICANT ----
-library(truncreg)
+# 2.3 Generality ----
+# Use of the truncated normal distribution
 gendat <- desStatMod(clippedpd, "Generality")
-trunc <- summary(truncreg(ind~trt, gendat))
-genlmer <- lm(ind~trt, gendat)
+trunc <- summary(truncreg(ind~trt, gendat)) # ns
+
+# No better ideas
+genlm <- lm(ind~trt, gendat)
+genlmer <- lmer(ind~trt+(1|block), gendat) #ns
+summary(genlm)
 summary(genlmer)
 plot(ind~trt,gendat)
 
-# Herbivore species *
-hsdat <- desStatMod(clippedpd, "Herbivore Species")
-summary(glmer.nb(ind~trt+(1|block), hsdat))
+# 2.4 Herbivore species [] ----
+
+# Also tested elsewhere
+# hsdat <- desStatMod(clippedpd, "Herbivore Species")
+# summary(glmer.nb(ind~trt+(1|block), hsdat))
 
 
 
-# Modularity NS
+# 2.5 Modularity ----
+
 # Can modularity be modified by plant species number?
 moddat <- desStatMod(clippedpd, "Modularity")
 # summary(lmer(logit(ind)~trt+(1|block), moddat))
 # plot(moddat$ind~ moddat$trt)
 # summary(betareg::betareg(ind~trt, data=moddat))
 
-library(glmmTMB)
 plot(ind~trt,moddat)
 
 # relevel treatments
@@ -419,33 +434,34 @@ modgrad <- glmmTMB(ind ~ graddat+sr+(1|block),
 summary(modgrad)
 
 
-# IP species * 
-ipdat <- desStatMod(clippedpd, "IP Species")
-summary(glmer.nb(ind~trt+(1|block), ipdat))
+# 2.6 IP species [calculated elsewhere] ---- 
+# ipdat <- desStatMod(clippedpd, "IP Species")
+# summary(glmer.nb(ind~trt+(1|block), ipdat))
 
-# Nestedness NS
+# 2.7 Nestedness ----
 nsdat <- desStatMod(clippedpd, "Nestedness")
-nslmer <- lmer(ind~trt+(1|block), nsdat)
-summary(nslmer)
+# nslmer <- lmer(ind~trt+(1|block), nsdat)
+nslme <- nlme::lme(ind~trt, random=~1|block, nsdat)
+summary(nslme)
 
 # Specialization PDI not! 
 pddat <- desStatMod(clippedpd, "Specialization PDI")
-pdlmer1 <- lmer(ind~trt+(1|block), pddat)
+# pdlmer1 <- lmer(ind~trt+(1|block), pddat)
 pdlme <- nlme::lme(ind~trt, random=~1|block, pddat)
 
 
 # pdlmer2 <- lmer(logit(ind)~trt+(1|block), pddat)
-summary(pdlmer1)
+# summary(pdlmer1)
 summary(pdlme)
 
 # summary(pdlmer2)
 
 # See if the gradient is significant
-gradvec <- c(1,2,3,4,5)
-names(gradvec) <- treats_to_plot
-pddat$graddat <- gradvec[as.character(pddat$trt)]
-pdlme <- nlme::lme(ind~graddat, random=~1|block, pddat)
-summary(pdlme)
+# gradvec <- c(1,2,3,4,5)
+# names(gradvec) <- treats_to_plot
+# pddat$graddat <- gradvec[as.character(pddat$trt)]
+# pdlme <- nlme::lme(ind~graddat, random=~1|block, pddat)
+# summary(pdlme)
 
 # gradient seems to result in a decrease
 # Gam
@@ -457,10 +473,10 @@ summary(pdlme)
 # ## smoothing basis dimensions...
 # gam.check(gam1)
 
-# Vulnerability * 
+# 2.8 Vulnerability ----
 vuldat <- desStatMod(clippedpd, "Vulnerability")
 summary(truncreg(ind~trt, vuldat))
-vullmer <- lmer(ind~trt+(1|block), vuldat)
+vullmer <- nlme::lme(ind~trt, random = ~1|block, vuldat)
 summary(vullmer)
 
 # sigind <- c("Vulnerability",
@@ -473,8 +489,8 @@ summary(vullmer)
 
 # Clipped plot ----
 
-plotdat_filtered <- plotdatrep(, 
-                    each=length(as.character(genvuldf$plot)))
+# plotdat_filtered <- plotdatrep(, 
+#                     each=length(as.character(genvuldf$plot)))
 
 clippedpd$trt <- factor(clippedpd$trt, 
                         levels = treats_to_plot)
@@ -484,26 +500,56 @@ indices_to_plot <- c("Generality", "Vulnerability", "Specialization PDI", "Conne
 
 clippedpd_itp <- clippedpd[clippedpd$type %in% indices_to_plot, ]
 
-sigcolors <- rep(nsigcol, 
-                 length(indices_to_plot)*length(treats_to_plot))
+# Connectance 
+# p <- ggplot(clippedpd_itp, aes(x = trt, y = ind))
+# p + stat_summary(fun=mean_cl_boot,
+#                  geom="pointrange", width=0.1,
+#                  color = colors, lwd=1)+
+#   stat_summary(fun=mean,
+#                geom="point",
+#                color=colors, cex = 2)
+#   # geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) +
+#   # theme_bw() +
+#   # theme(axis.text.x=element_text(angle=0, size=5, hjust=0.5))+
+#   # facet_wrap(~type, scales="free")+
+#   # ylab("")+xlab("")
 
-# Connectance sig
-sigcolors[2] <- "black"
+# Assign colors for significant and non-significant differences
+sigcol <- rgb(255,0,0,150,maxColorValue = 255)
+nsigcol <- rgb(10,10,10,150,maxColorValue = 255)
+
+
+sigcolors <- rep(nsigcol, length(treats_to_plot)*length(indices_to_plot))
+# All control plots
+sigcolors[2] <- "gold"
+sigcolors[7] <- "gold"
+sigcolors[12] <- "gold"
+sigcolors[17] <- "gold"
+sigcolors[22] <- "gold"
+sigcolors[27] <- "gold"
+
+
+
 sigcolors[c(4,5)] <- sigcol
 
-p <- ggplot(clippedpd_itp, aes(x = trt, y = ind))
-p + stat_summary(fun.data=mean_cl_boot,
-                 geom="pointrange", width=0.1,
-                 color = sigcolors, lwd=1) +
-  stat_summary(fun.y=mean, 
-               geom="point", 
-               color=sigcolors, cex = 2) +
-  geom_jitter(width = 0.1, col = rgb(128,128,128, alpha = 100, maxColorValue = 255)) +
-  theme_bw() +
-  theme(axis.text.x=element_text(angle=0, size=5, hjust=0.5))+
-  facet_wrap(~type, scales="free")+
-  ylab("")+xlab("")
-
+ggplot(clippedpd_itp, 
+       aes(x = trt, 
+           y = ind))+
+  geom_jitter(width = 0.1, 
+              col = rgb(150,150,150,80,
+                        maxColorValue = 255))+
+  facet_wrap(~type, 
+             scales = "free") + 
+  stat_summary(fun.data=mean_cl_boot, 
+               geom="pointrange", 
+               lwd=0.8,
+               color = sigcolors) +
+  stat_summary(fun=mean, 
+               geom="point",
+               color= sigcolors, 
+               cex = 2)
+  
+  
 # stat_summary(fun.data=mean_cl_boot,
 # geom="pointrange", color= colors, width=0.2, lwd=1.5) +
 #   stat_summary(fun.y=mean, geom="point", color=colors, cex = 5) +

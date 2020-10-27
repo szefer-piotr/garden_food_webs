@@ -85,11 +85,11 @@ gnames <- as.character(treats$codes)
 # vaznull(10, gardnets[["w1g2p4"]])
 # One line netwrok can also be randomized
 
-randomizations <- 3
+randomizations <- 1
 genvuldf <- data.frame()
 
 # gname <- "w1g2p3"
-gname <- names(gardnets)[[2]]
+# gname <- names(gardnets)[[2]]
 
 # *1.0 Run the loop ----
 for(gname in names(gardnets)){
@@ -213,43 +213,50 @@ for(gname in names(gardnets)){
   genvuldf <- rbind(genvuldf, subgvdf)
 }
 
+#***************************************************
+
 rownames(treats) <- treats$codes
 genvuldf$trt <- treats[as.character(genvuldf$plot),
                        ]$treat
 genvuldf$block <- substr(genvuldf$plot, 3,4)
 
-genvuldf$rmod_val <- with(genvuldf, {
-  (mod - rmod)/rmod
+# Get relative indices... not needed anymore
+# Nestedness Modularity
+genvuldf$rnest_val <- with(genvuldf, {
+  (nestedness - rnestedness)/rnestedness
 })
-genvuldf$rpdi_val <- with(genvuldf, {
-  (pdi - rpdi)/rpdi
-})
+# genvuldf$rpdi_val <- with(genvuldf, {
+#   (pdi - rpdi)/rpdi
+# })
+# genvuldf$rpdi_val <- with(genvuldf, {
+#   (pdi - rpdi)/rpdi
+# })
 
-genvuldf$mod 
-
-genvuldf$rmod 
+# Modularity and randomized modularity
+# genvuldf$mod 
+# genvuldf$rmod 
 
 # *1.1 Network size and PDI index ----
-nsizedf <- data.frame()
-for (plt in genvuldf$plot){
-  subnet <- gardnets[[plt]]
-  subnet <- subnet[,-grep(c("mant|aran"),
-                          colnames(subnet))]
-  nsizerow <- data.frame(plants = dim(subnet)[1],
-                         invert = dim(subnet)[2],
-                         pdi = genvuldf[genvuldf$plot == plt, ]$pdi,
-                         treatment = treats[treats$codes == plt, ]$treat )
-  nsizedf <- rbind(nsizedf, nsizerow)
-}
-
-ggplot(nsizedf, aes(x = pdi, y = plants, color = treatment))+
-  geom_point() + 
-  geom_smooth(method="lm")
-
-lm1 <- lm(pdi~plants*treatment, data = nsizedf)
-summary(lm1)
-lm1 <- lm(pdi~plants, data = nsizedf[nsizedf$treatment == "INSECTICIDE",])
-summary(lm1)
+# nsizedf <- data.frame()
+# for (plt in genvuldf$plot){
+#   subnet <- gardnets[[plt]]
+#   subnet <- subnet[,-grep(c("mant|aran"),
+#                           colnames(subnet))]
+#   nsizerow <- data.frame(plants = dim(subnet)[1],
+#                          invert = dim(subnet)[2],
+#                          pdi = genvuldf[genvuldf$plot == plt, ]$pdi,
+#                          treatment = treats[treats$codes == plt, ]$treat )
+#   nsizedf <- rbind(nsizedf, nsizerow)
+# }
+# 
+# ggplot(nsizedf, aes(x = pdi, y = plants, color = treatment))+
+#   geom_point() + 
+#   geom_smooth(method="lm")
+# 
+# lm1 <- lm(pdi~plants*treatment, data = nsizedf)
+# summary(lm1)
+# lm1 <- lm(pdi~plants, data = nsizedf[nsizedf$treatment == "INSECTICIDE",])
+# summary(lm1)
 
 
 # PDI doesnt seem to be dependent on the network size
@@ -344,7 +351,7 @@ condat$trt <- factor(condat$trt,
 # Use beta distribution
 brrand <- glmmTMB(ind ~ trt + (1|block), data = condat, 
                   family= beta_family(link = "logit"))
-sbrand <- summary(brrand)
+summary(brrand)
 
 # This add colors manually
 cond1 <- clippedpd$trt %in% c("WEEVIL25","WEEVIL125")
@@ -394,7 +401,7 @@ plot(ind~trt,gendat)
 
 # Can modularity be modified by plant species number?
 moddat <- desStatMod(clippedpd, "Modularity")
-# summary(lmer(logit(ind)~trt+(1|block), moddat))
+
 # plot(moddat$ind~ moddat$trt)
 # summary(betareg::betareg(ind~trt, data=moddat))
 
@@ -406,19 +413,21 @@ plot(ind~trt,moddat)
 #                                 "WEEVIL125",
 #                                 "CONTROL",
 #                                 "WEEVIL25"))
-
-br <- glmmTMB(ind ~ trt+sr, data = moddat, 
+# summary(nlme::lme(logit(ind)~trt, random = ~1|block, moddat))
+br <- glmmTMB(ind ~ trt, data = moddat, 
               family= beta_family(link = "logit"))
-brrand <- glmmTMB(ind ~ trt+sr+(1|block), 
-                  data = moddat, 
-                  family= beta_family(link = "logit"))
-summary(brrand)
-summary(br)
+# brrand <- glmmTMB(ind ~ trt+(1|block), 
+#                   data = moddat, 
+#                   family= beta_family(link = "logit"))
+# summary(brrand)
+summary(br) # random effect not significant
 
-brtest <- emmeans(br, "trt")
-brrandtest <- emmeans(brrand, "trt")
-pairwise <- cld(brtest, Letter="abcdefghijklm")
-pairwise <- cld(brrandtest, Letter="abcdefghijklm")
+# anova(br, brrand, test="Chisq") # differnce not significant
+
+# brtest <- emmeans(br, "trt")
+# brrandtest <- emmeans(brrand, "trt")
+# pairwise <- cld(brtest, Letter="abcdefghijklm")
+# pairwise <- cld(brrandtest, Letter="abcdefghijklm")
 
 # Something is wrong with blocks in this dataset! - SOLVED
 # ggplot(moddat, aes(y=ind, x =trt, col=block)) + 
@@ -431,6 +440,11 @@ moddat$graddat <- gradvec[as.character(moddat$trt)]
 modgrad <- glmmTMB(ind ~ graddat+sr+(1|block), 
                   data = moddat, 
                   family= beta_family(link = "logit"))
+modgrad <- glmmTMB(ind ~ graddat+(1|block), 
+                   data = moddat, 
+                   family= beta_family(link = "logit"))
+
+# But the gradienty is significant when we include cole001
 summary(modgrad)
 
 
@@ -443,8 +457,9 @@ nsdat <- desStatMod(clippedpd, "Nestedness")
 # nslmer <- lmer(ind~trt+(1|block), nsdat)
 nslme <- nlme::lme(ind~trt, random=~1|block, nsdat)
 summary(nslme)
+# Not significant
 
-# Specialization PDI not! 
+# 2.8 Specialization PDI ----
 pddat <- desStatMod(clippedpd, "Specialization PDI")
 # pdlmer1 <- lmer(ind~trt+(1|block), pddat)
 pdlme <- nlme::lme(ind~trt, random=~1|block, pddat)
@@ -473,11 +488,13 @@ summary(pdlme)
 # ## smoothing basis dimensions...
 # gam.check(gam1)
 
-# 2.8 Vulnerability ----
+# 2.9 Vulnerability ----
 vuldat <- desStatMod(clippedpd, "Vulnerability")
-summary(truncreg(ind~trt, vuldat))
+trmod <- (truncreg(ind~trt, vuldat))
 vullmer <- nlme::lme(ind~trt, random = ~1|block, vuldat)
 summary(vullmer)
+
+# AIC(trmod, vullmer)
 
 # sigind <- c("Vulnerability",
 #             "Specialization PDI",
@@ -487,13 +504,19 @@ summary(vullmer)
 # 
 # clippedpd <- clippedpd[clippedpd$type %in% sigind, ]
 
-# Clipped plot ----
+# 3. Clipped plot ----
 
 # plotdat_filtered <- plotdatrep(, 
 #                     each=length(as.character(genvuldf$plot)))
 
 clippedpd$trt <- factor(clippedpd$trt, 
-                        levels = treats_to_plot)
+                        levels = treats_to_plot,
+                        labels = c("I",
+                                   "C",
+                                   "P",
+                                   "W25",
+                                   "W125"))
+
 
 indices_to_plot <- c("Generality", "Vulnerability", "Specialization PDI", "Connectance", 
                      "Modularity", "Nestedness")
@@ -515,22 +538,32 @@ clippedpd_itp <- clippedpd[clippedpd$type %in% indices_to_plot, ]
 #   # ylab("")+xlab("")
 
 # Assign colors for significant and non-significant differences
-sigcol <- rgb(255,0,0,150,maxColorValue = 255)
-nsigcol <- rgb(10,10,10,150,maxColorValue = 255)
 
+sigcol <- rgb(255,0,0,150,maxColorValue = 255)
+nsigcol <- rgb(10,10,10,50,maxColorValue = 255)
+contcol <- rgb(10,10,10,150,maxColorValue = 255)
+msigncol <- rgb(255,142,0, 150, maxColorValue = 255)
+
+sigcol <- "red"
+nsigcol <- "grey50"
+contcol <- "black"
+msigncol <- "gold"
 
 sigcolors <- rep(nsigcol, length(treats_to_plot)*length(indices_to_plot))
-# All control plots
-sigcolors[2] <- "gold"
-sigcolors[7] <- "gold"
-sigcolors[12] <- "gold"
-sigcolors[17] <- "gold"
-sigcolors[22] <- "gold"
-sigcolors[27] <- "gold"
-
-
-
+# Control plots
+sigcolors[2] <- contcol
+sigcolors[7] <- contcol
+sigcolors[12] <- contcol
+sigcolors[17] <- contcol
+sigcolors[22] <- contcol
+sigcolors[27] <- contcol
+# Marginally significant
+sigcolors[28] <- msigncol
+sigcolors[30] <- msigncol
+# Significant
 sigcolors[c(4,5)] <- sigcol
+
+# Fix the labels
 
 ggplot(clippedpd_itp, 
        aes(x = trt, 
@@ -547,7 +580,8 @@ ggplot(clippedpd_itp,
   stat_summary(fun=mean, 
                geom="point",
                color= sigcolors, 
-               cex = 2)
+               cex = 2)+
+  xlab("")+ylab("")
   
   
 # stat_summary(fun.data=mean_cl_boot,
@@ -574,20 +608,20 @@ ggplot(clippedpd_itp,
 
 # Dealing with singularity because of the optimizers - use nlme::lme()
 
-table(subdat$block, subdat$trt)
-table(treats$treat, treats$codes) #
-
-vullme <- lmer(vul~trt+(1|block), data=genvuldf) 
-genlme <- lmer(gen~trt+(1|block), data=genvuldf) 
-summary(genlme)
-summary(vullme)
-
-# Controling for the plant diversity
-sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
-sr$code <- rownames(sr)
-colnames(sr) <- c("sr", "code")
-genvuldf$sr <- sr[genvuldf$plot, "sr"]
-colnames(genvuldf)
+# table(subdat$block, subdat$trt)
+# table(treats$treat, treats$codes) #
+# 
+# vullme <- lmer(vul~trt+(1|block), data=genvuldf) 
+# genlme <- lmer(gen~trt+(1|block), data=genvuldf) 
+# summary(genlme)
+# summary(vullme)
+# 
+# # Controling for the plant diversity
+# sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
+# sr$code <- rownames(sr)
+# colnames(sr) <- c("sr", "code")
+# genvuldf$sr <- sr[genvuldf$plot, "sr"]
+# colnames(genvuldf)
 
 # 
 # vullmesr <- lmer(vul~trt+sr+(1|block), data=genvuldf) 
@@ -603,7 +637,7 @@ colnames(genvuldf)
 # 
 # anova(genlme, genlmesr)
 
-#  IP/herb ----
+#  IP/herb
 # gardnets
 # for(gard in names(gardnets)){
 #   print(dim(gardnets[[gard]]))

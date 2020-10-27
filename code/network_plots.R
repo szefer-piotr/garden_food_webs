@@ -1,3 +1,5 @@
+rm(list = ls())
+
 insects <- read.table("datasets/arthropods_clean.txt")
 treats  <- read.table("datasets/treatments_clean.txt")
 plants  <- read.table("datasets/plants_clean.txt")
@@ -5,7 +7,8 @@ size_dat <-read.table("datasets/size_dat_bio.txt")
 
 library("bipartite")
 library("igraph")
-source("code/bio_log_ratio.R")
+# source("code/bio_log_ratio.R")
+source("code/data_processing_code.R")
 
 
 # ********************************************************************
@@ -41,8 +44,11 @@ networkPlot <- function(garden_list,
                       c("SP_CODE", "WEIGHT")]
   print(pl_weight)
   
+  print("Weights assigned")
+  
   plw <- pl_weight$WEIGHT
   names(plw) <- pl_weight$SP_CODE
+  
   # Herbivores/interactions
   hwc <- colSums(net)
   plws <- plw[names(plw) %in% names(V(netgraph))]
@@ -67,11 +73,13 @@ networkPlot <- function(garden_list,
   
   # 2. Plot weighted graph
   l <- layout_in_circle(netgraph)
-  plot(netgraph, layout = l, vertex.label = NA)
+  plot(netgraph, layout = l, 
+       vertex.label = NA, 
+       main = code)
   
 }
 
-networkPlot(abugardnets, "w1g3p4", hmltp = 0.5, emltp = 0.5,
+networkPlot(abugardnets, "w1g3p4", hmltp = 0.6, emltp = 0.6,
             pmltp = 1)
 
 # ****************************************************************
@@ -93,21 +101,21 @@ bipartieNetworkPlot <- function(garden_list, code, rem.ips=T, pmltp = 1){
   
 }
 
-bipartieNetworkPlot(abugardnets, pmltp = 10, "w1g1p3")
+bipartieNetworkPlot(abugardnets, pmltp = 5, "w1g1p3")
 
 filterCodes <- function(trt){
   return(as.character(treats[treats$treat %in% trt, ]$codes))
 }
 x11(8,6)
 
-jpeg("PREDATOR_networks.jpg", width = 1200, height = 1000,
-     quality = 100, pointsize = 20)
+# jpeg("PREDATOR_networks.jpg", width = 1200, height = 1000,
+     # quality = 100, pointsize = 20)
 par(mfrow = c(3,2))
 for(codes in filterCodes("PREDATOR")){
   print(codes)
   bipartieNetworkPlot(abugardnets, pmltp = 5, codes)
 }
-dev.off()
+# dev.off()
 
 
 

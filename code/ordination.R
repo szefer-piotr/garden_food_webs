@@ -767,57 +767,57 @@ phabu <- cld(inter.test1, Letter="abcdefghijklm")
 #   ggtitle("H")
 
 # # DIET SWITCHING ----
-# # Herbivores present in P and C treatments
-# predsites <- treats[treats$treat == "PREDATOR",]$codes
-# contsites <- treats[treats$treat == "CONTROL",]$codes
-# 
-# ips <- grep("aran|mant", ins_bio$morphotype)
-# 
-# ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
-# 
-# pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
-#                              "plot","morphotype","amount")
-# pbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% predsites, ],
-#                              "plot","morphotype","totbio")
-# 
-# cabumat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
-#                              "plot","morphotype","amount")
-# cbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
-#                              "plot","morphotype","totbio")
-# 
-# comparable <- colnames(cbiomat)[colnames(cbiomat) %in% colnames(pbiomat)]
+# Herbivores present in P and C treatments
+predsites <- treats[treats$treat == "PREDATOR",]$codes
+contsites <- treats[treats$treat == "CONTROL",]$codes
+
+ips <- grep("aran|mant", ins_bio$morphotype)
+
+ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
+
+pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
+                             "plot","morphotype","amount")
+pbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% predsites, ],
+                             "plot","morphotype","totbio")
+
+cabumat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+                             "plot","morphotype","amount")
+cbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+                             "plot","morphotype","totbio")
+
+comparable <- colnames(cbiomat)[colnames(cbiomat) %in% colnames(pbiomat)]
 # 
 # # Remove intermediate predators
 # comparable
 # 
 # # Food plants for comparable herbivores
-# cp_treats <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL","PREDATOR"),]$sites
-# csites <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL"),]$sites
-# psites <- treats_trimmed[treats_trimmed$treat %in% c("PREDATOR"),]$sites
+cp_treats <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL","PREDATOR"),]$sites
+csites <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL"),]$sites
+psites <- treats_trimmed[treats_trimmed$treat %in% c("PREDATOR"),]$sites
+
+ins_bio_cp <- ins_bio[ins_bio$plot %in% cp_treats, ]
+ins_bio_cp_comparable <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable,]
+ibc <- ins_bio_cp_comparable
+ibc <- ibc[complete.cases(ibc),]
 # 
-# ins_bio_cp <- ins_bio[ins_bio$plot %in% cp_treats, ]
-# ins_bio_cp_comparable <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable,]
-# ibc <- ins_bio_cp_comparable
-# ibc <- ibc[complete.cases(ibc),]
-# 
-# ccompFood <- contingencyTable2(ibc[ibc$plot %in% csites, ],
-#                                "tree",
-#                                "morphotype",
-#                                "totbio")
-# 
-# pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
-#                                "tree",
-#                                "morphotype",
-#                                "totbio")
-# 
-# dim(pcompFood)
-# dim(ccompFood)
+ccompFood <- contingencyTable2(ibc[ibc$plot %in% csites, ],
+                               "tree",
+                               "morphotype",
+                               "totbio")
+
+pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
+                               "tree",
+                               "morphotype",
+                               "totbio")
+
+dim(pcompFood)
+dim(ccompFood)
 # 
 # # Combine dataset 
-# rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
-# rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
-# 
-# compFood <- rbind(pcompFood,ccompFood)
+rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
+rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
+
+compFood <- rbind(pcompFood,ccompFood)
 
 #### UNHASH IN CASE OF EMERGENCY
 
@@ -915,11 +915,11 @@ colorsP <- rep(grayAlpha,length(colnames(pcompFood)))
 colorsP[colnames(pcompFood) == nm] <- "red"
 
 par(mfrow=c(1,2))
-# plot(czvalsc$c, czvalsc$z, col = colorsC, pch = 19)
+plot(czvalsc$c, czvalsc$z, col = colorsC, pch = 19)
 abline(h=2.5)
 abline(v=0.62)
 
-# plot(czvalsp$c, czvalsp$z, col = colorsP, pch = 19)
+plot(czvalsp$c, czvalsp$z, col = colorsP, pch = 19)
 abline(h=2.5)
 abline(v=0.62)
 

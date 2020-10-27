@@ -217,9 +217,9 @@ groupLogratio <-function(fam, treatments, abundance=T){
 groupLogratio(c(), c("weevil125", "control"), abundance=T)
 
 treat_pair_list <- list(c("weevil125", "control"),
-                        c("weevil125", "predator"),
+                        # c("weevil125", "predator"),
                         c("weevil25", "control"),
-                        c("weevil25", "predator"),
+                        # c("weevil25", "predator"),
                         c("control", "insecticide"),
                         c("control", "predator"))
 
@@ -323,6 +323,20 @@ for (block in unique(biollcp$gard)){
 
 
 genllratio
+
+# Correlations ----
+cor_df_cum <- plotDFLR[plotDFLR$fams == "cumulative", ]
+for(comp in unique(cor_df_cum$comp)){
+  subdset <- cor_df_cum[cor_df_cum$comp == comp, ]
+  print(comp)
+  
+  # Model
+  # Simple correlation.
+  sub_mod <- lm(lratioPL~lratioH, data = subdset)
+  
+  # Print the result
+  print(summary(sub_mod))
+}
 
 # * 2.1.1 Effects of predator removal on herbivores, intermediate predators and plants ----
 

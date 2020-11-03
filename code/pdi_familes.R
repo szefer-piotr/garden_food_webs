@@ -66,7 +66,38 @@ plot(pairwise)
 
 # Predict 
 y_new <- simulate(lm1) # terrible model, predicts values higher than 1
+y_new <- simulate(brmod)
 y_new$fam <- substr(rownames(y_new),1,4)
 
 ggplot(y_new, aes(x = fam, y = sim_1)) + 
   geom_boxplot(outlier.shape = 1)
+
+
+# Pdi for species selected in ordination analysis
+# from pRDA for herbiviores
+selSp <- c("cole003",
+           "cole059",
+           "cole061",
+           "homo004",
+           "lepi011",
+           "lepi019",
+           "orth006",
+           "orth013",
+           "orth014",
+           "orth016",
+           "orth018",
+           "orth020")
+
+selIns <- insects[insects$morphotype %in% selSp,]
+rownames(treats) <- treats$codes
+selIns$treat <- treats[selIns$plot, ]$treat
+selIns$pdi <- diet_breadth_ab[selIns$morphotype]
+
+ggplot(selIns, aes(x = treat, y=log(amount+1),
+                   color = morphotype))+
+  geom_jitter(width=0.05)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  facet_wrap(~morphotype, scales = "free")
+  
+selIns[selIns$morphotype == "lepi011",]$pdi
+selIns[selIns$morphotype == "orth020",]$pdi

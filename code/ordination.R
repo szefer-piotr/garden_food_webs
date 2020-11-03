@@ -376,6 +376,8 @@ final_herb_abu_formula <- paste("abumat_trimmed_no_cole", "~",
 herbAbuConditioned <-rda(formula(final_herb_abu_formula),
                          data=fselbioins$treatments)
 
+# Because of small sample size I use the model based permutations
+# https://fromthebottomoftheheap.net/2014/11/03/randomized-complete-block-designs-and-vegan/
 anova(herbAbuConditioned, by="terms", permutations = 999)
 
 herbivoresResponses <- envfit(herbAbuConditioned, abumat_trimmed)

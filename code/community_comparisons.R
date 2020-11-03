@@ -11,6 +11,11 @@ source("code/data_processing_code.R")
 treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
 # groups_to_plot <- 
 
+# Indicate insect order here ----
+order <- c("cole")
+
+ins_bio <- ins_bio[ins_bio$family %in% order, ]
+
 # Herbivores and IPS diversity, abumdnace, richness in different treatments
 ins_bio$group <- "Herbivore"
 ins_bio$group[grep("aran|mant", ins_bio$family)] <- "Intermediate predator"
@@ -102,7 +107,7 @@ panelData$tukey <- "" # set up column for labels from Tukey test
 
 # panelData
 
-# 1. Tests ----
+# 1. Ready ----
 library(lme4)
 library(MASS)
 library(lmerTest)

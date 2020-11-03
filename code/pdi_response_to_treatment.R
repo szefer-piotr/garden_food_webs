@@ -168,4 +168,37 @@ summary(lmer(dupl_lr~0+fam+(1|garden), data=mod_dat)) # orthoptera and marginall
 
 hist(mod_dat$dupl_lr)
 
+# Diet change of selected species ----
+
+# remove cole and ip
+insects_no_cole <- insects[insects$morphotype != "cole001", ]
+insdat <- insects_no_cole[-grep("aran|mant", insects_no_cole$morphotype), ]
+
+# most prevalent species
+which(table(insdat$morphotype) == max(table(insdat$morphotype)))
+"cole002"
+
+getBioFromGarden <- function(species,plot){
+  sp <- main_biomass$CODE == plot
+  plt <- main_biomass$SP_CODE == toupper(species)
+  sb <- sum(main_biomass[sp & plt, ]$WEIGHT)
+  return(sb)
+}
+
+treatSpecDietVec <- function(species, plot){
+  mps <- insects[insects$morphotype %in% c(species),]
+  rownames(treats) <- treats$codes
+  mps$treatment <- treats[mps$plot, "treat"]
+  df_w25 <- mps[mps$plot == plot, ]
+  df_w25$tree <- as.character(df_w25$tree)
+  net_w25 <- tapply(df_w25$amount, df_w25$tree, sum, na.rm = T)
+  retdf <- data.frame()
+  for(nm in names(net_w25)){
+    print(nm)
+    row
+  }
+}
+
+cole2w25 <- treatSpecDietVec('cole002', 'w1g1p3')
+cole2ctr <- treatSpecDietVec('cole002', 'w1g1p1')
 

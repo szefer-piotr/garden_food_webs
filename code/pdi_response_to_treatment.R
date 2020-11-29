@@ -29,6 +29,8 @@ comps <- list(toupper(c("control", "predator")),
               toupper(c("control", "weevil125")),
               toupper(c("control", "insecticide")))
 
+comps <- list(toupper(c("control", "predator")))
+
 for(num in 1:length(comps)){
   comparison <- comps[[num]]
   print(comparison)
@@ -142,7 +144,23 @@ ggplot(pdi_filtered , aes(x=trt, y = vals,
   ylab("Paired Distance Index (specialization")+
   xlab("Treatment")
 
-# These lines are not representing real trend for species, which were observed accross multile gardens. Line then simply joins them into vertical line before moving accross to the other treatment.
+logit <- function(x){log(x/(1-x))}
+ggplot(pdi_filtered , aes(x=trt, y = logit(vals), 
+                          group = sp_gard, 
+                          colour = fam))+
+  geom_jitter(width = 0.05, 
+              size = log(pdi_filtered$abu), 
+              alpha = 0.4)+
+  geom_line(lty = 2, lwd=0.9,
+            alpha = 0.4)+
+  facet_wrap(~fam, scales = "free")+
+  ylab("Paired Distance Index (specialization")+
+  xlab("Treatment")+
+  theme(legend.position = "none")
+
+# Test for individual orders paired in morpho-species
+
+# See if change is spread randomly around zero or is there an evidence for more positive or negative shifts
 
 # I think I need to break this dataset into families manually.
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[1], ]
@@ -199,6 +217,54 @@ treatSpecDietVec <- function(species, plot){
   }
 }
 
-cole2w25 <- treatSpecDietVec('cole002', 'w1g1p3')
-cole2ctr <- treatSpecDietVec('cole002', 'w1g1p1')
+plot <- "w1g3p1"
+mbt <- main_biomass[main_biomass$LIFE.FORM %in% c("tree","shrub"),]
+mbt$SP_CODE <- tolower(mbt$SP_CODE)
 
+plotPlantComposition <- function(plot){
+  return(mbt[mbt$CODE == plot, c("SP_CODE","WEIGHT")])
+}
+
+# 1. Get plots for a comparison
+comparison <- c('control', 'weevil25')
+cplots <- treats[treats$treat %in% toupper(comparison[1]), ]$codes
+tplots <- treats[treats$treat %in% toupper(comparison[2]), ]$codes
+
+# 2. PLots within a block 
+bl = "g1"
+plotsFromaBlock <- c(as.character(cplots[grep(bl, cplots)]),
+                     as.character(tplots[grep(bl, tplots)]))
+
+# 3. Get species names
+
+treshold <- 10
+
+cnet <- abugardnets[[plotsFromaBlock[1]]]
+tnet <- abugardnets[[plotsFromaBlock[2]]]
+comp_sp <- colnames(cnet)[colnames(cnet) %in% colnames(tnet)]
+comp_sp_noip_nocole <- comp_sp[-grep("aran|mant|cole001", comp_sp)]
+ins_dat <- insects[((insects$plot %in% c(plotsFromaBlock[1],
+                              plotsFromaBlock[2])) & (insects$morphotype %in% comp_sp_noip_nocole)), ]
+ins_dat$morphotype <- as.character(ins_dat$morphotype)
+ins_abu_vec <- tapply(ins_dat$amount, ins_dat$morphotype, sum)
+ins_abu_vec_tr <- ins_abu_vec[ins_abu_vec >= treshold]
+selected.species <- names(ins_abu_vec_tr)
+
+# Get background plant composition
+cplants <- plotPlantComposition(plotsFromaBlock[1])
+tplants <- plotPlantComposition(plotsFromaBlock[2])
+
+# For a given species get diet
+hsp <- selected.species[5]
+hsp
+sp_cont <- treatSpecDietVec(hsp, plotsFromaBlock[1])
+sp_tret <- treatSpecDietVec(hsp, plotsFromaBlock[2])
+
+# Calculate diet dissimilarity Sorensen Index
+cnet[,hsp]
+tnet[,hsp]
+cplants
+tplants
+
+networklevel(cnet, index = "weighted connectance")
+networklevel(cnet, index = "connectance")

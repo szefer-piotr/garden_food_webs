@@ -25,6 +25,8 @@ source("code/data_processing_code.R")
 source("code/pdi.R")
 source("code/diet_shift.R")
 
+library(ggplot2)
+
 # Assume that each plant hosts unique community of insects.
 
 # Log ratio analyses
@@ -223,6 +225,13 @@ treat_pair_list <- list(c("weevil125", "control"),
                         c("control", "insecticide"),
                         c("control", "predator"))
 
+treat_pair_list <- list(# c("weevil125", "control"),
+                        # c("weevil125", "predator"),
+                        # c("weevil25", "control"),
+                        # c("weevil25", "predator"),
+                        # c("control", "insecticide"),
+                        c("control", "predator"))
+
 # Plots for families and general log ratio
 plotDataFamilieLogRatio <- data.frame()
 for(fams in unique(ins_bioOrig$family)){
@@ -253,38 +262,163 @@ plotDFLR$fams <- as.character(plotDFLR$fams)
 plotDFLR[plotDFLR$fams == "", ]$fams <- "cumulative"
 
 # Herbivore vs plants
-ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], aes(x = lratioH, y=lratioPL, col = fams))+
+HvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
+       aes(y = lratioH, x=lratioPL))+
   geom_point()+
-  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-  stat_smooth(method="lm", se=FALSE)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
+  stat_smooth(method="lm", se=F, col = "grey50",lty=2,
+              data = plotDFLR[plotDFLR$comp == "control / predator",])+
   facet_wrap(~comp, scales = "free")
+
+#regression coefs.
+# rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
+# lmw125 <- lm(lratioH~lratioPL, 
+#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[1],])
+# summary(lmw125)
+# 
+# lmw25 <- lm(lratioH~lratioPL, 
+#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[2],])
+# summary(lmw25)
+# 
+# lmI <- lm(lratioH~lratioPL, 
+#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[3],])
+# summary(lmI)
+# 
+lmP <- lm(lratioH~lratioPL,
+             data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[4],])
+summary(lmP)
+
+
 
 # Herbivore vs IPS
-ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], aes(x = lratioH, y=lratioIP, col = fams))+
+HvIAP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
+       aes(x = lratioH, y=lratioIP))+
   geom_point()+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-  stat_smooth(method="lm", se=FALSE)+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / predator",])+
   facet_wrap(~comp, scales = "free")
 
+rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
+# iplmw125 <- lm(lratioIP~lratioPL, 
+#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[1],])
+# summary(iplmw125)
+# 
+# iplmw25 <- lm(lratioIP~lratioPL, 
+#             data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[2],])
+# summary(iplmw25)
+# 
+# iplmI <- lm(lratioIP~lratioPL, 
+#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[3],])
+# summary(iplmI)
+# 
+# iplmP <- lm(lratioIP~lratioPL, 
+#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[4],])
+# summary(iplmP)
 
 # Herbivore vs PLant FAMS
-ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], aes(x = lratioH, y=lratioPL, col = fams))+
-  geom_point()+
+
+# I could try to figure out maybe the average ind size for a given family at a given plot to see wether there is a pattern with this relationship
+
+plotDFLR$some_quality <- 1
+
+HvPfam <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
+       aes(y = lratioH, x=lratioPL, col = fams))+
+  geom_point(size = plotDFLR[plotDFLR$fams != "cumulative",
+                             ]$some_quality)+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-  stat_smooth(method="lm", se=FALSE)+
+  stat_smooth(method="lm", se=F)+
   facet_wrap(~comp, scales = "free")
+
+IAPvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
+                       aes(y = lratioIP, x=lratioPL))+
+  geom_point()+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / predator",])+
+  facet_wrap(~comp, scales = "free")
+
+# lmIP <- lm(lratioIP~lratioPL,
+#           data = plotDFLR[plotDFLR$fams == "cumulative", ])
+# summary(lmIP)
 
 # Herbivore vs IPS FAMS
-ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], aes(x = lratioPL, y=lratioIP, col = fams))+
+HvIAPfam <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
+                   aes(x = lratioPL, y=lratioIP, col = fams))+
   geom_point()+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
   stat_smooth(method="lm", se=FALSE)+
   facet_wrap(~comp, scales = "free")
 
+# Arrange panel plot ----
+
+library(ggpubr)
+
+ggarrange(HvP,
+          HvPfam+theme(legend.position = "none"),
+          IAPvP,
+          HvIAPfam+theme(legend.position = "none"), 
+          labels = c("A", "B", "C","D"),
+          ncol = 2, nrow = 2,
+          legend = "bottom", common.legend = T)
+
+# PAirwise correlations of IAPs and Herb
+pairdat <- plotDFLR[plotDFLR$fams != "cumulative", ]
+herb <- pairdat[!is.na(pairdat$lratioH), c("block",  "fams", "lratioH")]
+iaps <- pairdat[!is.na(pairdat$lratioIP), c("block",  "fams", "lratioIP")]
+
+names(iaps) <- names(herb) <- c("block", "ord", "lratio")
+
+pairwise_df <- rbind(herb, iaps)
+
+bm <- matrix("NA", nrow=length(unique(pairwise_df$block)),
+       ncol=length(unique(pairwise_df$ord)),
+       dimnames = list(unique(pairwise_df$block),
+                       unique(pairwise_df$ord)))
+
+pairwise_mat <- data.frame(bm)
+orders <- unique(pairwise_df$ord)
+for(ord in orders){
+  # cord <- orders[ord]
+  ss <- pairwise_df[pairwise_df$ord == ord,]
+  rownames(ss) <- as.character(ss$block)
+  vals <- ss[as.character(unique(pairwise_df$block)), ]$lratio
+  pairwise_mat[, ord] <- vals
+}
+
+pairs(pairwise_mat)
+names(pairwise_mat)
+library(corrplot)
+pairwise_cor <- cor(pairwise_mat, 
+                    method = "pearson", 
+                    use = "pairwise.complete.obs")
+pairwise_sig <- cor.mtest(pairwise_mat, 
+                          conf.level = .95,
+                          use = "pairwise.complete.obs")
+corrplot(pairwise_cor,
+         p.mat = pairwise_sig$p, 
+         insig = "label_sig",
+         sig.level = c(.001, .01, .05), 
+         pch.cex = .9, 
+         pch.col = "white",
+         type = "upper")
+
+library("PerformanceAnalytics")
+chart.Correlation(pairwise_mat, histogram=F, pch=19)
+library(GGally)
+
+ggpairs(pairwise_mat,upper=list(continuous="smooth"),lower=list(continuous="smooth"))
+
+####
 
 genllratio <- data.frame()
 for (block in unique(biollcp$gard)){
@@ -565,6 +699,8 @@ for(fam in unique(biollcp$nms)){
 
 # * 2.1.4 Differences between orders based on the abundance ----
 treatments <- c("control","predator","weevil25", "weevil125")
+treatments <- c("control","predator")
+
 
 abufulldf$gard <- substr(abufulldf$plot, 3,4)
 abudatfam <- data.frame()
@@ -648,17 +784,71 @@ ggplot(abudatfam_nozero, aes(x = trt, y=log(val))) +
   stat_summary(fun = mean, geom = "point", col="red")+
   stat_summary(fun.data = "mean_cl_normal",
                geom = "errorbar",
-               width=0.3, col="red") +
-  facet_wrap(vars(fam))
+               width=0.1, col="red") +
+  facet_wrap(vars(fam), scales = "free")
+
+# Statistical tests
+ad <- abudatfam_nozero
+library(lme4)
+library(MASS)
+ord <- "orth"
+mod <- glmer.nb(val~trt+(1|block), data = ad[ad$fam == ord, ])
+modnr <- glm.nb(val~trt, data = ad[ad$fam == ord, ])
+summary(mod)
+summary(modnr)
+
+
+
+
+# EACH ORDER Statistical test ----
+ad <- biodatfam_nozero
+library(lme4)
+library(MASS)
+
+ord <- "orth"
+mod <- glmer(val*100~trt+(1|block), 
+             data = ad[ad$fam == ord, ], 
+             family = gaussian(link=log))
+
+
+mod <- nlme::lme(log(val*111)~trt,
+                 random = ~1|block, 
+             data = ad[ad$fam == ord, ])
+
+# coledat <- ad[ad$fam == ord, ]
+# coledat <- coledat[-1,]
+# mod <- glmer(val~trt+(1|block),
+#              data = coledat,
+#              family = gaussian(link=log))
+
+modnr <- glm(val~trt, data = ad[ad$fam == ord, ],family = gaussian(link=log))
+summary(mod)   # Paired
+summary(modnr) # Unpaired
+
+ccol <- rgb(10,10,10,150, maxColorValue = 255)
+csig <- rgb(255,0,0,150,maxColorValue = 255)
+cmar <-rgb(255,215,0,150,maxColorValue = 255)
+sigcols <- c(ccol, csig, # aran
+             ccol, cmar, # cole
+             ccol, csig, # hemi
+             ccol, ccol, # homo
+             ccol, ccol, # lepi
+             ccol, ccol, # mant
+             ccol, ccol
+             )
 
 ggplot(biodatfam_nozero, aes(x = trt, y=log(val))) +
-  geom_jitter(width = 0.1) +
-  stat_summary(fun = mean, geom = "point", col="red")+
+  geom_jitter(width = 0.05,col = rgb(111,111,111,100, maxColorValue = 255)) +
+  stat_summary(fun = mean, geom = "point", 
+               size = 3,
+               col=sigcols)+
   stat_summary(fun.data = "mean_cl_normal",
                geom = "errorbar",
-               width=0.3, col="red") +
-  facet_wrap(vars(fam))
-
+               width=0.05, lwd = 1.5, 
+               col=sigcols) +
+  facet_wrap(vars(fam), scales = "free")+
+  geom_line(aes(x = trt, y=log(val),group = block), lty = 2, 
+            col = rgb(111,111,111,100, maxColorValue = 255))
 
 # test for biomass
 # plot(log(val)~trt, data=datfam_nozero)

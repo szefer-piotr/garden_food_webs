@@ -6,6 +6,7 @@ source("code/diet_shift.R")
 ### !!!! diet shift should be a function for any two treatments
 
 library(dplyr)
+library(ggplot2)
 # Select plant species and treatment
 
 # plant species 
@@ -144,20 +145,53 @@ makeLogratioData <- function(species, treatments, abundance = TRUE){
 
 # No difference
 cplratio <- makeLogratioData(tolower(species), treatments, abundance = T)
-
-cplratio <- makeLogratioData(c("piptar", "melamu"), treatments, abundance = T)
+# cplratio <- makeLogratioData(c("piptar", "melamu"), treatments, abundance = T)
 cplratio_spec <- cplratio[[1]]
 cplratio_gen <- cplratio[[2]]
 
 cplratio_spec$pdi <- diet_breadth_ab[as.character(cplratio_spec$species)]
 cplratio_spec$weight <- pdiss[as.character(cplratio_spec$species)]
 
+cplratio_spec$order <- substr(cplratio_spec$species,1,4)
+
+
 ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = tree))+
   geom_jitter(size = log(cplratio_spec$weight))
 
+ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
+  geom_jitter(size = log(cplratio_spec$weight))
+
+
+ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = tree))+
+  geom_jitter(size = log(cplratio_spec$weight))+
+  stat_smooth(method = "lm", lty = 1, se=F)
+
+ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
+  geom_jitter(size = log(cplratio_spec$weight))+
+  stat_smooth(method = "lm", lty = 1, se=F)
+
+modpip1 <- nlme::lme(lratio~pdi*order, random = ~1|block, data=cplratio_spec,
+                     weights = ~ as.vector(weight))
+
+modpip1 <- nlme::lme(lratio~pdi, random = ~0+pdi|order, data=cplratio_spec,
+                     weights = ~ as.vector(weight))
+
+summary(modpip1)
 modpip1 <- nlme::lme(lratio~pdi*tree, random = ~1|block, data=cplratio_spec,
                   weights = ~ as.vector(weight))
-modpip2 <- lm(lratio~pdi*tree,data=cplratio_spec)
+
+modpip1 <- nlme::lme(lratio~pdi, random = ~1+pdi|tree, data=cplratio_spec,
+                     weights = ~ as.vector(weight))
+
+modpip1 <- nlme::lme(lratio~pdi, random = ~1+pdi|tree, 
+                     data=cplratio_spec[cplratio_spec$tree == "tremor",],
+                     weights = ~ as.vector(weight))
+
+modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, 
+                     data=cplratio_spec[cplratio_spec$tree == "tremor",])
+modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, data=cplratio_spec)
+
+# modpip2 <- lm(lratio~pdi,data=cplratio_spec)
 summary(modpip1)
 summary(modpip2)
 

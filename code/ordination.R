@@ -51,8 +51,8 @@ treats_dummy$block <- substr(rownames(treats_dummy), 3,4)
 #                                    "block")]
 
 
-treats_to_plot <- as.character(unique(treats$treat))[c(3,4,2)]
-treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)] # insecticide as well
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4)]
+# treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)] # insecticide as well
 
 # Predator vs control only
 treats_trimmed <- treats[(treats$treat %in% treats_to_plot), ]
@@ -142,6 +142,77 @@ anova(plantTreat, by="terms") # as previously we have significant insecticide
 summary(plantTreat)
 # This maybe represents the variability well... for meany of these plants, standard deviation is zero.
 
+# 1a. pRDA on CvsP only, no significant effect of plant composition nor IAPs
+invert_abu <- cbind(ipabu_trimmed,abumat_trimmed)
+
+# Check wether plant abundance explains some variability
+pldat <- as.data.frame(plants_trimmed[, colSums(plants_trimmed)!=0])
+
+prdaNull <- rda(invert_abu~1, data = pldat)
+prdaScope <- rda(invert_abu~MACATA+PIPTAR, data = pldat)
+ordiR2step(prdaNull, prdaScope, direction = "forward")
+anova(prdaHP)
+
+prdaHerb <- rda(invert_abu~PREDATOR+Condition(block), data = treats_trimmed)
+pointcols <- rep(c(rgb(255,0,0,100,maxColorValue = 255),
+                   rgb(0,255,0,100,maxColorValue = 255)), 
+                 c(dim(ipabu_trimmed)[2], dim(abumat_trimmed)[2]))
+
+envHerb <- envfit(prdaHerb, pldat)
+# only melanolepis multigmlandulosa!
+  
+plot(prdaHerb)
+
+# plot(prdaHerb, type = "n",display="species")
+# points(prdaHerb, display = "species", col = pointcols, pch = 19)
+# anova(prdaHerb, by = "terms")
+
+# invert_abu[, "lepi008"]
+# text(prdaHerb,display = "species")
+
+insmetamds <- metaMDS(invert_abu)
+env <- envfit(insmetamds, treats_trimmed)
+
+dim(env$vectors$arrows)
+
+# No differences in community composition
+anosim(invert_abu, treats_trimmed$PREDATOR)
+
+rownames(invert_abu)
+
+plot(insmetamds)
+plot(env)
+arrows(x0 <- 0,
+       y0 <- 0,
+       x1 = env$vectors$arrows[env$vectors$pvals >= 0.05, 1],
+       y1 = env$vectors$arrows[env$vectors$pvals >= 0.05, 2]
+       )
+
+# There were no differences in abundances of woody plants
+
+for(col in 1:dim(pldat)[2]){
+  
+  x <- pldat[which(treats_trimmed$PREDATOR==1), col]
+  y <- pldat[which(treats_trimmed$CONTROL==1), col]
+  
+  if(sum(x) == 0 | sum(y) == 0 ){
+    # print("Zeros")
+    next
+  }
+  
+  if(sum(x > 0) <= 3 | sum(y > 0) <= 3){
+    # print("Only one in each")
+    next
+  }
+  print(colnames(pldat)[col])
+  print(cbind(x,y))
+  print(t.test(x,y, paired = T)$p.value)
+  print("W T")
+  print(wilcox.test(x, y, paired = TRUE, alternative = "two.sided")$p.value)
+  
+}
+
+t.test(x,y, paired = T)$p.value
 # 1b. Removing effect of herbivores on plants ----
 
 # Below migh be unnecessary as we don't anticipate that herbivores controll plant community
@@ -207,7 +278,7 @@ selectOrthogonalVars <- function(maxa,
               selected = fselbioins))
 }
 
-plants_sel_form <- selectOrthogonalVars(maxa = 10,
+plants_sel_form <- selectOrthogonalVars(maxa = 1,
                                    focal_dataset =  plants_trimmed,
                                    ort_sites = herb_ort_sites,
                                    additional_variables = c("hbio",
@@ -266,6 +337,10 @@ anova(herbTreatBio, by="terms")
 # herbFit <- envfit(herbTreat, biomat_trimmed)
 
 # Abundance based ordination for herbivores
+
+# Mannual select
+formula_string <- formula(abumat_trimmed_no_cole~PREDATOR+Condition(block))
+
 formula_string <- paste("abumat_trimmed_no_cole~", 
                         paste(paste(treats_to_formula,
                                     collapse = "+"), 

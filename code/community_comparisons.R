@@ -8,13 +8,14 @@ source("code/data_processing_code.R")
 # [3] "CONTROL"     [4] "PREDATOR"   
 # [5] "WEEVIL25"    [6] "INSECTICIDE"
 
-treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
-# groups_to_plot <- 
+# treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4)]
+
 
 # Indicate insect order here ----
-order <- c("cole")
+# order <- c("cole")
 
-ins_bio <- ins_bio[ins_bio$family %in% order, ]
+# ins_bio <- ins_bio[ins_bio$family %in% order, ]
 
 # Herbivores and IPS diversity, abumdnace, richness in different treatments
 ins_bio$group <- "Herbivore"
@@ -210,7 +211,9 @@ analyzeAndAppend2 <- function(Conditions,
 analyzeAndAppend2(Conditions = (herb & bio & trtsel),
                  FUN = glmer,
                  formula = value~treat+(1|block),
-                 family = gaussian(link="log"))
+                 family = gaussian(link="log"),
+                 control=glmerControl(optimizer="bobyqa",
+                                      optCtrl=list(maxfun=2e5)))
 
 ## 1B. IPs - biomass ----
 # analyzeAndAppend2( 
@@ -261,6 +264,13 @@ analyzeAndAppend2(
 analyzeAndAppend2(Conditions = (herb & div & trtsel),
                   FUN = lmer,
                   formula = value~treat+(1|block))
+
+library(nlme)
+analyzeAndAppend2(Conditions = (herb & div & trtsel),
+                  FUN = lme,
+                  fixed = value~treat,
+                  random= ~1|block)
+
 
 ## 4B. IPs - diversity SW ----
 analyzeAndAppend2(Conditions = (ips & div & trtsel),

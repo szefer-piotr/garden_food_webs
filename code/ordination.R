@@ -142,30 +142,66 @@ anova(plantTreat, by="terms") # as previously we have significant insecticide
 summary(plantTreat)
 # This maybe represents the variability well... for meany of these plants, standard deviation is zero.
 
-# 1a. pRDA on CvsP only, no significant effect of plant composition nor IAPs
+#### MANUSCRIPT I ----
+# 1a. pRDA on CvsP only, no significant effect of plant composition nor IAPs ----
 invert_abu <- cbind(ipabu_trimmed,abumat_trimmed)
 
 # Check wether plant abundance explains some variability
 pldat <- as.data.frame(plants_trimmed[, colSums(plants_trimmed)!=0])
+plPDC <- rda(pldat ~ Condition(block), data=treats_trimmed)
 
-prdaNull <- rda(invert_abu~1, data = pldat)
-prdaScope <- rda(invert_abu~MACATA+PIPTAR, data = pldat)
+plant_ort_sites <- plPDC$CA$u
+treats_trimmedPCA <- cbind(treats_trimmed, plant_ort_sites)
+
+abumat_trimmed_no_cole <- abumat_trimmed[,
+                                         -(which(colnames(abumat_trimmed) == "cole001"))]
+
+# For herbivores
+prdaNull <- rda(abumat_trimmed_no_cole~1+Condition(block+treat), 
+                data = treats_trimmedPCA)
+prdaScope <- rda(abumat_trimmed~PC1+PC2+PC3+PC4+Condition(block+treat),
+                 data = treats_trimmedPCA)
+prdaScope <- rda(abumat_trimmed_no_cole~PC5+PC6+Condition(block+treat), 
+                 data = treats_trimmedPCA)
+prdaScope <- rda(abumat_trimmed_no_cole~ipabu+ipbio+ipdiv+ipric+Condition(block+treat), 
+                 data = treats_trimmedPCA)
+
+# For IAPs
+prdaNull <- rda(ipabu_trimmed~1+Condition(block+treat), 
+                data = treats_trimmedPCA)
+
+prdaScope <- rda(ipabu_trimmed~PC1+PC2+PC3+PC4+Condition(block+treat),
+                 data = treats_trimmedPCA)
+prdaScope <- rda(ipabu_trimmed~PC5+PC6+Condition(block+treat), 
+                 data = treats_trimmedPCA)
+prdaScope <- rda(ipabu_trimmed~habu+hbio+hdiv+hric+Condition(block+treat), 
+                 data = treats_trimmedPCA)
+
+ordistep(prdaNull, prdaScope, direction = "forward")
 ordiR2step(prdaNull, prdaScope, direction = "forward")
-anova(prdaHP)
+
+# No PC axis for herbivores was and no characteristics of the IAP community was significant.
+# No PC axis for IAPs was and no characteristics of the IAP community was significant.
 
 prdaHerb <- rda(invert_abu~PREDATOR+Condition(block), data = treats_trimmed)
+
 pointcols <- rep(c(rgb(255,0,0,100,maxColorValue = 255),
                    rgb(0,255,0,100,maxColorValue = 255)), 
                  c(dim(ipabu_trimmed)[2], dim(abumat_trimmed)[2]))
 
-envHerb <- envfit(prdaHerb, pldat)
-# only melanolepis multigmlandulosa!
-  
-plot(prdaHerb)
+# Species significantly responding to the treatment
+envHerb <- envfit(prdaHerb, invert_abu)
+names(envHerb$vectors$r)[envHerb$vectors$pvals <= 0.05]
 
-# plot(prdaHerb, type = "n",display="species")
-# points(prdaHerb, display = "species", col = pointcols, pch = 19)
-# anova(prdaHerb, by = "terms")
+# only melanolepis multigmlandulosa!
+plot(prdaHerb)
+plot(prdaHerb, type = "n",display="species")
+points(prdaHerb, display = "species", col = pointcols, pch = 19)
+anova(prdaHerb, by = "terms")
+
+plot(envHerb[])
+# And the treatment was also not significant.
+
 
 # invert_abu[, "lepi008"]
 # text(prdaHerb,display = "species")
@@ -213,6 +249,10 @@ for(col in 1:dim(pldat)[2]){
 }
 
 t.test(x,y, paired = T)$p.value
+
+#### END
+
+
 # 1b. Removing effect of herbivores on plants ----
 
 # Below migh be unnecessary as we don't anticipate that herbivores controll plant community
@@ -395,7 +435,7 @@ fselbioins <- selectOrthogonalVars(maxa = 10,
                                    additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
 # nothing significant for biomass
 
-fselbioins <- selectOrthogonalVars(maxa = 10, 
+fselbioins <- selectOrthogonalVars(maxa = 1, 
                                    focal_dataset =  abumat_trimmed_no_cole, 
                                    ort_sites = ort_sites,
                                    additional_variables = c("ipabu","ipbio","ipdiv","ipric"))
@@ -598,12 +638,12 @@ abuFam_trim_paired <- abuFamOrig[treats_trimmed$codes, ]
 bioFam_trim_paired <- bioFamOrig[treats_trimmed$codes, ]
 
 library(psych)
-pairs.panels(log(abuFam_trim_paired+1), 
-             method = "pearson", # correlation method
-             hist.col = "#00AFBB",
-             density = TRUE,  # show density plots
-             ellipses = TRUE # show correlation ellipses
-)
+# pairs.panels(log(abuFam_trim_paired+1), 
+#              method = "pearson", # correlation method
+#              hist.col = "#00AFBB",
+#              density = TRUE,  # show density plots
+#              ellipses = TRUE # show correlation ellipses
+# )
 
 # Predator as base
 # final_herg_abu_formula <- paste("abumat_trimmed", "~", 
@@ -845,24 +885,30 @@ phabu <- cld(inter.test1, Letter="abcdefghijklm")
 
 # # DIET SWITCHING ----
 # Herbivores present in P and C treatments
+source("code/pdi.R")
+at <- 5 #abundance_treshold
+ins_bio_at <- ins_bio[ins_bio$amount >= at, ] 
+ins_bio_at <- ins_bio_at[-grep("aran|mant", ins_bio_at$morphotype), ]
+
 predsites <- treats[treats$treat == "PREDATOR",]$codes
 contsites <- treats[treats$treat == "CONTROL",]$codes
 
-ips <- grep("aran|mant", ins_bio$morphotype)
-
 ins_bioOrig <- ins_bioins_bio <- ins_bio[-ips, ]
 
-pabumat <- contingencyTable2(ins_bio[(ins_bio$plot %in% predsites), ],
+pabumat <- contingencyTable2(ins_bio_at[(ins_bio_at$plot %in% predsites), ],
                              "plot","morphotype","amount")
-pbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% predsites, ],
+pbiomat <- contingencyTable2(ins_bio_at[ins_bio_at$plot %in% predsites, ],
                              "plot","morphotype","totbio")
 
-cabumat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+cabumat <- contingencyTable2(ins_bio_at[ins_bio_at$plot %in% contsites, ],
                              "plot","morphotype","amount")
-cbiomat <- contingencyTable2(ins_bio[ins_bio$plot %in% contsites, ],
+cbiomat <- contingencyTable2(ins_bio_at[ins_bio_at$plot %in% contsites, ],
                              "plot","morphotype","totbio")
+
+
 
 comparable <- colnames(cbiomat)[colnames(cbiomat) %in% colnames(pbiomat)]
+
 # 
 # # Remove intermediate predators
 # comparable
@@ -872,40 +918,86 @@ cp_treats <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL","PREDATOR"),]$
 csites <- treats_trimmed[treats_trimmed$treat %in% c("CONTROL"),]$sites
 psites <- treats_trimmed[treats_trimmed$treat %in% c("PREDATOR"),]$sites
 
-ins_bio_cp <- ins_bio[ins_bio$plot %in% cp_treats, ]
+ins_bio_cp <- ins_bio_at[ins_bio_at$plot %in% cp_treats, ]
 ins_bio_cp_comparable <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable,]
 ibc <- ins_bio_cp_comparable
 ibc <- ibc[complete.cases(ibc),]
+
+# Species in the exclosure treatment get _P note ant the end
+ibc$morphotype <- as.character(ibc$morphotype)
+ibc[ibc$plot %in% psites, ]$morphotype <- paste(ibc[ibc$plot %in% psites,]$morphotype, 
+                                              "P", sep = "_")
+
+# Only one contingency table for all woody species
+compFood <- contingencyTable2(ibc,
+                              "tree",
+                              "morphotype",
+                              "totbio")
+
+dim(compFood)
+
+# envdat <- data.frame(treat = rep(c("predator", "control"), 
+#               c(dim(compFood)[1],
+#                 dim(compFood)[1])))
+# rownames(envdat) <- rownames(compFood)
+
+species_point_color <- rep(rgb(255,194,10,150,
+                               maxColorValue = 255), 
+                           dim(compFood)[2])
+species_point_color[grep("_P", colnames(compFood))] <- rgb(12,123,220,150,
+                             maxColorValue = 255)
+
+par(mfrow=c(1,1))
+dietrda <- metaMDS(compFood)
+foodDist <- vegdist(t(compFood))
+
+plot(dietrda, type = "n", display = "species")
+points(dietrda, display = "species", 
+       col = species_point_color, pch=19, cex = 1.5)
+
+# Shift vs pdi
+#diet breadths of comparable species 
+distspec <- as.matrix(foodDist)
+comparable <- comparable[comparable %in% colnames(distspec)]
+dbspec <- diet_breadth_ab[comparable]
+shiftvals <- diag(distspec[colnames(distspec) %in% comparable,
+         colnames(distspec) %in% paste(comparable,"P",sep ="_")])
+shiftvals[shiftvals == 1] <- 0.999
+
+# Linear regression may be weighted by abundance
+cds <- ins_bio_cp[ins_bio_cp$morphotype %in% comparable, ]
+cds$morphotype <- as.character(cds$morphotype)
+coll_abu <- tapply(cds$amount, cds$morphotype, sum)
+
+betareg_mod <- betareg::betareg(shiftvals~dbspec, 
+                                weights = log(coll_abu),
+                                type = "ML")
+summary(betareg_mod)
+# plot(betareg_mod)
+
+plotdf <- as.data.frame(cbind(shiftvals, dbspec, coll_abu))
+
+preddat <- predict(betareg_mod, 
+                 newdata = plotdf,
+                 type = "quantile", 
+                 at = c(0.025, 0.975))
+
+plotdf <- cbind(plotdf, preddat)
+
+ggplot(plotdf, aes(x = dbspec, y = shiftvals)) +
+  geom_point(size = log(coll_abu)) +
+  geom_line(aes(y = predict(betareg_mod, plotdf))) +
+  geom_ribbon(aes(ymin= q_0.025, ymax = q_0.975), alpha=0.2)
+
+
+ggplot(plotdf, aes(y=shiftvals, x=dbspec)) +
+  geom_point(size = log(coll_abu), shape = 21) +
+  geom_line(aes(y = predict(betareg_mod, plotdf))) +
+  theme_bw()
 # 
-ccompFood <- contingencyTable2(ibc[ibc$plot %in% csites, ],
-                               "tree",
-                               "morphotype",
-                               "totbio")
-
-pcompFood <- contingencyTable2(ibc[ibc$plot %in% psites, ],
-                               "tree",
-                               "morphotype",
-                               "totbio")
-
-dim(pcompFood)
-dim(ccompFood)
-# 
-# # Combine dataset 
-rownames(pcompFood) <- paste("p", rownames(pcompFood), sep="_")
-rownames(ccompFood) <- paste("c", rownames(ccompFood), sep="_")
-
-compFood <- rbind(pcompFood,ccompFood)
-
-#### UNHASH IN CASE OF EMERGENCY
-
-envdat <- data.frame(treat = rep(c("predator", "control"), 
-              c(dim(pcompFood)[1],
-                dim(ccompFood)[1])))
-rownames(envdat) <- rownames(compFood)
-
-dietrda <- rda(compFood~treat, data=envdat)
-anova(dietrda, by="axis")
-plot(dietrda)
+# ggplot()+
+#   geom_point(size = log(coll_abu))+
+#   stat_smooth(method="lm")
 
 # DIet shift initial code
 # compare_row <- function(row){

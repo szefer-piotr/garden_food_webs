@@ -60,6 +60,16 @@ for(fams in unique(ssdf$fam)){
   mod1 <- summary(glmer(exp(lbio)~type+(1|block), 
                        data=ssdf[ssdf$fam == fams,],
                        family = gaussian(link="log"), start = 0))
+  
+  # predict data from the mod
+  data <- ssdf[ssdf$fam == fams,]
+  nddata <- data[!duplicated(data),]
+  
+  mod1 <- summary(glmer(exp(lbio)~type+(1|block), 
+                        data=nddata,
+                        family = gaussian(link="log"), start = 0))
+  
+  
   # print(summary(mod1))
   sm <- summary(mod1)
   c1 <- sm$coefficients[1,1]

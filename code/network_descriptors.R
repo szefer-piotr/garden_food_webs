@@ -53,6 +53,9 @@ gardnets <- abugardnets # abundance based networks
 # Remove cole001 from sampled networks! This should be done in order to alalyse effect of weevils on the REST of the community! It might be bad idea to do this if cole001 is some kind of key species in the network
 treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
 treats_to_remove_cole <- as.character(unique(treats$treat)[c(2,3,4,5)])
+
+# C vs P
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4)]
 treats_to_remove_cole <- treats_to_plot
 sites_to_remove_cole <- treats[treats$treat %in% treats_to_remove_cole, ]$codes
 strc <- as.character(sites_to_remove_cole)
@@ -325,6 +328,8 @@ logit <- function(x){log(x/(1-x))}
 # Filter only plots that I want to plot
 clippedpd <- plotdat[plotdat$trt %in% treats_to_plot,]
 
+clippedpd$trt <- as.character(clippedpd$trt)
+
 # Assign colors for significant and non-significant differences
 sigcol <- rgb(255,0,0,150,maxColorValue = 255)
 nsigcol <- rgb(211,211,211,150,maxColorValue = 255)
@@ -387,7 +392,7 @@ genlm <- lm(ind~trt, gendat)
 genlmer <- lmer(ind~trt+(1|block), gendat) #ns
 summary(genlm)
 summary(genlmer)
-plot(ind~trt,gendat)
+plot(gendat$ind~gendat$trt)
 
 # 2.4 Herbivore species [] ----
 
@@ -416,13 +421,13 @@ plot(ind~trt,moddat)
 # summary(nlme::lme(logit(ind)~trt, random = ~1|block, moddat))
 br <- glmmTMB(ind ~ trt, data = moddat, 
               family= beta_family(link = "logit"))
-# brrand <- glmmTMB(ind ~ trt+(1|block), 
-#                   data = moddat, 
-#                   family= beta_family(link = "logit"))
-# summary(brrand)
+brrand <- glmmTMB(ind ~ trt+(1|block),
+                  data = moddat,
+                  family= beta_family(link = "logit"))
+summary(brrand)
 summary(br) # random effect not significant
 
-# anova(br, brrand, test="Chisq") # differnce not significant
+anova(br, brrand, test="Chisq") # differnce not significant
 
 # brtest <- emmeans(br, "trt")
 # brrandtest <- emmeans(brrand, "trt")
@@ -493,7 +498,7 @@ vuldat <- desStatMod(clippedpd, "Vulnerability")
 trmod <- (truncreg(ind~trt, vuldat))
 vullmer <- nlme::lme(ind~trt, random = ~1|block, vuldat)
 summary(vullmer)
-
+summary(trmod)
 # AIC(trmod, vullmer)
 
 # sigind <- c("Vulnerability",
@@ -565,6 +570,30 @@ sigcolors[c(4,5)] <- sigcol
 
 # Fix the labels
 
+sigcolors <- sigcolors[!is.na(sigcolors)]
+
+# Sigcolors not included
+ggplot(clippedpd_itp, 
+       aes(x = trt, 
+           y = ind))+
+  geom_jitter(width = 0.1, 
+              col = rgb(150,150,150,80,
+                        maxColorValue = 255))+
+  geom_line(aes(group=block),
+            lty = 2,
+            col = rgb(150,150,150,80,
+                      maxColorValue = 255)) + 
+  facet_wrap(~type, 
+             scales = "free") + 
+  stat_summary(fun.data=mean_cl_boot, 
+               geom="pointrange", 
+               lwd=0.8) +
+  stat_summary(fun=mean, 
+               geom="point", 
+               cex = 2)+
+  xlab("")+ylab("")
+
+# Sigcolors included 
 ggplot(clippedpd_itp, 
        aes(x = trt, 
            y = ind))+
@@ -582,108 +611,3 @@ ggplot(clippedpd_itp,
                color= sigcolors, 
                cex = 2)+
   xlab("")+ylab("")
-  
-  
-# stat_summary(fun.data=mean_cl_boot,
-# geom="pointrange", color= colors, width=0.2, lwd=1.5) +
-#   stat_summary(fun.y=mean, geom="point", color=colors, cex = 5) +
-#   theme(axis.text.x=element_text(angle=0, size=20, hjust=0.5)
-
-# Tests! - consider transformations
-# for(type in unique(plotdat$type)){
-#   print(type)
-#   subdat <- plotdat[plotdat$type == type, ]
-#   sublm <- lmer(ind~trt+sr+(1|block), data=subdat)
-#   print(summary(sublm))
-# }
-# 
-# for(dstp in unique(plotdat$type)){
-#   print("_________________________")
-#   desStatMod(plotdat, dstp)
-# }
-
-##########>>>>>>>>>>>>>>>>>>>>>>>>>>>>> WARNING - something wrong here with treatments
-# 
-
-
-# Dealing with singularity because of the optimizers - use nlme::lme()
-
-# table(subdat$block, subdat$trt)
-# table(treats$treat, treats$codes) #
-# 
-# vullme <- lmer(vul~trt+(1|block), data=genvuldf) 
-# genlme <- lmer(gen~trt+(1|block), data=genvuldf) 
-# summary(genlme)
-# summary(vullme)
-# 
-# # Controling for the plant diversity
-# sr <- as.data.frame(tapply(plants$SPEC, plants$CODE, function(x){length(unique(x))}))
-# sr$code <- rownames(sr)
-# colnames(sr) <- c("sr", "code")
-# genvuldf$sr <- sr[genvuldf$plot, "sr"]
-# colnames(genvuldf)
-
-# 
-# vullmesr <- lmer(vul~trt+sr+(1|block), data=genvuldf) 
-# genlmesr <- lmer(gen~trt+sr+(1|block), data=genvuldf)
-# 
-# summary(vullmesr)
-# summary(vullme)
-# 
-# anova(vullme, vullmesr)
-# 
-# summary(genlmesr)
-# summary(genlme)
-# 
-# anova(genlme, genlmesr)
-
-#  IP/herb
-# gardnets
-# for(gard in names(gardnets)){
-#   print(dim(gardnets[[gard]]))
-# }
-# 
-# psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
-# csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
-# 
-# pihratio <- data.frame()
-# for(gard in psites){
-#   print(gard)
-#   submat <- gardnets[[gard]]
-#   ipcols <- grep("aran|mant", colnames(submat))
-#   ipbio <- sum(colSums(submat[, ipcols]))
-#   hbio <- sum(colSums(submat[, -ipcols]))
-#   iphr <- ipbio/hbio
-#   phrow <- data.frame(site = gard, 
-#                        trt = "predator",
-#                        iphr = iphr)
-#   # sum(submat) == ipbio+hbio
-#   pihratio <- rbind(pihratio, phrow)
-# } 
-# 
-# cihratio <- data.frame()
-# for(gard in csites){
-#   print(gard)
-#   submat <- gardnets[[gard]]
-#   ipcols <- grep("aran|mant", colnames(submat))
-#   ipbio <- sum(colSums(submat[, ipcols]))
-#   hbio <- sum(colSums(submat[, -ipcols]))
-#   iphr <- ipbio/hbio
-#   chrow <- data.frame(site = gard, 
-#                       trt = "control",
-#                       iphr = iphr)
-#   # sum(submat) == ipbio+hbio
-#   cihratio <- rbind(cihratio, chrow)
-# } 
-# 
-# iphratio <- rbind(cihratio,pihratio)
-# iphratio$block <- substr(iphratio$site, 3, 4)
-# library(ggplot2)
-# # p <- ggplot(iphratio, aes(x =trt, y = log(iphr)))
-# # p + geom_jitter()
-# 
-# plot(log(iphr)~trt, iphratio)
-# library(lme4)
-# library(lmerTest)
-# summary(lmer(log(iphr)~trt+(1|block), iphratio))
-# 

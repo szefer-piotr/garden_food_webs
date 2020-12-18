@@ -261,8 +261,9 @@ plotDFLR$lratioPL <- log(plotDFLR$numpl/plotDFLR$denpl)
 plotDFLR$fams <- as.character(plotDFLR$fams)
 plotDFLR[plotDFLR$fams == "", ]$fams <- "cumulative"
 
-# Herbivore vs plants
-HvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
+# Figure 3 panels ----
+# PANE 1 ----
+pane1 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
        aes(y = lratioH, x=lratioPL))+
   geom_point()+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=0.5)+
@@ -274,27 +275,16 @@ HvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ],
   facet_wrap(~comp, scales = "free")
 
 #regression coefs.
-# rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
-# lmw125 <- lm(lratioH~lratioPL, 
-#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[1],])
-# summary(lmw125)
-# 
-# lmw25 <- lm(lratioH~lratioPL, 
-#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[2],])
-# summary(lmw25)
-# 
-# lmI <- lm(lratioH~lratioPL, 
-#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[3],])
-# summary(lmI)
-# 
-lmP <- lm(lratioH~lratioPL,
-             data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[4],])
-summary(lmP)
+rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
+
+pane1test <- lm(lratioH~lratioPL,
+             data = rcoefdf)
+summary(pane1test)
 
 
 
-# Herbivore vs IPS
-HvIAP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
+# PANE 2 ----
+pane2 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
        aes(x = lratioH, y=lratioIP))+
   geom_point()+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
@@ -306,21 +296,10 @@ HvIAP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ],
   facet_wrap(~comp, scales = "free")
 
 rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
-# iplmw125 <- lm(lratioIP~lratioPL, 
-#              data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[1],])
-# summary(iplmw125)
-# 
-# iplmw25 <- lm(lratioIP~lratioPL, 
-#             data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[2],])
-# summary(iplmw25)
-# 
-# iplmI <- lm(lratioIP~lratioPL, 
-#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[3],])
-# summary(iplmI)
-# 
-# iplmP <- lm(lratioIP~lratioPL, 
-#           data = rcoefdf[rcoefdf$comp == unique(rcoefdf$comp)[4],])
-# summary(iplmP)
+
+pane2test <- lm(lratioIP~lratioH,
+                data = rcoefdf)
+summary(pane2test)
 
 # Herbivore vs PLant FAMS
 
@@ -328,7 +307,8 @@ rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
 
 plotDFLR$some_quality <- 1
 
-HvPfam <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
+# PANE 3 ----
+pane3 <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
        aes(y = lratioH, x=lratioPL, col = fams))+
   geom_point(size = plotDFLR[plotDFLR$fams != "cumulative",
                              ]$some_quality)+
@@ -336,6 +316,40 @@ HvPfam <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ],
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
   stat_smooth(method="lm", se=F)+
   facet_wrap(~comp, scales = "free")
+
+rcoefdf <- plotDFLR[plotDFLR$fams != "cumulative", ]
+rcoefdf <- rcoefdf[-grep("aran|mant",rcoefdf$fams), ]
+rcoefdf <- rcoefdf[complete.cases(rcoefdf$lratioH),]
+
+p3dat <- plotDFLR[plotDFLR$fams != "cumulative", ]
+
+p3dat <- p3dat[-grep("aran|mant",p3dat$fams),]
+
+pane3 <- ggplot(p3dat, 
+                aes(y = lratioH, x=lratioPL))+
+  geom_point(aes(pch = fams, col = fams), size = 3)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(data = p3dat, 
+              mapping = aes(y = lratioH, x=lratioPL), 
+              method="lm", se=T, col = "gray40")
+
+pane3
+
+pane3test <- lm(lratioH~lratioPL+fams,
+                data = rcoefdf)
+summary(pane3test)
+
+dummy_data <- rcoefdf[, c("lratioH","lratioPL","fams")]
+library(psych)
+fams_dummy <- dummy.code(dummy_data$fams)
+dummy_data <- cbind(dummy_data, fams_dummy)
+
+pane3DummyTest <- lm(lratioH~lratioPL+hemi+lepi+orth+cole,
+                data = dummy_data)
+summary(pane3DummyTest)
+library(lmSupport)
+lm.sumSquares(pane3DummyTest)
 
 IAPvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
                        aes(y = lratioIP, x=lratioPL))+
@@ -350,26 +364,87 @@ IAPvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ],
 #           data = plotDFLR[plotDFLR$fams == "cumulative", ])
 # summary(lmIP)
 
-# Herbivore vs IPS FAMS
-HvIAPfam <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
-                   aes(x = lratioPL, y=lratioIP, col = fams))+
+# PANE 4 ----
+pane4df <- plotDFLR[plotDFLR$fams != "cumulative", ]
+pane4df_noIp <- pane4df[!(pane4df$fams %in% c("aran","mant")), 
+                        c("block","fams","lratioH")]
+pane4df_Ip <- pane4df[(pane4df$fams %in% c("aran","mant")), 
+                      c("block","fams","lratioIP")]
+
+basedf<- expand.grid(unique(pane4df_noIp$fams), unique(pane4df_Ip$fams), unique(pane4df_noIp$block))
+colnames(basedf) <- c("hfam","ipfam","block")
+basedf$lrIP <- NA
+basedf$lrH <- NA
+
+for(row in 1:dim(basedf)[1]){
+  print(row)
+  ipfam <- as.character(basedf[row,]$ipfam)
+  hfam <- as.character(basedf[row,]$hfam)
+  block <- as.character(basedf[row,]$block)
+  
+  ipval <- pane4df[(pane4df$fams %in% ipfam & pane4df$block %in% block), ]$lratioIP
+  hval <- pane4df[(pane4df$fams %in% hfam & pane4df$block %in% block), ]$lratioH
+  
+  basedf[row,]$lrH <- hval
+  basedf[row,]$lrIP <- ipval
+  
+}
+
+basedf$ordcomp <- paste(basedf$hfam, basedf$ipfam, sep="_")
+library(RColorBrewer)
+display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
+                   colorblindFriendly=T)
+
+pane4 <- ggplot(basedf, 
+                   aes(x = lrH, y=lrIP, col = ordcomp))+
   geom_point()+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-  stat_smooth(method="lm", se=FALSE)+
-  facet_wrap(~comp, scales = "free")
+  stat_smooth(method="lm", se=F)+
+  scale_color_manual(values =brewer.pal(10,"Paired"))+
+  facet_wrap(~ipfam, scales = "free")
+
+pane4 <- ggplot(basedf, 
+                aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = hfam, col = hfam), size = 3)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(data = basedf, 
+              mapping = aes(x = lrH, y=lrIP), 
+              method="lm", se=T, col = "gray40")+
+  facet_wrap(~ipfam, scales = "free")
+
+# pane4
+pane4testA <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "aran", ])
+pane4testM <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "mant", ])
+summary(pane4testA)
+summary(pane4testM)
+
 
 # Arrange panel plot ----
 
 library(ggpubr)
+library(gridExtra)
+grid.arrange(arrangeGrob(pane1,pane2, pane3, ncol=3, nrow=1),
+             arrangeGrob(pane4, ncol=1, nrow=1), heights=c(4,1), widths=c(2,1))
 
-ggarrange(HvP,
-          HvPfam+theme(legend.position = "none"),
-          IAPvP,
-          HvIAPfam+theme(legend.position = "none"), 
+ggarrange(pane1,
+          pane2,
+          pane3+theme(legend.position = "none"),
+          pane4+theme(legend.position = "none"), 
           labels = c("A", "B", "C","D"),
-          ncol = 2, nrow = 2,
+          ncol = 3, nrow = 2,
           legend = "bottom", common.legend = T)
+
+
+
+
+
+
+
+
+
+
 
 # PAirwise correlations of IAPs and Herb
 pairdat <- plotDFLR[plotDFLR$fams != "cumulative", ]

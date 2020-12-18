@@ -159,16 +159,16 @@ bioHerbRDA <- rda(biomat_trimmed~CONTROL+Condition(block), treats_trimmedPCA)
 abuIpRDA <- rda(ipabu_trimmed~CONTROL+Condition(block + habu), treats_trimmedPCA)
 bioIpRDA <- rda(ipbio_trimmed~CONTROL+Condition(block), treats_trimmedPCA)
 
-checkPredEffectStrength <- function(abuHerbRDA, treshold = 10){
+library(ggplot2)
+
+
+checkPredEffectStrength <- function(abuHerbRDA, treshold = 10, ...){
   # Coord plot
   ordcompdf <- data.frame(rdacoords = (-1) * summary(abuHerbRDA)$species[,1])
   ordcompdf$rdaorders <- substr(rownames(ordcompdf),1,4)
   
   # Remove zeros as these are not informative
   ordcompdf_nz <- ordcompdf[ordcompdf$rdacoords != 0,]
-  library(ggplot2)
-  ggplot(ordcompdf_nz, aes(x = rdaorders, y=rdacoords))+
-    geom_jitter(width = 0.1)
   
   # morphospecies with reasonable abundance
   # only C and P
@@ -178,7 +178,7 @@ checkPredEffectStrength <- function(abuHerbRDA, treshold = 10){
   # treshold = 10
   tspec <- names(abundances[abundances >= treshold])
   rdact <- ordcompdf_nz[rownames(ordcompdf_nz) %in% tspec, ] # tresholded ds
-  comp <- lm(rdacoords~rdaorders, rdact, weights = abundances[rownames(rdact)])
+  comp <- lm(rdacoords~0+rdaorders, rdact, weights = abundances[rownames(rdact)])
   print(summary(comp))
   
   tukeyComp <- emmeans(comp, "rdaorders")
@@ -192,8 +192,8 @@ checkPredEffectStrength <- function(abuHerbRDA, treshold = 10){
   p <- ggplot(rdact, aes(x = rdaorders, y=rdacoords))
   p +  geom_jitter(width = 0.1, col = rgb(10,10,10,80,maxColorValue = 255))+
     stat_summary(fun.data=mean_cl_boot, 
-                 geom="pointrange", lwd=0.8) +
-    stat_summary(fun=mean, geom="point",cex = 2)+
+                 geom="pointrange", lwd=0.8, ...) +
+    stat_summary(fun=mean, geom="point",cex = 2, ...)+
     geom_text(data = pairwise, aes(x = rdaorders, y = emmean,
                                    label = .group), nudge_y = 0.1)+
     geom_hline(yintercept = 0, lty = 2, 
@@ -201,15 +201,15 @@ checkPredEffectStrength <- function(abuHerbRDA, treshold = 10){
 }
 library(ggpubr)
 
-checkPredEffectStrength(abuHerbRDA)
-checkPredEffectStrength(bioHerbRDA)
-checkPredEffectStrength(abuIpRDA)
-checkPredEffectStrength(bioIpRDA)
+cols <- c(rgb(),
+          rgb())
 
-ggarrange(checkPredEffectStrength(abuHerbRDA),
-          checkPredEffectStrength(bioHerbRDA),
-          checkPredEffectStrength(abuIpRDA),
-          checkPredEffectStrength(bioIpRDA),
+p1 <- checkPredEffectStrength(abuHerbRDA, colour = c("red","red","black","red","black"))
+p2 <- checkPredEffectStrength(bioHerbRDA, colour = c("red","red","black","red","black"))
+p3 <- checkPredEffectStrength(abuIpRDA, colour = c("black","red"))
+p4 <- checkPredEffectStrength(bioIpRDA, colour = c("black","gold"))
+
+ggarrange(p1,p2,p3,p4,
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
 
@@ -229,3 +229,5 @@ anova(abuHerbRDA)
 anova(bioHerbRDA)
 anova(abuIpRDA)
 anova(bioIpRDA)
+
+# Plot RDA graphs

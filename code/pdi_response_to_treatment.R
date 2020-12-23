@@ -109,12 +109,12 @@ pdi_change_nozero <- pdi_changedf[pdi_changedf$vals != 0, ]
 pdi_nocole <- pdi_change_nozero[!(pdi_change_nozero$species %in% "cole001"), ]
 pdi_only_cole <- pdi_change_nozero[(pdi_change_nozero$species %in% "cole001"), ]
 
-ggplot(pdi_only_cole , aes(x=trt, y = vals, group = garden))+
-  geom_jitter(width = 0.1)+
-  geom_line(lty = 2, lwd=0.1)+
-  facet_wrap(~comp, scales = "free")+
-  ylab("Paired Distance Index (specialization")+
-  xlab("Treatment")
+# ggplot(pdi_only_cole , aes(x=trt, y = vals, group = garden))+
+#   geom_jitter(width = 0.1)+
+#   geom_line(lty = 2, lwd=0.1)+
+#   facet_wrap(~comp, scales = "free")+
+#   ylab("Paired Distance Index (specialization")+
+#   xlab("Treatment")
 
 # Compare log ratios and test wether their mean value is different from 0.
 
@@ -132,31 +132,42 @@ pdi_filtered$sp_gard <- paste(pdi_filtered$species, pdi_filtered$garden, sep = "
 pdi_filtered$fam <- substr(pdi_filtered$species,1,4)
 
 # There is some relationship between plant sp richness in C vs I comparison.
+# ggplot(pdi_filtered , aes(x=trt, y = vals, 
+#                           group = sp_gard, 
+#                           colour = fam))+
+#   geom_jitter(width = 0.05, 
+#               size = log(pdi_filtered$abu), 
+#               alpha = 0.4)+
+#   geom_line(lty = 2, lwd=0.9,
+#             alpha = 0.4)+
+#   facet_wrap(~comp, scales = "free")+
+#   ylab("Paired Distance Index (specialization")+
+#   xlab("Treatment")
+
+cbf_2 <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+           "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+pdi_filtered$shape <- as.numeric(as.factor(pdi_filtered$fam))+20
+
+# logit <- function(x){log(x/(1-x))}
 ggplot(pdi_filtered , aes(x=trt, y = vals, 
                           group = sp_gard, 
-                          colour = fam))+
-  geom_jitter(width = 0.05, 
+                          fill = fam))+
+  geom_jitter(data = pdi_filtered,
+              width = 0.05, 
               size = log(pdi_filtered$abu), 
-              alpha = 0.4)+
-  geom_line(lty = 2, lwd=0.9,
-            alpha = 0.4)+
-  facet_wrap(~comp, scales = "free")+
-  ylab("Paired Distance Index (specialization")+
-  xlab("Treatment")
-
-logit <- function(x){log(x/(1-x))}
-ggplot(pdi_filtered , aes(x=trt, y = logit(vals), 
-                          group = sp_gard, 
-                          colour = fam))+
-  geom_jitter(width = 0.05, 
-              size = log(pdi_filtered$abu), 
-              alpha = 0.4)+
-  geom_line(lty = 2, lwd=0.9,
+              alpha = 0.8,
+              shape = pdi_filtered$shape)+
+  geom_line(lty = 2, lwd=0.5,
             alpha = 0.4)+
   facet_wrap(~fam, scales = "free")+
-  ylab("Paired Distance Index (specialization")+
+  scale_shape_manual(values=c(21,22,23,24,25,
+                              21,22,23,24,25))+
+  ylab("Specialization of herbivore species (Paired Distance Index)")+
   xlab("Treatment")+
+  theme_bw()+
   theme(legend.position = "none")
+
 
 # Test for individual orders paired in morpho-species
 
@@ -226,7 +237,7 @@ plotPlantComposition <- function(plot){
 }
 
 # 1. Get plots for a comparison
-comparison <- c('control', 'weevil25')
+comparison <- c('control', 'predator')
 cplots <- treats[treats$treat %in% toupper(comparison[1]), ]$codes
 tplots <- treats[treats$treat %in% toupper(comparison[2]), ]$codes
 
@@ -268,3 +279,5 @@ tplants
 
 networklevel(cnet, index = "weighted connectance")
 networklevel(cnet, index = "connectance")
+
+plotweb(cnet)

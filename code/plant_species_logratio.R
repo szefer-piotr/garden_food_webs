@@ -97,7 +97,7 @@ makeLogratioData <- function(species, treatments, abundance = TRUE){
     
     # Individual herbivore species lratio
     for(spec in species){
-      print(spec)
+      # print(spec)
       
       num_sub_spec <- num_subdat[num_subdat$tree == spec, ]
       den_sub_spec <- den_subdat[den_subdat$tree == spec, ]
@@ -121,14 +121,28 @@ makeLogratioData <- function(species, treatments, abundance = TRUE){
         gen_num <- herb_num_subdat[, c("morphotype","totbio")]
         gen_den <- herb_den_subdat[, c("morphotype","totbio")]
       }
+      
+      # DEBUG
+      print(gen_num)
+      
       mergeddf <- merge(gen_num, gen_den, by="morphotype")
+      
+      #DEBUG
+      print(mergeddf)
+      
       ind_spec_lratio <- log(mergeddf[,2]/mergeddf[,3])
+      
+      # DEBUG
+      print(ind_spec_lratio)
+      
       names(ind_spec_lratio) <- as.character(mergeddf[,1])
+      
       # Plant biomass change
       num_bool<-(pl_bio_dat$CODE==num_site & pl_bio_dat$SP_CODE==toupper(spec))
       den_bool<-(pl_bio_dat$CODE == den_site & pl_bio_dat$SP_CODE==toupper(spec))
       num_pl_bio <- sum(pl_bio_dat[num_bool, ]$WEIGHT)
       den_pl_bio <- sum(pl_bio_dat[den_bool, ]$WEIGHT)
+      
       # Put the row together
       slr_row <- data.frame(species = names(ind_spec_lratio),
                             lratio = ind_spec_lratio,
@@ -145,6 +159,12 @@ makeLogratioData <- function(species, treatments, abundance = TRUE){
 
 # No difference
 cplratio <- makeLogratioData(tolower(species), treatments, abundance = T)
+
+# Biomass based
+cplratio <- makeLogratioData(tolower(species), treatments, abundance = FALSE)
+
+
+
 # cplratio <- makeLogratioData(c("piptar", "melamu"), treatments, abundance = T)
 cplratio_spec <- cplratio[[1]]
 cplratio_gen <- cplratio[[2]]
@@ -155,20 +175,84 @@ cplratio_spec$weight <- pdiss[as.character(cplratio_spec$species)]
 cplratio_spec$order <- substr(cplratio_spec$species,1,4)
 
 
-ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = tree))+
-  geom_jitter(size = log(cplratio_spec$weight))
+# ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = tree))+
+#   geom_jitter(size = log(cplratio_spec$weight))
+# 
+# ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
+#   geom_jitter(size = log(cplratio_spec$weight))
 
-ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
-  geom_jitter(size = log(cplratio_spec$weight))
+cplratio_spec$pshape <- as.numeric(cplratio_spec$tree)+20
 
+cbf_2 <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+           "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = tree))+
-  geom_jitter(size = log(cplratio_spec$weight))+
-  stat_smooth(method = "lm", lty = 1, se=F)
+fulltree <- c("Breynia cernua", 
+              "Melanolepis multiglandulosa",
+              "Pipturus argenteus", 
+              "Trichospermum pleiostigma",
+             "Trema orientalis")
+names(fulltree) <- c("breyce", "melamu","piptar", "tricpl",
+                    "tremor")
 
-ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
-  geom_jitter(size = log(cplratio_spec$weight))+
-  stat_smooth(method = "lm", lty = 1, se=F)
+p1 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
+  geom_point(aes(fill= tree, shape = tree))+
+  # scale_fill_manual(values=cbf_2[4:8])+
+  # scale_color_manual(values=cbf_2[4:8])+
+  scale_shape_manual(values=c(21,22,23,24,25))+
+  facet_grid(vars(tree),
+             labeller = labeller(tree = fulltree,label_wrap_gen()))
+  # stat_smooth(mapping=aes(weight=log(weight)),
+  #             method = "lm", formula = y~x,
+  #             lty = 2, se=F, col="grey40", lwd=0.5)
+
+p1
+fullord <- c("Coleoptera", "Hemiptera","Homoptera", "Lepidoptera",
+             "Orthoptera")
+names(fullord) <- c("cole", "hemi","homo", "lepi",
+             "orth")
+  
+p2 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
+  geom_point(aes(fill= order, shape = order))+
+  # scale_fill_manual(values=cbf_2[4:8])+
+  # scale_color_manual(values=cbf_2[4:8])+
+  scale_shape_manual(values=c(21,22,23,24,25))+
+  facet_grid(vars(order),
+             labeller = labeller(order = fullord))+
+  stat_smooth(data = subset(cplratio_spec, order == "homo"),
+              mapping=aes(weight=log(weight)),
+              method = "lm", formula = y~x,
+              lty = 1, se=T, col="grey40", lwd=0.5)
+  # scale_linetype_manual(values=c(cole=2,
+  #                                hemi=2,
+  #                                homo=1,
+  #                                lepi=2,
+  #                                orth=2))
+
+library(ggpubr)
+
+ggarrange(p1+theme(legend.position = "none")+
+            xlab("Specialization (PDI)")+
+            ylab("Predator indirect effect on herbivore abundance"),
+          p2+theme(legend.position = "none")+
+            xlab("Specialization (PDI)")+
+            ylab("Predator direct effect on herbivore abundance"))
+# I need a genearl pattern and is there an interaction in different orders and plant species
+
+# ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
+#   geom_point(aes(size = log(weight), 
+#                  shape = order, fill=order))+
+#   # scale_fill_manual(values=cbf_2[4:8])+
+#   # scale_color_manual(values=cbf_2[4:8])+
+#   scale_shape_manual(values=c(21,22,23,24,25))+
+#   stat_smooth(mapping=aes(weight=log(weight)), 
+#               method = "lm", formula = y~x+I(x^2),
+#               lty = 1, se=F, col="grey80")
+# 
+# ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
+#   geom_jitter(size = log(cplratio_spec$weight))+
+#   stat_smooth(method = "lm", lty = 1, se=T)
+
+# General test
 
 modpip1 <- nlme::lme(lratio~pdi*order, random = ~1|block, data=cplratio_spec,
                      weights = ~ as.vector(weight))
@@ -204,4 +288,81 @@ summary(mod2)
 
 # This just looks the same... positive response from plants in correlated with popsitive response from herbivores
 plot(lratio~plant_abu_logratio, data=cplratio_gen)
-     
+
+# Each plant each o0rder: nothing significant
+for(plt in unique(cplratio_spec$tree)[-1]){
+  print(paste(plt,"_________________"))
+  subdat <- cplratio_spec[cplratio_spec$tree == plt, ]
+  mod <- nlme::lme(lratio ~ pdi, random = ~1|block, 
+                   data = subdat, weights = ~ as.vector(weight))
+  print(summary(mod))
+}
+
+for(plt in unique(cplratio_spec$order)){
+  print(paste(plt,"_________________"))
+  subdat <- cplratio_spec[cplratio_spec$order == plt, ]
+  mod <- nlme::lme(lratio ~ pdi, random = ~1|block, 
+                   data = subdat, weights = ~ as.vector(weight))
+  print(summary(mod))
+}
+
+# Here homoptera is significant
+
+
+# Each plant each order plant interacton nothing significant
+
+for(plt in unique(cplratio_spec$tree)){
+  for(ord in unique(cplratio_spec$order)){
+    
+    print(paste(plt, ord))
+    
+    c1 <- cplratio_spec$tree == plt
+    c2 <- cplratio_spec$order == ord
+    subdat <- cplratio_spec[c1&c2, ]
+    
+    isenough <- TRUE
+
+    huh <- tryCatch({
+      mod <- nlme::lme(lratio ~ pdi,
+                       random = ~1|block,
+                       data = subdat,
+                       weights = ~ as.vector(weight))
+      }, error = function(e) {
+        print(paste(title, "not enough obs"))
+        isenough <- FALSE
+        return(isenough)
+      })
+    
+    print(summary(huh))
+    
+    # if(huh){
+    #   mod <- nlme::lme(lratio ~ pdi, random = ~1|block,
+    #                    data = subdat, weights = ~ as.vector(weight))
+    #   print(summary(mod))
+    # }
+    
+  }
+  
+}
+
+ggplot(cplratio_spec, aes(y = lratio,x = pdi))+
+  geom_point()+
+  geom_smooth(type = "lm")
+
+
+inter <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
+  geom_point(aes(fill= order, shape = order))+
+  scale_shape_manual(values=c(21,22,23,24,25))+
+  facet_grid(vars(order), vars(tree))+
+  stat_smooth(mapping=aes(weight=log(weight)),
+              method = "lm", formula = y~x,
+              lty = 1, se=T, col="grey40", lwd=0.5)
+# scale_linetype_manual(values=c(cole=2,
+
+# for(plt in unique(cplratio_spec$order)){
+#   print(paste(plt,"_________________"))
+#   subdat <- cplratio_spec[cplratio_spec$order == plt, ]
+#   mod <- nlme::lme(lratio ~ I(pdi^2), random = ~1|block, 
+#                    data = subdat, weights = ~ as.vector(weight))
+#   print(summary(mod))
+# }

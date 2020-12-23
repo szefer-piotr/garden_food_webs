@@ -862,66 +862,66 @@ for(block in unique(genllratio$bl)){
 # 
 # # * 2.1.4 Differences between orders based on the abundance ----
 # treatments <- c("control","predator","weevil25", "weevil125")
-# treatments <- c("control","predator")
-# 
-# 
-# abufulldf$gard <- substr(abufulldf$plot, 3,4)
-# abudatfam <- data.frame()
-# 
-# # fam <- unique(abufulldf$nms)[3]
-# # bl <- "g2"
-# 
-# for(fam in unique(abufulldf$nms)){
-#   print(fam)
-#   fambiocp <- abufulldf[abufulldf$nms == fam,]
-#   fambiocp$trt <- as.character(fambiocp$trt)
-#   blockdat <- data.frame()
-#   for (bl in unique(abufulldf$gard)){
-#     print(bl)
-#     fcpbl <- fambiocp[fambiocp$gard == bl,]
-#     # print(fcpbl)
-#     fcpbl_trt <- fcpbl[fcpbl$trt %in% toupper(treatments),]
-#     vals <- tapply(fcpbl_trt$bio, fcpbl_trt$trt, sum)
-#     blockrow <- data.frame(fam = fam,
-#                            val = vals,
-#                            trt = tolower(names(vals)), 
-#                            block = bl)
-#     blockdat <- rbind(blockdat, blockrow)
-#   }
-#   abudatfam <- rbind(abudatfam, blockdat)
-# }
-# 
-# abudatfam_nozero <- abudatfam[abudatfam$val != 0, ]
-# 
-# # * 2.1.5 Diffs based on biomass ----
-# 
-# biofulldf$gard <- substr(biofulldf$plot, 3,4)
-# biodatfam <- data.frame()
-# 
+treatments <- c("control","predator")
+
+
+abufulldf$gard <- substr(abufulldf$plot, 3,4)
+abudatfam <- data.frame()
+ 
 # fam <- unique(abufulldf$nms)[3]
 # bl <- "g2"
+
+for(fam in unique(abufulldf$nms)){
+  print(fam)
+  fambiocp <- abufulldf[abufulldf$nms == fam,]
+  fambiocp$trt <- as.character(fambiocp$trt)
+  blockdat <- data.frame()
+  for (bl in unique(abufulldf$gard)){
+    print(bl)
+    fcpbl <- fambiocp[fambiocp$gard == bl,]
+    # print(fcpbl)
+    fcpbl_trt <- fcpbl[fcpbl$trt %in% toupper(treatments),]
+    vals <- tapply(fcpbl_trt$bio, fcpbl_trt$trt, sum)
+    blockrow <- data.frame(fam = fam,
+                           val = vals,
+                           trt = tolower(names(vals)),
+                           block = bl)
+    blockdat <- rbind(blockdat, blockrow)
+  }
+  abudatfam <- rbind(abudatfam, blockdat)
+}
+ 
+abudatfam_nozero <- abudatfam[abudatfam$val != 0, ]
+ 
+# # * 2.1.5 Diffs based on biomass ----
 # 
-# for(fam in unique(biofulldf$nms)){
-#   print(fam)
-#   fambiocp <- biofulldf[biofulldf$nms == fam,]
-#   fambiocp$trt <- as.character(fambiocp$trt)
-#   blockdat <- data.frame()
-#   for (bl in unique(biofulldf$gard)){
-#     print(bl)
-#     fcpbl <- fambiocp[fambiocp$gard == bl,]
-#     # print(fcpbl)
-#     fcpbl_trt <- fcpbl[fcpbl$trt %in% toupper(treatments),]
-#     vals <- tapply(fcpbl_trt$bio, fcpbl_trt$trt, sum)
-#     blockrow <- data.frame(fam = fam,
-#                            val = vals,
-#                            trt = tolower(names(vals)), 
-#                            block = bl)
-#     blockdat <- rbind(blockdat, blockrow)
-#   }
-#   biodatfam <- rbind(biodatfam, blockdat)
-# }
-# 
-# biodatfam_nozero <- biodatfam[biodatfam$val != 0, ]
+biofulldf$gard <- substr(biofulldf$plot, 3,4)
+biodatfam <- data.frame()
+
+# fam <- unique(abufulldf$nms)[3]
+# bl <- "g2"
+
+for(fam in unique(biofulldf$nms)){
+  print(fam)
+  fambiocp <- biofulldf[biofulldf$nms == fam,]
+  fambiocp$trt <- as.character(fambiocp$trt)
+  blockdat <- data.frame()
+  for (bl in unique(biofulldf$gard)){
+    print(bl)
+    fcpbl <- fambiocp[fambiocp$gard == bl,]
+    # print(fcpbl)
+    fcpbl_trt <- fcpbl[fcpbl$trt %in% toupper(treatments),]
+    vals <- tapply(fcpbl_trt$bio, fcpbl_trt$trt, sum)
+    blockrow <- data.frame(fam = fam,
+                           val = vals,
+                           trt = tolower(names(vals)),
+                           block = bl)
+    blockdat <- rbind(blockdat, blockrow)
+  }
+  biodatfam <- rbind(biodatfam, blockdat)
+}
+
+biodatfam_nozero <- biodatfam[biodatfam$val != 0, ]
 
 
 
@@ -956,36 +956,36 @@ biodatfam_nozero
 
 dataset <- biodatfam_nozero
 
-# getLogRatiosCP <- function(dataset){
-#   
-#   famlogratio <- data.frame()
-#   
-#   predset <- dataset[dataset$trt %in% "predator",]
-#   contset <- dataset[dataset$trt %in% "control",]
-#   
-#   rownames(predset) <- paste(predset$fam,predset$block)
-#   rownames(contset) <- paste(contset$fam,contset$block)
-#   
-#   dsrn <- sort(unique(c(rownames(predset),rownames(contset))))
-#   
-#   for(name in dsrn){
-#     dfrow <- data.frame(name = name, 
-#                         pvals = predset[name,]$val,
-#                         cvals = contset[name,]$val)
-#     famlogratio <- rbind(famlogratio, dfrow)
-#   }
-#   
-#   famlogratio$lratio <- log(famlogratio$cvals/famlogratio$pvals)
-#   famlogratio$fam <- substr(famlogratio$name,1,4)
-#   famlogratio$block <- substr(famlogratio$name, 6,7)
-#   
-#   return(famlogratio)
-# }
-# 
-# 
-# abulr <- getLogRatiosCP(abudatfam_nozero)
-# biolr <- getLogRatiosCP(biodatfam_nozero)
-# 
+getLogRatiosCP <- function(dataset){
+
+  famlogratio <- data.frame()
+
+  predset <- dataset[dataset$trt %in% "predator",]
+  contset <- dataset[dataset$trt %in% "control",]
+
+  rownames(predset) <- paste(predset$fam,predset$block)
+  rownames(contset) <- paste(contset$fam,contset$block)
+
+  dsrn <- sort(unique(c(rownames(predset),rownames(contset))))
+
+  for(name in dsrn){
+    dfrow <- data.frame(name = name,
+                        pvals = predset[name,]$val,
+                        cvals = contset[name,]$val)
+    famlogratio <- rbind(famlogratio, dfrow)
+  }
+
+  famlogratio$lratio <- log(famlogratio$cvals/famlogratio$pvals)
+  famlogratio$fam <- substr(famlogratio$name,1,4)
+  famlogratio$block <- substr(famlogratio$name, 6,7)
+
+  return(famlogratio)
+}
+
+
+abulr <- getLogRatiosCP(abudatfam_nozero)
+biolr <- getLogRatiosCP(biodatfam_nozero)
+
 # abulr$type <- "abundance"
 # biolr$type <- "biomass"
 # 

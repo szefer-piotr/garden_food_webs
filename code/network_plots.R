@@ -54,9 +54,9 @@ networkPlot <- function(garden_list,
   plws <- plw[names(plw) %in% names(V(netgraph))]
   hwcs <- hwc[names(hwc) %in% names(V(netgraph))]
   
-  V(netgraph)$size <- c(plws*pmltp, hwcs*hmltp)
+  V(netgraph)$size <- c(log(plws)*pmltp, log(hwcs)*hmltp)
   
-  E(netgraph)$width <- E(netgraph)$weight*emltp
+  E(netgraph)$width <- log(E(netgraph)$weight)*emltp
   
   plts <- names(V(netgraph)) %in% names(plw)
   herbivores <- !plts
@@ -79,8 +79,22 @@ networkPlot <- function(garden_list,
   
 }
 
-networkPlot(abugardnets, "w1g3p4", hmltp = 0.6, emltp = 0.6,
-            pmltp = 1)
+multiplier = 8
+networkPlot(abugardnets, "w1g3p4", hmltp = multiplier, emltp = multiplier/3,
+            pmltp = multiplier)
+library(ggpubr)
+
+psites <- treats[treats$treat %in% "PREDATOR",]$codes
+csites <- treats[treats$treat %in% "CONTROL",]$codes
+
+psites <- as.character(psites)
+csites <- as.character(csites)
+
+c1 <- networkPlot(abugardnets, csites[4], hmltp = multiplier, emltp = multiplier/3,
+            pmltp = multiplier)
+
+
+
 
 # ****************************************************************
 bipartieNetworkPlot <- function(garden_list, code, rem.ips=T, pmltp = 1){

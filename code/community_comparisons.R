@@ -279,9 +279,9 @@ analyzeAndAppend2(Conditions = (ips & div & trtsel),
 
 # I should check also wether these models fit data well.
 # Check for overdispersion
-data(RecreationDemand)
-rd <- glm(trips ~ ., data = RecreationDemand, family = poisson)
-dispersiontest(rd,trafo=1)
+# data(RecreationDemand)
+# rd <- glm(trips ~ ., data = RecreationDemand, family = poisson)
+# dispersiontest(rd,trafo=1)
 
 # ### Individual analyses ----
 # c1 <- panelData$group == "IPs"
@@ -423,15 +423,40 @@ treats_to_plot
 library(ggplot2)
 panelData$treat <- factor(panelData$treat,
                           levels = treats_to_plot)
-ggplot(panelData[panelData$treat %in% treats_to_plot,], 
+
+ann_text = 
+
+panelData[panelData$treat %in% treats_to_plot,] -> pD
+ggplot(pD, 
        aes(x = treat, 
            y = value,
            group = group,
            label = tukey))+
   geom_jitter(width = 0.1, col = rgb(10,10,10,80,maxColorValue = 255))+
-  facet_wrap(~type, scales = "free") + 
+  facet_wrap(~type, ncol=4, scales = "free") + 
   stat_summary(fun.data=mean_cl_boot, 
-               geom="pointrange", lwd=0.8) +
-  stat_summary(fun=mean, geom="point",cex = 2)+
-  stat_summary(fun=mean, geom="text", hjust = 2,
-               vjust = 1)
+               geom="pointrange", lwd=0.5) +
+  # Significance of herbivore biomass
+  stat_summary(data = pD[pD$type == "Herbivore biomass",], 
+               fun.data=mean_cl_boot, 
+               geom="pointrange", 
+               lwd=0.8, col = c("black", "red")) +
+  stat_summary(data = pD[pD$type == "Herbivore diversity (biomass based)",], 
+               fun.data=mean_cl_boot, 
+               geom="pointrange", 
+               lwd=0.8, col = c("black", "gold"))+
+  theme_bw()
+  # stat_summary(data = pD[pD$type == "Herbivore biomass",],
+  #              fun=mean, geom="text", hjust = 2,
+  #              vjust = 1)
+  
+  scale_color_manual(values = c("black", "black",
+                               "black", "red",
+                               "black", "gold",
+                               "black", "black",
+                               "black", "black",
+                               "black", "black",
+                               "black", "black",
+                               "black", "black"))
+
+                    

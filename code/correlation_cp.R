@@ -37,8 +37,6 @@ pairs.panels(cordf,
 library(PerformanceAnalytics)
 chart.Correlation(cordf, pch="+")
 
-chart.Correlation(iris[-5], bg=iris$Species, pch=21)
-
 # Both not significant
 cor.test(cordf[,1], cordf[,3])
 cor.test(cordf[,2], cordf[,4])
@@ -58,64 +56,126 @@ matbiodf <- as.data.frame(matbio)
 matbiodf$trt <- cptrt
 
 library(corrplot)
-corcont <- cor(matamodf[matamodf$trt == "CONTROL",-8], 
+corcontabu <- cor(matamodf[matamodf$trt == "CONTROL",-8], 
                     method = "pearson", 
                     use = "pairwise.complete.obs")
-corcont_sig <- cor.mtest(matamodf[matamodf$trt == "CONTROL",-8], 
+corcontabu_sig <- cor.mtest(matamodf[matamodf$trt == "CONTROL",-8], 
                           conf.level = .95,
                           use = "pairwise.complete.obs")
-corrplot(corcont,
-         diag=F,
-         p.mat = corcont_sig$p, 
-         insig = "label_sig",
-         sig.level = c(.001, .01, .05), 
-         pch.cex = .9, 
-         pch.col = "white",
-         type = "upper")
-corpred <- cor(matamodf[matamodf$trt == "PREDATOR",-8], 
+# corrplot(corcont,
+#          diag=F,
+#          p.mat = corcont_sig$p, 
+#          insig = "label_sig",
+#          sig.level = c(.001, .01, .05), 
+#          pch.cex = .9, 
+#          pch.col = "white",
+#          type = "upper")
+
+corpredabu <- cor(matamodf[matamodf$trt == "PREDATOR",-8], 
                method = "pearson", 
                use = "pairwise.complete.obs")
-corpred_sig <- cor.mtest(matamodf[matamodf$trt == "PREDATOR",-8], 
+corpredabu_sig <- cor.mtest(matamodf[matamodf$trt == "PREDATOR",-8], 
                          conf.level = .95,
                          use = "pairwise.complete.obs")
-corrplot(corpred,
-         p.mat = corpred_sig$p, 
-         insig = "label_sig",
-         sig.level = c(.001, .01, .05), 
-         pch.cex = .9, 
-         pch.col = "white",
-         type = "upper",
-         diag = FALSE)
+# corrplot(corpred,
+#          p.mat = corpred_sig$p, 
+#          insig = "label_sig",
+#          sig.level = c(.001, .01, .05), 
+#          pch.cex = .9, 
+#          pch.col = "white",
+#          type = "upper",
+#          diag = FALSE)
 
-par(mfrow=c(1,2))
+# par(mfrow=c(1,1))
 
 
 
-corcont <- cor(matbiodf[matbiodf$trt == "CONTROL",-8], 
+corcontbio <- cor(matbiodf[matbiodf$trt == "CONTROL",-8], 
                method = "pearson", 
                use = "pairwise.complete.obs")
-corcont_sig <- cor.mtest(matbiodf[matbiodf$trt == "CONTROL",-8], 
+corcontbio_sig <- cor.mtest(matbiodf[matbiodf$trt == "CONTROL",-8], 
                          conf.level = .95,
                          use = "pairwise.complete.obs")
-corrplot(corcont,
-         diag=F,
-         p.mat = corcont_sig$p, 
-         insig = "label_sig",
-         sig.level = c(.001, .01, .05), 
-         pch.cex = .9, 
-         pch.col = "white",
-         type = "upper")
-corpred <- cor(matbiodf[matbiodf$trt == "PREDATOR",-8], 
+# p3 <- corrplot(corcont,
+#          diag=F,
+#          p.mat = corcont_sig$p, 
+#          insig = "label_sig",
+#          sig.level = c(.001, .01, .05), 
+#          pch.cex = .9, 
+#          pch.col = "white",
+#          type = "upper")
+
+corpredbio <- cor(matbiodf[matbiodf$trt == "PREDATOR",-8], 
                method = "pearson", 
                use = "pairwise.complete.obs")
-corpred_sig <- cor.mtest(matbiodf[matbiodf$trt == "PREDATOR",-8], 
+corpredbio_sig <- cor.mtest(matbiodf[matbiodf$trt == "PREDATOR",-8], 
                          conf.level = .95,
                          use = "pairwise.complete.obs")
-corrplot(corpred,
-         p.mat = corpred_sig$p, 
-         insig = "label_sig",
-         sig.level = c(.001, .01, .05), 
-         pch.cex = .9, 
-         pch.col = "white",
-         type = "upper",
-         diag = FALSE)
+# p4 <-corrplot(corpred,
+#          p.mat = corpred_sig$p, 
+#          insig = "label_sig",
+#          sig.level = c(.001, .01, .05), 
+#          pch.cex = .9, 
+#          pch.col = "white",
+#          type = "upper",
+#          diag = FALSE)
+
+library(ggcorrplot)
+
+corcontabu <- cor(matamodf[matamodf$trt == "CONTROL",-8], 
+                  method = "pearson", 
+                  use = "pairwise.complete.obs")
+corcontabu_sig <- cor_pmat(matamodf[matamodf$trt == "CONTROL",-8])
+corpredabu <- cor(matamodf[matamodf$trt == "PREDATOR",-8], 
+                  method = "pearson", 
+                  use = "pairwise.complete.obs")
+corpredabu_sig <- cor_pmat(matamodf[matamodf$trt == "PREDATOR",-8])
+corcontbio <- cor(matbiodf[matbiodf$trt == "CONTROL",-8], 
+                  method = "pearson", 
+                  use = "pairwise.complete.obs")
+corcontbio_sig <- cor_pmat(matbiodf[matbiodf$trt == "CONTROL",-8])
+corpredbio <- cor(matbiodf[matbiodf$trt == "PREDATOR",-8], 
+                  method = "pearson", 
+                  use = "pairwise.complete.obs")
+corpredbio_sig <- cor_pmat(matbiodf[matbiodf$trt == "PREDATOR",-8])
+
+
+
+# outline.color = "white",
+# ggtheme = ggplot2::theme_gray,
+# colors = c("#F0E442", "#E69F00", "#56B4E9")
+
+COLVEC <- c("#D55E00","#F0E442", "#56B4E9")
+p1 <- ggcorrplot(corcontabu,
+                 hc.order = F,
+                 type = "upper",
+                 p.mat = corcontabu_sig,
+                 outline.color = "white",
+                 ggtheme = ggplot2::theme_gray,
+                 colors = COLVEC)
+p2 <- ggcorrplot(corpredabu,
+                 hc.order = F,
+                 type = "upper",
+                 p.mat = corpredabu_sig,
+                 outline.color = "white",
+                 ggtheme = ggplot2::theme_gray,
+                 colors =  COLVEC)
+p3 <- ggcorrplot(corcontbio,
+                 hc.order = F,
+                 type = "upper",
+                 p.mat = corcontbio_sig,
+                 outline.color = "white",
+                 ggtheme = ggplot2::theme_gray,
+                 colors =  COLVEC)
+p4 <- ggcorrplot(corpredbio,
+                 hc.order = F,
+                 type = "upper",
+                 p.mat = corpredbio_sig,
+                 outline.color = "white",
+                 ggtheme = ggplot2::theme_gray,
+                 colors =  COLVEC)
+
+library(ggpubr)
+ggarrange(p1,p2,p3,p4,
+          labels = c("A", "B", "C","D"),
+          legend = "right", common.legend = T)

@@ -90,14 +90,26 @@ treats_trimmed$ipbio <- IPbiomass[treats_trimmed$sites]
 treats_trimmed$ipdiv <- IPdiversity[treats_trimmed$sites]
 treats_trimmed$ipric <- IPrichness[treats_trimmed$sites]
 
-pairs(treats_trimmed[,7:14], 
-      bg=as.numeric(treats_trimmed$treat)+1,pch=21)
+# Pairwise comparisons of the descriptors
+# pairs(treats_trimmed[,7:14], 
+#       bg=as.numeric(treats_trimmed$treat)+1,pch=21)
+# 
+# library(PerformanceAnalytics)
+# chart.Correlation(treats_trimmed[,7:14], 
+#                   pch=treats_trimmed$treat)
+library(ggcorrplot)
+inddat <- treats_trimmed[,7:14]
+inddatcor <- cor(inddat,
+                  method = "pearson", 
+                  use = "pairwise.complete.obs")
+inddatpval <- cor_pmat(inddat)
 
-library(PerformanceAnalytics)
-chart.Correlation(treats_trimmed[,7:14], 
-                  bg=treats_trimmed$treat,
-                  pch=21)
-
+ggcorrplot(inddatcor,
+           hc.order = F,
+           type = "upper",
+           p.mat = inddatpval,
+           outline.color = "white",
+           ggtheme = ggplot2::theme_gray)
 
 # Plant PCA
 pldat <- as.data.frame(plants_trimmed[, colSums(plants_trimmed)!=0])

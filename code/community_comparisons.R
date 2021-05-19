@@ -2,14 +2,14 @@
 rm(list=ls())
 source("code/data_processing_code.R")
 
+# treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
+treats_to_plot <- as.character(unique(treats$treat))[c(3,4)]
 
 
-# [1] "FUNGICIDE"   [2] "WEEVIL125"   
-# [3] "CONTROL"     [4] "PREDATOR"   
-# [5] "WEEVIL25"    [6] "INSECTICIDE"
+# Indicate insect order here ----
+# order <- c("cole")
 
-treats_to_plot <- as.character(unique(treats$treat))[c(6,3,4,5,2)]
-# groups_to_plot <- 
+# ins_bio <- ins_bio[ins_bio$family %in% order, ]
 
 # Herbivores and IPS diversity, abumdnace, richness in different treatments
 ins_bio$group <- "Herbivore"
@@ -43,11 +43,11 @@ ipsBio <- tapply(ins_bio[ins_bio$group == "Intermediate predator", ]$totbio,
 # Diversity
 herbDivBio <- tapply(ins_bio[ins_bio$group == "Herbivore", ]$totbio, 
                   ins_bio[ins_bio$group == "Herbivore", ]$plot, 
-                  vegan::diversity)
+                  vegan::diversity, index = "invsimpson")
 
 ipsDivBio <- tapply(ins_bio[ins_bio$group == "Intermediate predator", ]$totbio, 
                  ins_bio[ins_bio$group == "Intermediate predator", ]$plot, 
-                 vegan::diversity)
+                 vegan::diversity,index = "invsimpson")
 
 # Richness [test this!!!]
 herbRich <- tapply(ins_bio[ins_bio$group == "Herbivore", ]$morphotype, 
@@ -79,22 +79,22 @@ panelData <- data.frame(value = c(herbAbundance,
                                   ipsRich,
                                   herbDivBio,
                                   ipsDivBio),
-                        group = rep(c("Herbivore","IPs",
-                                    "Herbivore","IPs",
-                                    "Herbivore","IPs",
-                                    "Herbivore","IPs"),each = 36),
+                        group = rep(c("Herbivore","AP",
+                                    "Herbivore","AP",
+                                    "Herbivore","AP",
+                                    "Herbivore","AP"),each = 36),
                         descriptor = rep(c("Abundance",
                                            "Biomass",
                                            "Richness",
                                            "Diversity"), each = 2*36),
                         type = rep(c("Herbivore abundance",
-                                 "IPs abundance",
+                                 "AP abundance",
                                  "Herbivore biomass",
-                                 "IPs biomass",
+                                 "AP biomass",
                                  "Herbivore richness",
-                                 "IPs richness",
-                                 "Herbivore diversity (biomass based)",
-                                 "IPs diversity (biomass bases)"), each = 36),
+                                 "AP richness",
+                                 "Herbivore diversity",
+                                 "AP diversity"), each = 36),
                         treat = rep(treats[descriptorDf$plot, ]$treat, 8),
                         plots = rep(treats[descriptorDf$plot, ]$codes, 8))
 panelData$block <- substr(panelData$plots,3,4)
@@ -102,7 +102,7 @@ panelData$tukey <- "" # set up column for labels from Tukey test
 
 # panelData
 
-# 1. Tests ----
+# 1. Ready ----
 library(lme4)
 library(MASS)
 library(lmerTest)
@@ -117,7 +117,7 @@ library(AER)
 
 # Group
 herb <- panelData$group == "Herbivore"
-ips <- panelData$group == "IPs"
+ips <- panelData$group == "AP"
 
 # Descriptors
 bio <- panelData$descriptor == "Biomass"
@@ -128,39 +128,7 @@ div <- panelData$descriptor == "Diversity"
 # Selected treatments
 trtsel <- panelData$treat %in% treats_to_plot
 
-# Function that performs the test and appends results into the panelData
-# analyzeAndAppend <- function(Conditions,
-#                              FUN,
-#                              Form = formula(value~treat+(1|block)),
-#                              Fam = gaussian(link="log"), ...){
-# 
-#   #Call the function
-#   model <- FUN(formula = Form, family = Fam,
-#                         data = panelData[Conditions, ], ...)
-# 
-#   # Get model summary and pairwise comparisons
-#   summary(model)
-#   inter.test <- emmeans(model, "treat")
-#   pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-#   # Extract letters and append to the dataset
-#   ltrs <- data.frame(pt = pairwise$treat,
-#                      pg = pairwise$.group)
-#   rownames(ltrs) <- ltrs$pt
-#   labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-#   panelData[condition, ]$tukey <<- as.character(labs)
-# 
-#   # Print model results
-#   print(summary(model))
-# }
-
-# FUN = glmer
-# formula = value~treat+(1|block)
-# family = gaussian(link="log")
-# Conditions = (herb & bio & trtsel)
-# model <- FUN(data = panelData[Conditions, ], formula=formula, family=family)  
-
-
+# Specific function that performs the analysis and appends the Tukey results to a dataset.
 analyzeAndAppend2 <- function(Conditions, 
                              FUN,
                              dispTest = F,
@@ -196,28 +164,41 @@ analyzeAndAppend2 <- function(Conditions,
   
   # Print model results
   print(summary(model))
+  
+  return(model)
 }
 
 
 # Analyses
 
+# library(merTools)
+
 ## 1A. Herbivore - biomass ----
 analyzeAndAppend2(Conditions = (herb & bio & trtsel),
                  FUN = glmer,
                  formula = value~treat+(1|block),
-                 family = gaussian(link="log"))
+                 family = gaussian(link="log"),
+                 control=glmerControl(optimizer="bobyqa",
+                                      optCtrl=list(maxfun=2e5)))
+
+# Variance test
+# data <- panelData[herb & bio & trtsel, ]
+# var.test(value~treat, data = data)
+# bartlett.test(value~treat, data = data)
+# car::leveneTest(value~treat, data = data)
 
 ## 1B. IPs - biomass ----
-# analyzeAndAppend2( 
-#   Conditions = (ips & bio & trtsel),
-#   FUN = glmer,
-#   formula = value~treat+(1|block),
-#   family = gaussian(link="log"))
+analyzeAndAppend2(Conditions = (ips & bio & trtsel),
+                  FUN = glmer,
+                  formula = value~treat+(1|block),
+                  family = gaussian(link="log"),
+                  control=glmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=2e5)))
 
-analyzeAndAppend2( 
-  Conditions = (ips & bio & trtsel),
-  FUN = lmer,
-  formula = value~treat+(1|block))
+# data <- panelData[(ips & bio & trtsel), ]
+# var.test(value~treat, data = data)
+# bartlett.test(value~treat, data = data)
+# car::leveneTest(value~treat, data = data)
 
 ## 2A. Herbivore - Abundance ----
 # no random effects because I was getting singular var-cov matrix
@@ -226,6 +207,11 @@ analyzeAndAppend2(
   FUN = glm.nb,
   formula = value~treat)
 
+# data <- panelData[(herb & abu & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
+
 ## 2B. IPs - Abundnace ----
 # no random effects because I was getting singular var-cov matrix
 # Barr DJ, Levy R, Scheepers C, Tily HJ. Random effects structure for confirmatory hypothesis testing: Keep it maximal. Journal of Memory and Language, 68(3):255–278, April 2013.
@@ -233,6 +219,11 @@ analyzeAndAppend2(
   Conditions = (ips & abu & trtsel),
   FUN = glm.nb,
   formula = value~treat)
+
+# data <- panelData[(ips & abu & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
 
 ## 3A. Herbivore - Richness ----
 analyzeAndAppend2(
@@ -243,6 +234,11 @@ analyzeAndAppend2(
   fixed = value~treat,
   dispTest = F)
 
+# data <- panelData[(herb & rich & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
+
 ## 3B. IPs - Richness ----
 # overdispersed random effect models
 analyzeAndAppend2(
@@ -252,171 +248,119 @@ analyzeAndAppend2(
   random = ~ 1|block,
   fixed = value~treat)
 
+# data <- panelData[(ips & rich & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
+
 ## 4A. Herbivore - diversity SW ----
 analyzeAndAppend2(Conditions = (herb & div & trtsel),
                   FUN = lmer,
                   formula = value~treat+(1|block))
+
+library(nlme)
+analyzeAndAppend2(Conditions = (herb & div & trtsel),
+                  FUN = lme,
+                  fixed = value~treat,
+                  random= ~1|block)
+
+
+# data <- panelData[(herb & div & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
 
 ## 4B. IPs - diversity SW ----
 analyzeAndAppend2(Conditions = (ips & div & trtsel),
                   FUN = lm,
                   formula = value~treat)
 
-# I should check also wether these models fit data well.
-# Check for overdispersion
-data(RecreationDemand)
-rd <- glm(trips ~ ., data = RecreationDemand, family = poisson)
-dispersiontest(rd,trafo=1)
-
-# ### Individual analyses ----
-# c1 <- panelData$group == "IPs"
-# 
-# condition <- (c1 & c2 & c3)
-# ips_bio_glmer <- glmer(value~treat+(1|block), family = gaussian(link="log"),
-#                        data = panelData[condition, ])
-# summary(ips_bio_glmer)
-# inter.test <- emmeans(ips_bio_lmer, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # Abundnace
-# c1 <- panelData$group == "Herbivore"
-# c2 <- panelData$descriptor == "Abundance"
-# c3 <- panelData$treat %in% treats_to_plot
-# 
-# # Herbivore
-# condition <- (c1 & c2 & c3)
-# herb_abu_glmer <- glmer(value~treat+(1|block), family = poisson(),
-#                         data = panelData[condition, ])
-# herb_abu_quasi <- glmmPQL(value~treat, random = ~ 1|block, family = quasipoisson(),
-#                         data = panelData[condition, ])
-# summary(herb_abu_glmer)
-# summary(herb_abu_quasi)
-# 
-# # Which one is better?
-# # This should be 1: 2053.9/14
-# 
-# inter.test <- emmeans(herb_abu_quasi, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # IPs
-# c1 <- panelData$group == "IPs"
-# condition <- (c1 & c2 & c3)
-# ips_abu_glmer <- glmer(value~treat+(1|block), family = poisson(),
-#                         data = panelData[condition, ])
-# ips_abu_quasi <- glmmPQL(value~treat, random = ~ 1|block, family = quasipoisson(),
-#                           data = panelData[condition, ])
-# summary(ips_abu_glmer)
-# summary(ips_abu_quasi)
-# 
-# # Which one is better?
-# # This should be 1: 328.1/13
-# 
-# inter.test <- emmeans(ips_abu_quasi, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # Diversity
-# 
-# # Herbivores
-# c1 <- panelData$group == "Herbivore"
-# c2 <- panelData$descriptor == "Diversity"
-# c3 <- panelData$treat %in% treats_to_plot
-# condition <- (c1 & c2 & c3)
-# herb_div_lmer <- lmer(value~treat+(1|block), 
-#                        data = panelData[condition, ])
-# summary(herb_div_lmer)
-# inter.test <- emmeans(herb_div_lmer, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # IPs
-# c1 <- panelData$group == "IPs"
-# condition <- (c1 & c2 & c3)
-# ips_div_lm <- lm(value~treat, 
-#                       data = panelData[condition, ])
-# summary(ips_div_lm)
-# inter.test <- emmeans(ips_div_lm, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # Richness
-# 
-# # Herbivore
-# c1 <- panelData$group == "Herbivore"
-# c2 <- panelData$descriptor == "Richness"
-# c3 <- panelData$treat %in% treats_to_plot
-# condition <- (c1 & c2 & c3)
-# herb_rich_glmer <- glmer(value~treat+(1|block), family = poisson(),
-#                         data = panelData[condition, ])
-# herb_rich_quasi <- glmmPQL(value~treat, random = ~ 1|block, family = quasipoisson(),
-#                           data = panelData[condition, ])
-# summary(herb_rich_glmer)
-# summary(herb_rich_quasi)
-# inter.test <- emmeans(herb_rich_quasi, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-# 
-# ltrs <- data.frame(pt = pairwise$treat,
-#                    pg = pairwise$.group)
-# rownames(ltrs) <- ltrs$pt
-# labs <- ltrs[as.character(panelData[condition, "treat"]),]$pg
-# panelData[condition, ]$tukey <- as.character(labs)
-# 
-# # IPs
-# c1 <- panelData$group == "IPs"
-# condition <- (c1 & c2 & c3)
-# ips_rich_glmer <- glmer(value~treat+(1|block), family = poisson(),
-#                          data = panelData[condition, ])
-# ips_rich_quasi <- glmmPQL(value~treat, random = ~ 1|block, family = quasipoisson(),
-#                            data = panelData[condition, ])
-# summary(ips_rich_glmer)
-# summary(ips_rich_quasi)
-# inter.test <- emmeans(ips_rich_quasi, "treat")
-# pairwise <- cld(inter.test, Letter="abcdefghijklm")
-
-
+# data <- panelData[(ips & div & trtsel), ]
+# var.test(log(value)~treat, data = data)
+# bartlett.test(log(value)~treat, data = data)
+# car::leveneTest(value~treat, data = data)
 
 # 2. Plots ----
 
+# Add density to the panel data
+dens <- read.table("datasets/densities.txt")
+densPD <- data.frame(value = c(dens$hdens,dens$apdens),
+                     group = rep(c("Herbivore", "AP"), 
+                                 each = dim(dens)[1]),
+                     descriptor = "Density",
+                     type = rep(c("Herbivore density",
+                                  "AP density"),each = dim(dens)[1]),
+                     treat = rep(toupper(dens$trt), 
+                                 2),
+                     plots = rep(dens$plot, 2),
+                     block = rep(dens$block,2),
+                     tukey = "")
+
+panelDataDens <- rbind(panelData, densPD)
+panelDataDens[panelDataDens$treat == "EXCLOSURE", ]$treat <- "PREDATOR"
+
+panelDataDens$treat
 treats_to_plot
 library(ggplot2)
-panelData$treat <- factor(panelData$treat,
+
+# panelData$treat <- factor(panelData$treat,
+#                           levels = treats_to_plot)
+
+panelDataDens$treat <- factor(panelDataDens$treat,
                           levels = treats_to_plot)
-ggplot(panelData[panelData$treat %in% treats_to_plot,], 
+
+
+# ann_text = 
+
+# panelData[panelData$treat %in% treats_to_plot,] -> pD
+
+panelDataDens[panelDataDens$treat %in% treats_to_plot,] -> pD
+
+pD$type <- factor(pD$type, levels = levels(pD$type)[c(5,6,7,8,10,1,2,3,4,9)],
+                  labels = c("H-A","H-B","H-D","H-R","H-Dens",
+                             "AP-A","AP-B","AP-D","AP-R","AP-Dens"
+                           ))
+
+pD[grep("B", pD$type), ]$value <- pD[grep("B", pD$type), ]$value/1000
+
+colvals <-  c("black", "black",
+                              "black", "red",
+                              "black", "gold",
+                              "black", "black",
+              "black","red",
+                              "black", "black",
+                              "black", "red",
+                              "black", "black",
+                              "black", "black",
+              "black","gold")
+
+pDplot <- ggplot(pD, 
        aes(x = treat, 
            y = value,
            group = group,
            label = tukey))+
-  geom_jitter(width = 0.1, col = rgb(10,10,10,80,maxColorValue = 255))+
-  facet_wrap(~type, scales = "free") + 
+  geom_jitter(width = 0.05, 
+              col = rgb(10,10,10,50,
+                        maxColorValue = 255),
+              size = 3)+
+  geom_line(aes(group  = block), lty = 2, 
+            col = rgb(0,0,0,0.1))+
+  facet_wrap(~type, ncol=5, scales = "free") + 
   stat_summary(fun.data=mean_cl_boot, 
-               geom="pointrange", lwd=0.8) +
-  stat_summary(fun=mean, geom="point",cex = 2)+
-  stat_summary(fun=mean, geom="text", hjust = 2,
-               vjust = 1)
+               geom="pointrange",col = colvals,
+               lwd=1) +
+  theme_bw() +
+  theme(strip.text = element_text(face = "bold", size = 12))+
+  scale_x_discrete(labels = c("C", "Ex"))+
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 6))+
+  xlab("")+ylab("")
+
+svg("ms1/draft_3/figures/fig1.svg", width = 6, height= 4)
+pDplot
+dev.off()
+# Get real values
+ggplot_build(pDplot)$data[[3]]
+biotest <- pD[pD$type == "H-B", ]
+
+# mean_cl_boot(biotest$value)
+# mean_cl_boot(biotest[biotest$treat == "CONTROL", ]$value)

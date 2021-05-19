@@ -53,8 +53,14 @@ for (grp in unique(allo_params$group)){
   size_dat[size_dat$group == grp, ]$b <- bval
 }
 
-size_dat$bio <- exp(size_dat$a) * size_dat$size^size_dat$b
-# write.table(size_dat, "datasets/size_dat_bio.txt")
+size_dat$bio <- exp(size_dat$a) * (size_dat$size*10)^size_dat$b
+
+size_dat[size_dat$morph == "lepi061",]
+
+# exp(-3.58) * 31.95^2.42
+
+
+write.table(size_dat, "datasets/size_dat_bio_corr.txt")
 
 # Size distributions
 library(ggplot2)
@@ -235,8 +241,3 @@ write.table(insects, "datasets/arthropods_clean.txt")
 write.table(treats,  "datasets/treatments_clean.txt")
 write.table(plants,  "datasets/plants_clean.txt")
 write.table(sizes,   "datasets/sizes_clean.txt")
-
-
-# 4. Biomass for plants at each plot ----
-
-

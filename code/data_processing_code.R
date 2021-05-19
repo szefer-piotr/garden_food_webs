@@ -4,6 +4,8 @@
 # 3. Plant biomass in each plot
 # 4. Treatment assignments to the plot codes
 
+rm(list = ls())
+
 # 0. Contingency table function ----
 
 # This function creates a contingency table for a given row category
@@ -182,7 +184,9 @@ library("igraph")
 insects <- read.table("datasets/arthropods_clean.txt")
 treats  <- read.table("datasets/treatments_clean.txt")
 plants  <- read.table("datasets/plants_clean.txt")
-size_dat <-read.table("datasets/size_dat_bio.txt")
+# size_dat <-read.table("datasets/size_dat_bio.txt")
+size_dat <-read.table("datasets/size_dat_bio_corr.txt")
+
 # sizes   <- read.table("datasets/sizes_clean.txt")
 
 # Attach biomass measurments to the main insects dataset
@@ -320,3 +324,9 @@ biollcp$trt <- as.character(biollcp$trt)
 biollcp$gard <- substr(biollcp$plot, 3,4)
 # see which species are present in both treatment plots
 # table(biollcp$trt, biollcp$plnm) 
+
+# Test which elements in teh environment are data.frames and remove everything else
+
+# write.table(main_biomass, "/home/piotrszefer/garden_food_webs/ms2/data/main_biomass.txt")
+# 
+# write.table(ins_bioOrig, "/home/piotrszefer/garden_food_webs/ms2/data/ins_bioOrig.txt")

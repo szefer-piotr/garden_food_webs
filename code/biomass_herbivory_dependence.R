@@ -136,8 +136,10 @@ atbhd <- all_treat_bio_herb_data
 #   geom_smooth(method = "lm")+
 #   facet_wrap(~treatment)
 
+# Species has to occur at least in three gardens
 more_than_x <- tapply(atbhd$species, atbhd$treatment, function(x){which(table(x)>=3)} )
 
+# Filter data to get only selected plant species
 filtered_data <- data.frame()
 for(nm in names(more_than_x)){
   c1 <- atbhd$treatment == nm
@@ -254,25 +256,46 @@ library(lmerTest)
 #            data=filtered_slope)
 
 # For all possible species
+
 # Biomass ----
-lmer_random <- lmer(log(bio)~log(biomass)+species+(1|block), data=filtered_data)
-lmer_norand <- lm(log(bio)~log(biomass)+species, data=filtered_data)
+library(nlme)
+filtered_data$logbiomass_g <- log(filtered_data$biomass *1000)
+lmer1 <- nlme::lme(log(bio)~logbiomass_g, 
+                   random=~1|block,
+              data=filtered_data)
+gls1 <- nlme::gls(log(bio)~logbiomass_g,
+            data = filtered_data)
 
-AIC(lmer_random, lmer_norand)
-# Random factor is not necessarry
+anova(lmer1, gls1)
+# https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q4/003090.html
+# Two models are the same, dont need to include this. it is advised thought to keep it there
 
-# Lets see wether biomass predicts herbivore biomass better
-lm_bio <- lm(log(bio)~log(biomass), 
-                data=filtered_data)
-lm_spc <- lm(log(bio)~species, 
-             data=filtered_data)
+# Lets see wether plant biomass predicts herbivore biomass better than plant identity
+# lm_bio <- lme(log(bio)~0+log(biomass),random=~1|block, 
+#                 data=filtered_data, method = "ML")
+# lm_spc <- lme(log(bio)~species,random=~1|block,
+#              data=filtered_data, method="ML")
+# anova(lm_bio, lm_spc) # Model with biomass is better
 
-lm_bio_spc <- update(lm_bio, .~.+species)
-anova(lm_bio, lm_bio_spc, test = "Chisq")
+lm.spc.bio <- lme(log(bio)~0+logbiomass_g+species,random=~1|block,
+              data=filtered_data, method="ML")
+lm.spc.bio <- lm(log(bio)~0+logbiomass_g+species,
+                  data=filtered_data)
+summary(lm.spc.bio)
 
-lm_spc_bio <- update(lm_spc, .~.+log(biomass))
-anova(lm_spc, lm_spc_bio, test = "Chisq")
 
+summary(lm_bio)
+summary(lm_spc)
+
+# Add species to bio and check for improvement
+# lm_bio_spc <- update(lm_bio, .~.+species)
+# summary(lm_bio_spc)
+# anova(lm_bio, lm_bio_spc)
+# 
+# lm_spc_bio <- update(lm_spc, .~.+log(biomass))
+# anova(lm_spc, lm_spc_bio)
+# 
+# r2(lm_bio)
 
 # By the way, this same approach is proposed by N. W. Galwey in 'Introduction to Mixed Modelling: Beyond Regression and Analysis of Variance' on pages 213-214.
 
@@ -281,13 +304,28 @@ anova(lm_spc, lm_spc_bio, test = "Chisq")
 
 # Do species differ in their slopes?
 # Is there an interaction?
-lm_int_bio_sp <-update(lm_bio_spc, .~. + log(biomass)*species)
-anova(lm_bio_spc, lm_int_bio_sp)
+lm.spc.bio.int <- lm(log(bio)~0+logbiomass_g*species,
+                 data=filtered_data)
+summary(lm.spc.bio.int)
+anova(lm.spc.bio,lm.spc.bio.int)
+
+lm.spc.bio.trt <- lm(log(bio)~logbiomass_g+treatment,
+                         data=filtered_data)
+lm.spc.bio.int.trt <- lm(log(bio)~0+logbiomass_g*treatment,
+                     data=filtered_data)
+summary(lm.spc.bio.trt)
+anova(lm.spc.bio.trt,lm.spc.bio.int.trt)
+
 # There is no signigficant interaction there.
 
 # What if the slope is random? Unconstrained slopes
-random_slope <- lmer(log(bio)~biomass+species+(0+biomass|species), data = filtered_data)
+random_slope <- lmer(log(bio)~log(biomass)+species+(0+log(biomass)|species), data = filtered_data)
+
+# random_slope <- nlme::lme(log(bio)~log(biomass)+species,
+#                      random = ~ 0+log(biomass)|species, data = filtered_data)
+
 summary(random_slope)
+
 
 # Form the graph it deasn't look like it.
 # Variance doesn't seem to be different than zero
@@ -329,7 +367,12 @@ anova(lm_no_int, lm_int, test="Chisq")
 # pairwise <- cld(inter.test, Letter="abcdefghijklm")
 
 
+
 # Abundance vs species identity ----
+
+# In grams (plant biomass)
+# filtered_data$biomass <- filtered_data$biomass*1000
+
 glmer1 <- glm.nb(abu~log(biomass)+species, data=filtered_data)
 # nb model with random effect does not converge
 
@@ -343,8 +386,9 @@ anova(glmer2, glmer3a)
 # Model withouth random effect of block performs better.
 
 summary(glmer3a)
+# Interaction
 glmer3b <- lm(log(abu)~log(biomass)*species, data=filtered_data)
-
+summary(glmer3b)
 anova(glmer3b, glmer3a)
 # There is a marginal signifdicant interaction term in case of abundnace
 
@@ -353,19 +397,70 @@ ggplot(filtered_data, aes(x = log(biomass), y=log(abu), color = species))+
   geom_smooth(method = "lm", se=FALSE)+
   facet_wrap(~treatment)
 
+# regression through the origin
+ggplot(filtered_data, aes(x = log(biomass), y=log(abu), color = species))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se=T)
+
+glmer3c.0 <- lm(log(abu)~0+log(biomass), data=filtered_data)
+glmer3c.1 <- lm(log(abu)~0+log(biomass)+species, data=filtered_data)
+glmer3c.2 <- lm(log(abu)~0+log(biomass)*species, data=filtered_data)
+anova(glmer3c.0, glmer3c.1) # marginally significant again!
+anova(glmer3c.1, glmer3c.2) # marginally significant again!
+summary(glmer3c.0)
+summary(glmer3c.1)
+summary(glmer3c.2)
+new_dat <- filtered_data[, c("plot","species","biomass", "treatment",
+                             "block")]
+new_dat$mod0 <- simulate(glmer3c.0)[,1]
+new_dat$mod1 <- simulate(glmer3c.1)[,1]
+new_dat$mod2 <- simulate(glmer3c.2)[,1]
+
+# Simulated data:
+# Mod 0
+ggplot(new_dat, aes(x = log(biomass), 
+                          y=mod0, 
+                          color = species))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se=T)
+# Mod 1
+ggplot(new_dat, aes(x = log(biomass), 
+                    y=mod1, 
+                    color = species))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se=T)
+# Mod 2
+ggplot(new_dat, aes(x = log(biomass), 
+                    y=mod2, 
+                    color = species))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se=T)
+
+# Is treatment significant
+glmer3c.0 <- lm(log(abu)~0+log(biomass), data=filtered_slope)
+glmer3c.1 <- lm(log(abu)~0+log(biomass)+treatment, data=filtered_slope)
+glmer3c.2 <- lm(log(abu)~0+log(biomass)*treatment, data=filtered_slope)
+glmer3c.3 <- lm(log(abu)~0+log(biomass)*species*treatment, data=filtered_slope)
+anova(glmer3c.0,glmer3c.1,glmer3c.2,glmer3c.3)
+
 # Richness ----
 
-# should be Poisson?
-lmer_rich <- lmer(rich~log(biomass)+species+(1|block), data=filtered_data)
+ggplot(filtered_data, aes(x = logbiomass_g, y=rich, color = species))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se=FALSE)+
+  facet_wrap(~treatment)
 
 
-lmer_rich_norand <- lm(rich~log(biomass)+species, data=filtered_data)
+filtered_data$logbiomass_g <- log(filtered_data$biomass*1000)
+lmer_rich <- lmer(rich~logbiomass_g+species+(1|block), data=filtered_data)
+
+lmer_rich_norand <- lm(rich~logbiomass_g+species, data=filtered_data)
 
 AIC(lmer_rich, lmer_rich_norand) # Here random is better
 anova(lmer_rich, lmer_rich_norand) # And here is not :/
 
-lm_rich_norand_int <- lm(rich~log(biomass)*species, data=filtered_data)
-
+lm_rich_norand_int <- lm(rich~logbiomass_g*species, data=filtered_data)
+summary(lm_rich_norand_int) # interaction term is not significant
 anova(lmer_rich_norand, lm_rich_norand_int) # no significant improvement
 
 lm_rich_norand_trt <- lm(rich~log(biomass)+species+treatment, data=filtered_data)
@@ -377,14 +472,34 @@ anova(lmer_rich_norand, lm_rich_norand_trt_int) # interaction not significant
 lm_rich_norand_bio <- lm(rich~log(biomass), data=filtered_data)
 lm_rich_norand_bio_sp <- update(lm_rich_norand_bio, .~.+species)
 anova(lm_rich_norand_bio, lm_rich_norand_bio_sp) # species is significant but only for piptar
-
 # final simplest model approximately 70% of variation
 summary(lm_rich_norand_bio_sp)
 
-ggplot(filtered_data, aes(x = log(biomass), y=rich, color = species))+
-  geom_jitter()+
-  geom_smooth(method = "lm", se=FALSE)
 
+# should be Poisson?
+# garden as a random factor should stay because I expect to have local differences in richness, but there are not enough data!
+pmdata <- filtered_data[filtered_data$species %in% c("melamu","piptar"),]
+# summary(glmer.nb(rich~logbiomass_g+species+(1|block), data=filtered_data))
+# summary(glmer.nb(rich~logbiomass_g+species+(1|block), data=pmdata))
+
+glmnb.rich <- glm.nb(rich~logbiomass_g+species, data=filtered_data)
+glm.rich <- glm(rich~logbiomass_g+species,family = "poisson", data=filtered_data)
+
+AIC(glmnb.rich, glm.rich)
+# Negative binmomial works better
+summary(glmnb.rich)
+
+glmnb.rich.int <- glm.nb(rich~logbiomass_g*species, data=pmdata)
+summary(glmnb.rich.int)
+
+glmnb.rich.trt <- glm.nb(rich~logbiomass_g+treatment, data=pmdata)
+summary(glmnb.rich.trt)
+
+glmnb.rich.trt.int <- glm.nb(rich~logbiomass_g*treatment, data=pmdata)
+summary(glmnb.rich.trt.int)
+
+glmnb.rich.trt.int.sp <- glm.nb(rich~logbiomass_g*treatment*species, data=pmdata)
+summary(glmnb.rich.trt.int.sp)
 ## glmer poisson
 
 lmer_rich <- glmer(rich~log(biomass)+species+(1|block),family = "poisson", data=filtered_data)
@@ -418,34 +533,34 @@ ggplot(filtered_data, aes(x = log(biomass), y=rich, color = species))+
   geom_jitter()+
   geom_smooth(method = "lm", se=FALSE)
 
-# Diversity ----
-
-lmer_div <- lmer(rich~log(biomass)+species+(1|block), data=filtered_data)
-lmer_rich_norand <- lm(rich~log(biomass)+species, data=filtered_data)
-
-AIC(lmer_rich, lmer_rich_norand) # Here random is better
-anova(lmer_rich, lmer_rich_norand) # And here is not :/
-
-lm_rich_norand_int <- lm(rich~log(biomass)*species, data=filtered_data)
-
-anova(lmer_rich_norand, lm_rich_norand_int) # no significant improvement
-
-lm_rich_norand_trt <- lm(rich~log(biomass)+species+treatment, data=filtered_data)
-anova(lmer_rich_norand, lm_rich_norand_trt) # teatment not significant
-lm_rich_norand_trt_int <- lm(rich~log(biomass)*treatment+species,
-                             data=filtered_data)
-anova(lmer_rich_norand, lm_rich_norand_trt_int) # interaction not significant
-
-lm_rich_norand_bio <- lm(rich~log(biomass), data=filtered_data)
-lm_rich_norand_bio_sp <- update(lm_rich_norand_bio, .~.+species)
-anova(lm_rich_norand_bio, lm_rich_norand_bio_sp) # species is significant but only for piptar
-
-# final simplest model approximately 70% of variation
-summary(lm_rich_norand_bio_sp)
-
-ggplot(filtered_data, aes(x = log(biomass), y=rich, color = species))+
-  geom_jitter()+
-  geom_smooth(method = "lm", se=FALSE)
+# Diversity [don't include] ----
+# 
+# lmer_div <- lmer(rich~log(biomass)+species+(1|block), data=filtered_data)
+# lmer_rich_norand <- lm(rich~log(biomass)+species, data=filtered_data)
+# 
+# AIC(lmer_rich, lmer_rich_norand) # Here random is better
+# anova(lmer_rich, lmer_rich_norand) # And here is not :/
+# 
+# lm_rich_norand_int <- lm(rich~log(biomass)*species, data=filtered_data)
+# 
+# anova(lmer_rich_norand, lm_rich_norand_int) # no significant improvement
+# 
+# lm_rich_norand_trt <- lm(rich~log(biomass)+species+treatment, data=filtered_data)
+# anova(lmer_rich_norand, lm_rich_norand_trt) # teatment not significant
+# lm_rich_norand_trt_int <- lm(rich~log(biomass)*treatment+species,
+#                              data=filtered_data)
+# anova(lmer_rich_norand, lm_rich_norand_trt_int) # interaction not significant
+# 
+# lm_rich_norand_bio <- lm(rich~log(biomass), data=filtered_data)
+# lm_rich_norand_bio_sp <- update(lm_rich_norand_bio, .~.+species)
+# anova(lm_rich_norand_bio, lm_rich_norand_bio_sp) # species is significant but only for piptar
+# 
+# # final simplest model approximately 70% of variation
+# summary(lm_rich_norand_bio_sp)
+# 
+# ggplot(filtered_data, aes(x = log(biomass), y=rich, color = species))+
+#   geom_jitter()+
+#   geom_smooth(method = "lm", se=FALSE)
 
 # Notes ----
 # glmer3b <- lm(log(val)~log(biomass)+species+treatment+species*treatment, 
@@ -461,13 +576,13 @@ ggplot(filtered_data, aes(x = log(biomass), y=rich, color = species))+
 # ltrs <- data.frame(pt = pairwise$treat,
 #                    pg = pairwise$.group)
 
-plot(glmer1)
-plot(glmer2)
-
-# Log abundance model is better, no need for random effec neither
-anova(glmer1, glmer2)
-AIC(glmer1, glmer2, glmer3a, glmer3b,glmer3c)
-)
+# plot(glmer1)
+# plot(glmer2)
+# 
+# # Log abundance model is better, no need for random effec neither
+# anova(glmer1, glmer2)
+# AIC(glmer1, glmer2, glmer3a, glmer3b,glmer3c)
+# )
 
 library(insight)
 library(MuMIn)

@@ -11,6 +11,7 @@ specperbio <- attractivness/fullbio
 
 sort(specperbio)
 sort(fullabu)
+
 # More abundant species gather more species, this is almost a perfect relationship
 # cbind(attractivness,fullbio)
 # lm1  <- lm(log(attractivness)~log(fullbio))
@@ -44,7 +45,8 @@ specqua_stacked$code <- rep(specqua_filtered[, "CODE"], 4)
 # ggplot(specqua_stacked, aes(x = sp_code, y = values))+
 #   # geom_jitter(width = 0.1)+
 #   geom_boxplot(varwidth = TRUE)+
-#   facet_wrap(vars(ind), scales = "free")
+#   facet_wrap(vars(ind), scales = "free")+
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 specqua$plco <- paste(specqua$SP_CODE, specqua$CODE, sep="")
 specqua <- specqua[!duplicated(specqua$plco),]

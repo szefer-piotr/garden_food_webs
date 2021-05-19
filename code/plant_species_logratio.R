@@ -34,6 +34,8 @@ species <- rownames(pltab[rowSums(pltab)> 10, ])
 # bl = "g5"
 # bl = "g2"
 
+ins_bio <- ins_bioOrig
+
 unique(ins_bioOrig$family)
 
 
@@ -169,6 +171,30 @@ cplratio <- makeLogratioData(tolower(species), treatments, abundance = FALSE)
 cplratio_spec <- cplratio[[1]]
 cplratio_gen <- cplratio[[2]]
 
+
+# Differences in LRR for families
+cplratio_spec$fam <- substr(cplratio_spec$species, 1,4)
+
+tukey <- emmeans::emmeans(abu_mod, "family")
+grouping <- as.data.frame(multcomp::cld(tukey, Letter="abcdefghijklm"))
+
+# ggplot(fam_abu)+
+#   geom_boxplot(aes(family, log(abu)))+
+#   geom_text(data = grouping,
+#             aes(family, sort(tapply(log(fam_abu$abu),fam_abu$family, max)+1), 
+#                 label = .group))+
+#   xlab("")+ylab("Log(abundance)")
+
+
+# ggplot(cplratio_spec, aes(x=fam, y=lratio))+
+#   geom_boxplot()
+
+test <- lm(lratio~0+fam, data = cplratio_spec)
+tukey <- emmeans::emmeans(test, "fam")
+grouping <- as.data.frame(multcomp::cld(tukey, Letter="abcdefghijklm"))
+
+
+
 cplratio_spec$pdi <- diet_breadth_ab[as.character(cplratio_spec$species)]
 cplratio_spec$weight <- pdiss[as.character(cplratio_spec$species)]
 
@@ -195,7 +221,7 @@ names(fulltree) <- c("breyce", "melamu","piptar", "tricpl",
                     "tremor")
 
 p1 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
-  geom_point(aes(fill= tree, shape = tree))+
+  geom_point(aes(fill= tree, shape = tree), size = 2)+
   # scale_fill_manual(values=cbf_2[4:8])+
   # scale_color_manual(values=cbf_2[4:8])+
   scale_shape_manual(values=c(21,22,23,24,25))+
@@ -205,14 +231,17 @@ p1 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
   #             method = "lm", formula = y~x,
   #             lty = 2, se=F, col="grey40", lwd=0.5)
 
-p1
-fullord <- c("Coleoptera", "Hemiptera","Homoptera", "Lepidoptera",
+# p1
+fullord <- c("Coleoptera", "Heteroptera","Homoptera", "Lepidoptera",
              "Orthoptera")
 names(fullord) <- c("cole", "hemi","homo", "lepi",
              "orth")
-  
-p2 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
-  geom_point(aes(fill= order, shape = order))+
+
+cplratio_spec_f <- cplratio_spec %>%
+  filter(!grepl("aran|mant", order))
+
+p2 <- ggplot(cplratio_spec_f, aes(y=lratio, x=pdi))+
+  geom_point(aes(fill= order, shape = order), size = 2)+
   # scale_fill_manual(values=cbf_2[4:8])+
   # scale_color_manual(values=cbf_2[4:8])+
   scale_shape_manual(values=c(21,22,23,24,25))+
@@ -227,16 +256,68 @@ p2 <- ggplot(cplratio_spec, aes(y=lratio, x=pdi))+
   #                                homo=1,
   #                                lepi=2,
   #                                orth=2))
+# p2
 
 library(ggpubr)
 
-ggarrange(p1+theme(legend.position = "none")+
-            xlab("Specialization (PDI)")+
-            ylab("Predator indirect effect on herbivore abundance"),
-          p2+theme(legend.position = "none")+
-            xlab("Specialization (PDI)")+
-            ylab("Predator direct effect on herbivore abundance"))
+# ggarrange(p1+theme(legend.position = "none")+
+#             xlab("Specialization (PDI)")+
+#             ylab("LRR of arthropod abundance"),
+#           p2+theme(legend.position = "none")+
+#             xlab("Specialization (PDI)")+
+#             ylab(""))
 # I need a genearl pattern and is there an interaction in different orders and plant species
+
+# LRR vs size relationship
+size_dat$morph <- as.character(size_dat$morph)
+
+chrs <- charmatch(cplratio_spec$species, size_dat$morph)
+cplratio_spec$hbio <- size_dat[chrs, ]$size
+
+cplratio_spec[which(cplratio_spec$hbio == max(cplratio_spec$hbio, na.rm = T)),]
+
+cplratio_spec$Order <- as.factor(cplratio_spec$order)
+ord.labs <- c("Orthoptera",
+              "Aranea",
+              "Homoptera",
+              "Heteroptera",
+              "Mantodea", 
+              "Coleoptera","Lepidoptera")
+levels(cplratio_spec$Order) <- sort(ord.labs)
+
+ggplot(cplratio_spec[!(cplratio_spec$order %in% c("aran","mant")),],
+       aes(x = hbio, y = lratio, colour = Order))+
+  geom_point()+
+  scale_x_continuous(trans = "")
+  facet_wrap(~Order, scales = "free")+
+  xlab("Body length [cm]")+ ylab("LRR of abundance")+
+  theme(legend.position = "none")+
+  geom_smooth(method="lm", col = "grey40",
+              data = subset(cplratio_spec, order %in% c("homo")),
+              mapping=aes(weight=log(weight)))+
+  geom_smooth(method="lm",col = "grey40",
+            data = subset(cplratio_spec, order %in% c("orth")),
+            mapping=aes(weight=log(weight)), lty=2, se = F)
+
+size_mod1 <- (lm(lratio~log(hbio)*order, 
+                 weights = log(weight), 
+                 data = cplratio_spec))
+summary(size_mod1)
+plot(size_mod1)
+
+size_mod2 <- lm(log(size)~0+group, data = size_dat)
+grouping_s <- multcomp::cld(emmeans(size_mod2, "group"), Letter = "abcdef")
+grouping <- as.data.frame(grouping_s)
+ggplot(size_dat, aes(x=group, y=log(size)))+
+  geom_boxplot()+
+  geom_text(data = grouping,
+            aes(group, sort(tapply(log(size_dat$size),
+                                    size_dat$group, max, na.rm=T)+0.5), 
+                label = .group))+
+  xlab("")+ylab("Log(biomass)")
+
+#### TODO
+# Add weights based on abudance!!!!
 
 # ggplot(cplratio_spec, aes(y=lratio, x=pdi, color = order))+
 #   geom_point(aes(size = log(weight), 
@@ -253,38 +334,49 @@ ggarrange(p1+theme(legend.position = "none")+
 #   stat_smooth(method = "lm", lty = 1, se=T)
 
 # General test
-
-modpip1 <- nlme::lme(lratio~pdi*order, random = ~1|block, data=cplratio_spec,
+cplrcc <- cplratio_spec[complete.cases(cplratio_spec) ,]
+modpip1 <- nlme::lme(lratio~pdi*order, 
+                     random = ~1|block, 
+                     data = cplrcc,
                      weights = ~ as.vector(weight))
 
-modpip1 <- nlme::lme(lratio~pdi, random = ~0+pdi|order, data=cplratio_spec,
-                     weights = ~ as.vector(weight))
+# modpip2 <- nlme::lme(lratio~pdi, 
+#                      random = ~0+pdi|order, 
+#                      data = cplrcc,
+#                      weights = ~ as.vector(weight))
+# 
+# summary(modpip1)
+# summary(modpip2)
 
-summary(modpip1)
-modpip1 <- nlme::lme(lratio~pdi*tree, random = ~1|block, data=cplratio_spec,
+
+modpip3<- nlme::lme(lratio~pdi*tree, 
+                     random = ~1|block, 
+                     data=cplrcc,
                   weights = ~ as.vector(weight))
 
-modpip1 <- nlme::lme(lratio~pdi, random = ~1+pdi|tree, data=cplratio_spec,
-                     weights = ~ as.vector(weight))
+# modpip4 <- nlme::lme(lratio~pdi, 
+#                      random = ~1+pdi|tree, 
+#                      data=cplratio_spec,
+#                      weights = ~ as.vector(weight))
+# 
+# modpip1 <- nlme::lme(lratio~pdi, random = ~1+pdi|tree, 
+#                      data=cplratio_spec[cplratio_spec$tree == "tremor",],
+#                      weights = ~ as.vector(weight))
+# 
+# modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, 
+#                      data=cplratio_spec[cplratio_spec$tree == "tremor",])
+# modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, data=cplratio_spec)
+# 
+# # modpip2 <- lm(lratio~pdi,data=cplratio_spec)
+# summary(modpip1)
+# summary(modpip2)
 
-modpip1 <- nlme::lme(lratio~pdi, random = ~1+pdi|tree, 
-                     data=cplratio_spec[cplratio_spec$tree == "tremor",],
-                     weights = ~ as.vector(weight))
 
-modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, 
-                     data=cplratio_spec[cplratio_spec$tree == "tremor",])
-modpip1 <- nlme::lme(lratio~pdi, random = ~1|block, data=cplratio_spec)
-
-# modpip2 <- lm(lratio~pdi,data=cplratio_spec)
-summary(modpip1)
-summary(modpip2)
-
-
-mod1 <- nlme::lme(lratio~pdi*tree, random = ~1|block, data=cplratio_spec,
-                  weights = ~ as.vector(weight))
-mod2 <- lm(lratio~pdi*tree,data=cplratio_spec)
-summary(mod1)
-summary(mod2)
+# mod1 <- nlme::lme(lratio~pdi*tree, random = ~1|block, data=cplratio_spec,
+#                   weights = ~ as.vector(weight))
+# mod2 <- lm(lratio~pdi*tree,data=cplratio_spec)
+# summary(mod1)
+# summary(mod2)
 
 # This just looks the same... positive response from plants in correlated with popsitive response from herbivores
 plot(lratio~plant_abu_logratio, data=cplratio_gen)

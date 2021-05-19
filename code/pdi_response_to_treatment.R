@@ -44,7 +44,6 @@ for(num in 1:length(comps)){
     ctr_net <- abugardnets[[ctr_plot]]
     trt_net <- abugardnets[[trt_plot]]
     
-    # print("ASS")
     c1 <- is.null(dim(ctr_net))
     c2 <- is.null(dim(trt_net))
     
@@ -149,6 +148,21 @@ cbf_2 <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 
 pdi_filtered$shape <- as.numeric(as.factor(pdi_filtered$fam))+20
 
+duplicated(pdi_filtered[pdi_filtered$fam == "orth",]$species)
+
+# Change order names
+ord.labs <- c("Orthoptera",
+              "Homoptera",
+              "Heteroptera",
+              "Coleoptera",
+              "Lepidoptera")
+
+pdi_filtered$fam <- as.factor(pdi_filtered$fam)
+pdi_filtered$trt <- as.factor(pdi_filtered$trt)
+
+levels(pdi_filtered$fam) <- sort(ord.labs)
+levels(pdi_filtered$trt) <- c("Control", "Exclosure")
+
 # logit <- function(x){log(x/(1-x))}
 ggplot(pdi_filtered , aes(x=trt, y = vals, 
                           group = sp_gard, 
@@ -164,9 +178,10 @@ ggplot(pdi_filtered , aes(x=trt, y = vals,
   scale_shape_manual(values=c(21,22,23,24,25,
                               21,22,23,24,25))+
   ylab("Specialization of herbivore species (Paired Distance Index)")+
-  xlab("Treatment")+
+  xlab("")+
   theme_bw()+
   theme(legend.position = "none")
+
 
 
 # Test for individual orders paired in morpho-species
@@ -176,11 +191,35 @@ ggplot(pdi_filtered , aes(x=trt, y = vals,
 # I think I need to break this dataset into families manually.
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[1], ]
 # summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero
-summary(lmer(dupl_lr~0+fam+(1|garden), data=mod_dat)) # Not different  from zero
+summary(lmer(dupl_lr~0+fam+(1|garden), weights = abu, data=mod_dat)) # Not different  from zero
 
 # Break tests into families to help understand these results
 mdf <- mod_dat[mod_dat$fam == "cole", ]
-summary(lmer(dupl_lr~1+(1|garden), data=mdf))
+summary(lmer(dupl_lr~0+trt+(1|garden), weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "hemi", ]
+summary(lmer(dupl_lr~0+trt+(1|garden), weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "homo", ]
+summary(lmer(dupl_lr~0+trt+(1|garden), weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "lepi", ]
+summary(lmer(dupl_lr~0+trt+(1|garden), weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "orth", ]
+summary(lmer(dupl_lr~0+trt+(1|garden), weights = abu, data=mdf))
+
+# Drop the random effect
+mdf <- mod_dat[mod_dat$fam == "cole", ]
+summary(lm(dupl_lr~0+trt, weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "hemi", ]
+summary(lm(dupl_lr~0+trt, weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "homo", ]
+summary(lm(dupl_lr~0+trt, weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "lepi", ]
+summary(lm(dupl_lr~0+trt, weights = abu, data=mdf))
+mdf <- mod_dat[mod_dat$fam == "orth", ]
+summary(lm(dupl_lr~0+trt, weights = abu, data=mdf))
+
+
+
+
 
 mod_dat <- pdi_filtered[pdi_filtered$comp == unique(pdi_filtered$comp)[2], ]
 # summary(lmer(dupl_lr~1+(1|garden), data=mod_dat)) # Not different  from zero

@@ -117,6 +117,18 @@ bipartieNetworkPlot <- function(garden_list, code, rem.ips=T, pmltp = 1){
 
 bipartieNetworkPlot(abugardnets, pmltp = 5, "w1g1p3")
 
+psites
+csites
+
+pwg2 <- "w1g2p3"
+cwg2 <- "w1g2p6"
+
+par(mfrow = c(2,1))
+
+bipartieNetworkPlot(abugardnets, pmltp = 5, cwg2)
+bipartieNetworkPlot(abugardnets, pmltp = 5, pwg2)
+
+
 filterCodes <- function(trt){
   return(as.character(treats[treats$treat %in% trt, ]$codes))
 }
@@ -130,7 +142,6 @@ for(codes in filterCodes("PREDATOR")){
   bipartieNetworkPlot(abugardnets, pmltp = 5, codes)
 }
 # dev.off()
-
 
 
 

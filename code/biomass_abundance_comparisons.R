@@ -39,7 +39,7 @@ for(fam in unique(biollcp$nms)){
 
 
 # * 2.1.4 Differences between orders based on the abundance ----
-treatments <- c("control","predator","weevil25", "weevil125")
+# treatments <- c("control","predator","weevil25", "weevil125")
 treatments <- c("control","predator")
 
 
@@ -160,24 +160,142 @@ ns <- ns[,1]
 #                  params = list(na.rm = na.rm, ...))
 # }
 
-ggplot(data = fulldf,aes(y=lratio,x=fam,
-                         fill = type))+
-  stat_summary(
-    aes(color = type),
+csite <- treats[treats$treat == "CONTROL", ]$codes
+psite <- treats[treats$treat == "PREDATOR", ]$codes
+
+abullcp <- ins_bio %>%
+  filter(plot %in% c(as.character(csite), 
+                     as.character(psite))) %>%
+  select(c("family","plot", "amount")) %>%
+  mutate(garden = substr(plot,3,4)) %>%
+  mutate(name = paste(family, garden)) %>%
+  mutate(trt = ifelse(plot %in% csite, "C","Ex"))
+
+# SLA is in cm2/g
+mb <- main[main$CODE %in% c(as.character(csite),
+                            as.character(psite)), ]
+mbw <- mb %>% 
+  filter(LIFE.FORM %in% c("tree", "shrub")) %>%
+  mutate(area = SLA * LEAVES*1000) # in cm2
+
+mbws <- mbw %>%
+  group_by(CODE) %>%
+  summarise(area.cm2 = sum(area, na.rm=T)) %>%
+  mutate(area.m2 = area.cm2/10000)
+
+
+tcpp <- treats %>%
+  filter(treat %in% c("PREDATOR"))
+tcpc <- treats %>%
+  filter(treat %in% c("CONTROL"))
+# Loop
+fulldiv <- data.frame()
+descriptors <- c("Diversity", "Richness", "Density")
+for(desc in descriptors){
+  print(desc)
+  for(fam in unique(abullcp$family)){
+    print(fam)
+    for(gard in unique(abullcp$garden)){
+      print(gard)
+      subdat <- abullcp %>%
+        filter(family == fam & garden == gard)
+      
+      if(desc == "Diversity"){
+        pvals <- vegan::diversity(subdat[subdat$trt == "Ex",]$amount, index = "invsimpson")
+        cvals <- vegan::diversity(subdat[subdat$trt == "C",]$amount, index = "invsimpson")
+      }
+      if(desc == "Richness"){
+        pvals <- nrow(subdat[subdat$trt == "Ex",])
+        cvals <- nrow(subdat[subdat$trt == "C",])
+      }
+      
+      if(desc == "Density"){
+        explot <- tcpp[grepl(gard, tcpp$codes), ]$codes
+        cplot <-tcpc[grepl(gard, tcpc$codes), ]$codes
+        print("plots assigned")
+        carea <- mbws %>% 
+          filter(CODE == as.character(cplot)) %>%
+          select(area.m2)
+        parea <- mbws %>% 
+          filter(CODE == as.character(explot)) %>%
+          select(area.m2)
+        print("area obtained")
+        pvals <- sum(subdat[subdat$trt == "Ex",]$amount)/parea
+        cvals <- sum(subdat[subdat$trt == "C",]$amount)/carea
+        pvals <- as.numeric(pvals)
+        cvals <- as.numeric(cvals)
+        
+        print("vals calculated")
+      }
+      
+      fulldiv <- rbind(fulldiv, data.frame(
+        name = subdat$name[1], pvals = pvals, cvals = cvals,
+        lratio = log(cvals/pvals), fam = fam, block = gard, 
+        type = desc
+      ))
+    }
+  }
+}
+
+
+head(fulldiv)
+head(fulldf)
+# Connect fulldf with fulldiv
+
+full.desc <- rbind(fulldiv, fulldf)
+
+ord.labs <- c("Orthoptera",
+              "Homoptera",
+              "Heteroptera",
+              "Aranea",
+              "Mantodea", 
+              "Coleoptera",
+              "Lepidoptera")
+levels(full.desc$fam) <- ord.labs 
+
+names(full.desc)[7] <- "Descriptor"
+levels(full.desc$Descriptor) <- c("Diversity",
+                                  "Richness",
+                                  "Density",
+                                  "Abundance",
+                                  "Biomass" )
+
+ggplot(data = full.desc,aes(y=lratio,x=fam,
+                            fill = Descriptor))+
+  stat_summary(aes(color = Descriptor),
     fun.data="mean_sdl",  fun.args = list(mult=1), 
     geom = "pointrange",  size = 0.4,
     position = position_dodge(0.8)
   )+
-  coord_flip() +
+  # coord_flip() +
   theme_minimal()+
   geom_hline(yintercept = 0, lty=2, 
-             col = rgb(150,150,150,150,maxColorValue = 255))
+             col = rgb(150,150,150,150,maxColorValue = 255))+
+  ylab("Log-response ratio")+xlab("")
 
 
 # Tests
-
-for (fms in unique(fulldf$fam)){
-  testdf <- fulldf[fulldf$fam == fms, ]
-  testlm <- lm(lratio~1+type, data=testdf)
-  print(summary(testlm)$coefficients)
+desc.test.df <- data.frame()
+for (desc in unique(full.desc$Descriptor)){
+  print(desc)
+  for (ord in unique(full.desc$fam)){
+    print(ord)
+    
+    testvals <- full.desc %>%
+      filter(fam == ord & Descriptor == desc) %>%
+      select(lratio)
+    
+    print(testvals)
+    
+    testvals <- testvals[complete.cases(testvals),]
+    testvals <- testvals[!is.infinite(testvals)]
+    
+    test <- summary(lm(testvals~1))$coefficients
+    
+    print(test)
+    
+    desc.test.df <- rbind(desc.test.df, data.frame(
+      Descriptor = desc, Order = ord, p = test
+    ))
+  }
 }

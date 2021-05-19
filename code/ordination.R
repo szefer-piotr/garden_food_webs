@@ -759,7 +759,7 @@ herbfam_mat_abu <- insfam_mat_abu[, -grep("aran|mant", colnames(insfam_mat_abu))
 
 herbfam_mat_abu_trim <- herbfam_mat_abu[rownames(treats_trimmed), ]
 
-famRda <- rda(herbfam_mat_abu_trim~PREDATOR+WEEVIL125+WEEVIL25+Condition(block),
+famRda <- rda(herbfam_mat_abu_trim~PREDATOR+Condition(block),
               treats_trimmed)
 anova(famRda, by = "terms")
 plot(famRda)

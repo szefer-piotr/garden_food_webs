@@ -33,7 +33,6 @@ gardnetsorrig <- gardnets
 # gardnets <- gardnetsorrig
 gardnets <- abugardnets # abundance based networks
 
-
 # Dont run this - it will be taken care of later
 # Remove intermediate predators from the networks
 # for(garden in names(gardnets)){
@@ -94,6 +93,8 @@ genvuldf <- data.frame()
 # gname <- "w1g2p3"
 # gname <- names(gardnets)[[2]]
 
+dddf <- list()
+
 # *1.0 Run the loop ----
 for(gname in names(gardnets)){
   
@@ -128,9 +129,11 @@ for(gname in names(gardnets)){
     if(is.null(gardnets[[gname]])){
       next
     }
+  
+    dddf[[gname]] <- rowSums(rMAT_noip>0)
 
     nlres <- networklevel(rMAT_noip, index = "vulnerability")
-    pdi <- mean(PDI(rMAT_noip, normalise = F, log=T))
+    pdi <- mean(PDI(rMAT_noip, normalise = T, log=T))
     con <-  networklevel(rMAT_noip, index = "connectance")
 
     # Randomized
@@ -177,7 +180,7 @@ for(gname in names(gardnets)){
   }
   
   nlres <- networklevel(MAT_noip, index = "vulnerability")
-  pdi <- mean(PDI(MAT_noip, normalise = F, log=T))
+  pdi <- mean(PDI(MAT_noip, normalise = T, log=T))
   con <-  networklevel(MAT_noip, index = "connectance")
   
   mod1 = DIRT_LPA_wb_plus(MAT_noip)
@@ -341,6 +344,10 @@ clippedpd$colors <- nsigcol
 # 2.2 Connectance - significant somewhat----
 condat <- desStatMod(clippedpd, "Connectance")
 
+# var.test(ind~trt, data = condat)
+# bartlett.test(ind~trt, data = condat)
+car::leveneTest(ind~trt, data = condat)
+
 # Relevel
 condat$trt <- factor(condat$trt, 
                      levels = c("CONTROL",
@@ -356,7 +363,29 @@ condat$trt <- factor(condat$trt,
 # Use beta distribution
 brrand <- glmmTMB(ind ~ trt + (1|block), data = condat, 
                   family= beta_family(link = "logit"))
+
+bmod <- betareg::betareg(ind~trt, data = condat)
+
 summary(brrand)
+summary(bmod)
+
+# Simulate from the model
+# library(ggplot2)
+plotdata <- condat
+simn = 50
+preddat <- expand.grid(treat = rep(c("CONTROL", "PREDATOR"),simn),
+                       block = c("g1","g2","g3","g4","g5","g6"))
+preddat$predicted <- stack(simulate(bmod, nsim = simn))[,1]
+
+ggplot(plotdata, aes(y = ind, x = trt))+
+  geom_jitter(data = preddat, aes(y = predicted, x = treat), 
+              size = 2, colour = "blue")+
+  geom_jitter(size = 2,colour = "orange")
+
+summary(lmeSimp)
+summary(lmSimp)
+sigma(lmSimp)
+summary(trmod)
 
 # This add colors manually
 cond1 <- clippedpd$trt %in% c("WEEVIL25","WEEVIL125")
@@ -386,26 +415,49 @@ clippedpd[cond1 & cond2,]$colors <- sigcol
 # Use of the truncated normal distribution
 gendat <- desStatMod(clippedpd, "Generality")
 trunc <- summary(truncreg(ind~trt, gendat)) # ns
+summary(trunc)
+# var.test(ind~trt, data = gendat)
+# bartlett.test(ind~trt, data = gendat)
+car::leveneTest(ind~trt, data = gendat)
 
 # No better ideas
 genlm <- lm(ind~trt, gendat)
 genlmer <- lmer(ind~trt+(1|block), gendat) #ns
 summary(genlm)
 summary(genlmer)
-plot(gendat$ind~gendat$trt)
+# plot(gendat$ind~gendat$trt)
+# 
+# plotdata <- condat
+# simn = 50
+# preddat <- expand.grid(treat = rep(c("CONTROL", "PREDATOR"),simn),
+#                        block = c("g1","g2","g3","g4","g5","g6"))
+# preddat$predicted <- stack(simulate(genlmer, nsim = simn))[,1]
+# 
+# ggplot(plotdata, aes(y = ind, x = trt))+
+#   geom_jitter(data = preddat, aes(y = predicted, x = treat), 
+#               size = 2, colour = "blue")+
+#   geom_jitter(size = 2,colour = "orange")
+
 
 # 2.4 Herbivore species [] ----
 
 # Also tested elsewhere
-# hsdat <- desStatMod(clippedpd, "Herbivore Species")
+hsdat <- desStatMod(clippedpd, "Herbivore Species")
 # summary(glmer.nb(ind~trt+(1|block), hsdat))
 
+# var.test(log(ind)~trt, data = hsdat)
+# bartlett.test(log(ind)~trt, data = hsdat)
+car::leveneTest(log(ind)~trt, data = hsdat)
 
 
 # 2.5 Modularity ----
 
 # Can modularity be modified by plant species number?
 moddat <- desStatMod(clippedpd, "Modularity")
+
+# var.test(ind~trt, data = moddat)
+# bartlett.test(ind~trt, data = moddat)
+car::leveneTest(ind~trt, data = moddat)
 
 # plot(moddat$ind~ moddat$trt)
 # summary(betareg::betareg(ind~trt, data=moddat))
@@ -425,9 +477,9 @@ brrand <- glmmTMB(ind ~ trt+(1|block),
                   data = moddat,
                   family= beta_family(link = "logit"))
 summary(brrand)
-summary(br) # random effect not significant
+summary(br) # random effect is significant
 
-anova(br, brrand, test="Chisq") # differnce not significant
+anova(br, brrand, test="Chisq") # differnce is significant
 
 # brtest <- emmeans(br, "trt")
 # brrandtest <- emmeans(brrand, "trt")
@@ -454,25 +506,50 @@ summary(modgrad)
 
 
 # 2.6 IP species [calculated elsewhere] ---- 
-# ipdat <- desStatMod(clippedpd, "IP Species")
+ipdat <- desStatMod(clippedpd, "IP Species")
 # summary(glmer.nb(ind~trt+(1|block), ipdat))
+
+# var.test(log(ind)~trt, data = ipdat)
+# bartlett.test(log(ind)~trt, data = ipdat)
+car::leveneTest(ind~trt, data = ipdat)
+
+
 
 # 2.7 Nestedness ----
 nsdat <- desStatMod(clippedpd, "Nestedness")
 # nslmer <- lmer(ind~trt+(1|block), nsdat)
+
+# var.test(ind~trt, data = nsdat)
+# bartlett.test(ind~trt, data = nsdat)
+car::leveneTest(ind~trt, data = nsdat)
+
 nslme <- nlme::lme(ind~trt, random=~1|block, nsdat)
+nslm <- nlme::gls(ind~trt, nsdat)
+anova(nslm, nslme)
 summary(nslme)
+summary(nslm)
+plot(nslme)
+
 # Not significant
 
 # 2.8 Specialization PDI ----
 pddat <- desStatMod(clippedpd, "Specialization PDI")
 # pdlmer1 <- lmer(ind~trt+(1|block), pddat)
-pdlme <- nlme::lme(ind~trt, random=~1|block, pddat)
+# pdlme <- nlme::lme(ind~trt, random=~1|block, pddat)
+
+
+pdbeta <- glmmTMB(ind ~ trt+(1|block), 
+                   data = pddat, 
+                   family= beta_family(link = "logit"))
+
+# var.test(ind~trt, data = pddat)
+# bartlett.test(ind~trt, data = pddat)
+# car::leveneTest(ind~trt, data = pddat)
 
 
 # pdlmer2 <- lmer(logit(ind)~trt+(1|block), pddat)
 # summary(pdlmer1)
-summary(pdlme)
+summary(pdbeta)
 
 # summary(pdlmer2)
 
@@ -499,6 +576,22 @@ trmod <- (truncreg(ind~trt, vuldat))
 vullmer <- nlme::lme(ind~trt, random = ~1|block, vuldat)
 summary(vullmer)
 summary(trmod)
+
+# plotdata <- vuldat
+# simn = 50
+# preddat <- expand.grid(treat = rep(c("CONTROL", "PREDATOR"),simn),
+#                        block = c("g1","g2","g3","g4","g5","g6"))
+# preddat$predicted <- stack(simulate(vullmer, nsim = simn))[,1]
+# 
+# ggplot(plotdata, aes(y = ind, x = trt))+
+#   geom_jitter(data = preddat, aes(y = predicted, x = treat), 
+#               size = 2, colour = "blue")+
+#   geom_jitter(size = 2,colour = "orange")
+
+
+
+car::leveneTest(ind~trt, data = vuldat)
+
 # AIC(trmod, vullmer)
 
 # sigind <- c("Vulnerability",
@@ -573,41 +666,106 @@ sigcolors[c(4,5)] <- sigcol
 sigcolors <- sigcolors[!is.na(sigcolors)]
 
 # Sigcolors not included
-ggplot(clippedpd_itp, 
-       aes(x = trt, 
-           y = ind))+
-  geom_jitter(width = 0.1, 
-              col = rgb(150,150,150,80,
-                        maxColorValue = 255))+
-  geom_line(aes(group=block),
-            lty = 2,
-            col = rgb(150,150,150,80,
-                      maxColorValue = 255)) + 
-  facet_wrap(~type, 
-             scales = "free") + 
-  stat_summary(fun.data=mean_cl_boot, 
-               geom="pointrange", 
-               lwd=0.8) +
-  stat_summary(fun=mean, 
-               geom="point", 
-               cex = 2)+
-  xlab("")+ylab("")
+# ggplot(clippedpd_itp, 
+#        aes(x = trt, 
+#            y = ind))+
+#   geom_jitter(width = 0.1, 
+#               col = rgb(150,150,150,80,
+#                         maxColorValue = 255))+
+#   geom_line(aes(group=block),
+#             lty = 2,
+#             col = rgb(150,150,150,80,
+#                       maxColorValue = 255)) + 
+#   facet_wrap(~type, 
+#              scales = "free") + 
+#   stat_summary(fun.data=mean_cl_boot, 
+#                geom="pointrange", 
+#                lwd=0.8) +
+#   stat_summary(fun=mean, 
+#                geom="point", 
+#                cex = 2)+
+#   xlab("")+ylab("")
+# 
+# sigcolors
 
-# Sigcolors included 
-ggplot(clippedpd_itp, 
-       aes(x = trt, 
-           y = ind))+
-  geom_jitter(width = 0.1, 
-              col = rgb(150,150,150,80,
-                        maxColorValue = 255))+
-  facet_wrap(~type, 
-             scales = "free") + 
+colvals <-  c("black", "black",
+              "black", "black",
+              "black", "red",
+              "black", "black",
+              "black", "black",
+              "black", "gold")
+
+pDplot <- ggplot(clippedpd_itp, 
+                 aes(x = trt, 
+                     y = ind))+
+  geom_jitter(width = 0.05, 
+              col = rgb(0,0,0,0.3),
+              size = 3)+
+  geom_line(aes(group = block), lty = 2, 
+            col = rgb(0,0,0,0.1))+
+  facet_wrap(~type, ncol=3, scales = "free") + 
   stat_summary(fun.data=mean_cl_boot, 
-               geom="pointrange", 
-               lwd=0.8,
-               color = sigcolors) +
-  stat_summary(fun=mean, 
-               geom="point",
-               color= sigcolors, 
-               cex = 2)+
+               geom="pointrange", col = colvals,
+               lwd=1) +
+  theme_bw() +
+  theme(strip.text = element_text(face = "bold", size = 10))+
+  scale_x_discrete(labels = c("C", "Ex"))+
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 6))+
   xlab("")+ylab("")
+# pDplot
+
+tiff(filename='ms1/draft_4/figures/fig4.tif',
+     height=5600,
+     width=5200,
+     units='px',
+     res=800,compression='lzw')
+# svg("ms1/draft_4/figures/fig4.svg", width = 6, height= 4)
+pDplot
+dev.off()
+
+#Degree distribution
+dddf
+ccodes <- treats[treats$treat == "CONTROL",]$codes
+pcodes <- treats[treats$treat == "PREDATOR",]$codes
+dddf_C <- dddf[as.character(ccodes)]
+dddf_Ex <- dddf[as.character(pcodes)]
+
+ddcomp <- data.frame()
+for (element in names(dddf_C)){
+  print(element)
+  comm <- dddf_C[element][[1]]
+  H = vegan::diversity(comm, index = "shannon")
+  Ev <- H/log(length(comm))
+  ddcomp <- rbind(ddcomp, data.frame(H = H, Ev = Ev, 
+                                     plot = element,
+                                     treat = "C"))
+}
+for (element in names(dddf_Ex)){
+  print(element)
+  comm <- dddf_Ex[element][[1]]
+  H = vegan::diversity(comm, index = "shannon")
+  Ev <- H/log(length(comm))
+  ddcomp <- rbind(ddcomp, data.frame(H = H, Ev = Ev, 
+                                     plot = element,
+                                     treat = "Ex"))
+}
+
+library(dplyr)
+ddcomp_bl <- ddcomp %>%
+  mutate(block = substr(plot, 3,4))
+
+write.table(ddcomp_bl, "datasets/evenness.txt")
+
+ddcomp_bl <- read.table("datasets/evenness.txt")
+
+# ggplot(ddcomp_bl, aes(x = treat, y = H, group = block))+
+#   geom_jitter()+
+#   geom_line()
+ggplot(ddcomp_bl, aes(x = treat, y = Ev, group = block))+
+  geom_jitter(width = 0.05, size = 6, alpha = 0.3)+
+  geom_line(lty = 2, lwd = 1, alpha = 0.3) +
+  xlab("")+ylab("Evenness of the plant degree distribution")
+
+evrand <- glmmTMB(Ev ~ treat + (1|block), data = ddcomp_bl, 
+                  family= beta_family(link = "logit"))
+summary(evrand)

@@ -117,44 +117,59 @@ minabu <- 10
 slgfullnozero_noip_minabu <- slgfullnozero_noip[slgfullnozero_noip$abundnce >= minabu, ]
 
 # 1a. Plot----
-ggplot(slgfullnozero_noip_minabu,aes(x = type, y = pdi,
-                               color = block))+
-  geom_jitter(width = 0.1, pch=19) +
+slgfullnozero_noip_minabu$fam
+slgfullnozero_noip_minabu -> abudat
+
+abudat$fam <- as.factor(abudat$fam)
+levels(abudat$fam) <- c("Coleoptera",
+                        "Heteroptera",
+                        "Homoptera",
+                        "Lepidoptera",
+                        "Orthoptera")
+levels(abudat$type) <- c("C+Ex", "C","Ex")
+
+# Calculate 
+
+bddat <- slgfullnozero_noip_minabu
+bddat[bddat$pdi == 0, ]$pdi <- 0.001
+bddat[bddat$pdi == 1, ]$pdi <- 0.999
+
+grouping <- expand.grid(levels(abudat$type),
+                        levels(abudat$fam))
+grouping$label <- c("a","b","b",
+                    "","","",
+                    "","","",
+                    "a","b","ab",
+                    "a","b","b")
+
+pdicols <- c("red","grey20","grey20",
+             "grey20","grey20","grey20",
+             "grey20","grey20","grey20",
+             "red","grey20","grey20",
+             "red","grey20","grey20")
+
+library(ggsignif)
+
+p1 <- ggplot(abudat,aes(x = type, y = pdi))+
+  geom_jitter(width = 0.1, pch=19, alpha = 0.3) +
   stat_summary(fun = mean, geom = "point", col= "red")+
   stat_summary(fun.data = "mean_cl_boot",
-               geom = "errorbar",
-               width=0.05, col="red", lwd=1.1)+
-  facet_wrap(vars(fam))
+               geom = "pointrange",
+               col=pdicols, lwd=1.1)+
+  facet_grid(cols = vars(fam)) + xlab("")+ylab("Paired Differences Index")
+
+p2 <- ggplot(abudat[abudat$type %in% c("C","Ex"),],aes(x = type, y = log(abundnce)))+
+  geom_jitter(width = 0.1, pch=19, alpha = 0.3) +
+  stat_summary(fun = mean, geom = "point", col= "red")+
+  stat_summary(fun.data = "mean_cl_boot",
+               geom = "pointrange",
+               col="grey20", lwd=1.1)+
+  facet_grid(cols = vars(fam))+ xlab("")+ylab("log[Abundance]")
+
+ggpubr::ggarrange(p1,p2, nrow = 2, labels = c("A", "B"))
 
 # 1b. Test ----
-test1 <- nlme::lme(pdi~type*fam,random = ~1|block, data = slgfullnozero_noip_minabu)
-summary(test1)
-
-# Emmeans analysis
-emmeans(test1, "type")
-emmip(test1, type ~ type | fam)
-emm_s.t <- emmeans(test1, pairwise ~ type | fam)
-plot(emm_s.t)
-
-# Before rejecting Gaussian error distribution lets analyse prediction of my model
-
-newdata <- expand.grid(block = unique(slgfullnozero_noip_minabu$block),
-                       fam = unique(slgfullnozero_noip_minabu$fam),
-                       type = unique(slgfullnozero_noip_minabu$type))
-
-newdata$prediction <- predict(test1, newdata)
-
-# seems like a pretty good model!
-ggplot(newdata,aes(x = type, y = prediction,
-                                     color = block))+
-  geom_jitter(width = 0.1, pch=19) +
-  stat_summary(fun = mean, geom = "point", col= "red")+
-  stat_summary(fun.data = "mean_cl_boot",
-               geom = "errorbar",
-               width=0.05, col="red", lwd=1.1)+
-  facet_wrap(vars(fam))
-
-# Beta distribution
+# Beta distribution - theoretically better model
 library(glmmTMB)
 bddat <- slgfullnozero_noip_minabu
 bddat[bddat$pdi == 0, ]$pdi <- 0.001
@@ -165,10 +180,38 @@ brrand <- glmmTMB(pdi ~ type*fam+(1|block),
                   family= beta_family(link = "logit"))
 summary(brrand)
 
+emmeans(brrand, "type")
+emmip(brrand, type ~ type | fam)
+emm_s.t <- emmeans(brrand, pairwise ~ type | fam)
+plot(emm_s.t)
+as.data.frame(summary(emm_s.t)$contrasts)
+
+# Prediction
+# newdata <- expand.grid(block = unique(slgfullnozero_noip_minabu$block),
+#                        fam = unique(slgfullnozero_noip_minabu$fam),
+#                        type = unique(slgfullnozero_noip_minabu$type))
+# 
+# newdata$prediction <- predict(brrand, newdata, type = 'response')
+# ggplot(newdata,aes(x = type, y = prediction,
+#                    color = block))+
+#   geom_jitter(width = 0.1, pch=19) +
+#   stat_summary(fun = mean, geom = "point", col= "red")+
+#   stat_summary(fun.data = "mean_cl_boot",
+#                geom = "errorbar",
+#                width=0.05, col="red", lwd=1.1)+
+#   facet_wrap(vars(fam))
 
 
+# Abundance plot for the lost-stayed-gained
 
+glmnb1 <- glm.nb(abundnce~type*fam,data = abudat[abudat$type %in% c("C","Ex"), ])
+# glmernb1 <- glmer.nb(abundnce~type*fam+(1|block),data = abudat)
 
+summary(glmnb1)
+emmeans(glmnb1, "type")
+emmip(glmnb1, type ~ type | fam)
+emm_s.t <- emmeans(glmnb1, pairwise ~ type | fam)
+summary(emm_s.t)
 # 2. Weighted lratio of individual species change vs PDI ----
 treatments <- c("predator", "weevil125")
 

@@ -297,7 +297,7 @@ plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 # Run this to change abundance into biomass
 # plotDFLR <- plotDFLRbio
 
-# Create plos
+# Create plots
 pane1 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
                 aes(y = lratioH, x=lratioPL))+
   geom_point()+
@@ -357,20 +357,25 @@ p3dat <- plotDFLR[plotDFLR$fams != "cumulative", ]
 
 p3dat <- p3dat[-grep("aran|mant",p3dat$fams),]
 
+# Random slope test for orders
+pane3test <- nlme::lme(lratioH~lratioPL,
+                       random = ~0+lratioPL|fams,
+                       data = rcoefdf)
+sp3 <- summary(pane3test)
+
+annotation <- paste("P=", 
+                    round(sp3$tTable[2,5],3))
+
 pane3 <- ggplot(p3dat, 
                 aes(y = lratioH, x=lratioPL))+
-  geom_point(aes(pch = fams, col = fams), size = 4)+
+  geom_point(aes(pch = fams, color = fams), size = 4)+
   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
   stat_smooth(data = p3dat, 
               mapping = aes(y = lratioH, x=lratioPL), 
               method="lm", se=T, col = "gray40")
 
-pane3
-
-pane3test <- lm(lratioH~lratioPL+fams,
-                data = rcoefdf)
-summary(pane3test)
+# pane3
 
 dummy_data <- rcoefdf[, c("lratioH","lratioPL","fams")]
 library(psych)
@@ -381,7 +386,7 @@ pane3DummyTest <- lm(lratioH~lratioPL+hemi+lepi+orth+cole,
                      data = dummy_data)
 summary(pane3DummyTest)
 library(lmSupport)
-lm.sumSquares(pane3DummyTest)
+# lm.sumSquares(pane3DummyTest)
 
 IAPvP <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
                 aes(y = lratioIP, x=lratioPL))+
@@ -436,7 +441,7 @@ pane4 <- ggplot(basedf,
   scale_color_manual(values =brewer.pal(10,"Paired"))+
   facet_wrap(~ipfam, scales = "free")
 
-fullfams <- c("Arachnids","Mantoids")
+fullfams <- c("Araneae","Mantodea")
 names(fullfams) <- c("aran","mant")
 
 pane4 <- ggplot(basedf, 
@@ -450,7 +455,7 @@ pane4 <- ggplot(basedf,
               method="lm", se=T, col = "gray40", lty = 1)
 
 
-pane4
+# pane4
 pane4testA <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "aran", ])
 pane4testM <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "mant", ])
 summary(pane4testA)
@@ -467,11 +472,11 @@ summary(pane4testM)
 #               mapping = aes(x = lrH, y=lrIP), 
 #               method="lm", se=T, col = "gray40", lty = 1)
 # 
-# pane5 <- ggplot(basedf[basedf$ipfam == "mant",], 
-#                          aes(x = lrH, y=lrIP))+
-#   geom_point(aes(pch = hfam, col = hfam), size = 4)+
-#   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-#   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)
+pane5 <- ggplot(basedf[basedf$ipfam == "mant",],
+                         aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = hfam, col = hfam), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)
 # 
 # pane4
 # pane5
@@ -483,11 +488,52 @@ library(ggpubr)
 # grid.arrange(arrangeGrob(pane1,pane2, pane3, ncol=3, nrow=1),
 #              arrangeGrob(pane4, ncol=1, nrow=1), heights=c(4,1), widths=c(2,1))
 
-lH <- c("Predator effect on herbivores")
-lP <- c("Predator effect on plants")
-lIP  <- c("Predator effect on IAPs")
 
-labsize <- 8
+# Panels again
+library(dplyr)
+
+p3dat <- as_tibble(p3dat)
+
+p3datP <- p3dat %>% 
+  rename(Order = fams)
+p3datP$Order <- dplyr::recode(p3datP$Order, 
+                orth = "Orthoptera",
+                homo = "Homoptera",
+                hemi = "Heteroptera",
+                cole = "Coleoptera",
+                lepi = "Lepidoptera")
+
+basedfP <- basedf  %>% 
+  rename(Order = hfam)
+basedfP$Order <- dplyr::recode(basedfP$Order, 
+                        orth = "Orthoptera",
+                        homo = "Homoptera",
+                        hemi = "Heteroptera",
+                        cole = "Coleoptera",
+                        lepi = "Lepidoptera")
+pane3 <- ggplot(p3datP, 
+                aes(y = lratioH, x=lratioPL))+
+  geom_point(aes(pch = Order, color = Order), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(data = p3datP, 
+              mapping = aes(y = lratioH, x=lratioPL), 
+              method="lm", se=T, col = "gray40")
+pane4 <- ggplot(basedfP, 
+                aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = Order, col = Order), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  facet_wrap(~ipfam, scales = "free", labeller = labeller(ipfam = fullfams))+
+  stat_smooth(data = basedfP, 
+              mapping = aes(x = lrH, y=lrIP), 
+              method="lm", se=T, col = "gray40", lty = 1)
+
+lH <- c("LRR of herbivores")
+lP <- c("LRR of plants")
+lIP  <- c("LRR of AP")
+
+labsize <- 10
 axissize <- 10
 
 pane1 <- pane1 + 
@@ -508,24 +554,32 @@ pane4 <- pane4 +
         axis.title=element_text(size=labsize))
 
 # Run for biomass
-# pane5 <- pane5 + 
+# pane5 <- pane5 +
 #   theme_bw()+
 #   theme(axis.text=element_text(size=axissize),
 #         axis.title=element_text(size=labsize))
 
 #labels for the panels
-summary(pane1test)
-summary(pane2test)
-summary(pane3test)
-summary(pane4testA)
-summary(pane4testM)
+# summary(pane1test)
+# summary(pane2test)
+# summary(pane3test)
+# summary(pane4testA)
+# summary(pane4testM)
 
 # Arrange the plot
+# svg("ms1/draft_3/figures/fig2.svg", width = 8, height=8)
+
+tiff(filename='ms1/draft_4/figures/fig2.tif',
+     height=5600,
+     width=5200,
+     units='px',
+     res=800,compression='lzw') 
 ggarrange(pane1+ylab(lH)+xlab(lP),
           pane2+ylab(lIP)+xlab(lH),
           pane3+theme(legend.position = "none")+ylab(lH)+xlab(lP),
           pane4+theme(legend.position = "none")+ylab(lIP)+xlab(lH),
-          pane5+theme(legend.position = "none")+ylab(lIP)+xlab(lH),
+          # pane5+theme(legend.position = "none")+ylab(lIP)+xlab(lH),
           labels = c("A", "B", "C","D","E"),
-          ncol = 3, nrow = 2,
+          ncol = 2, nrow = 2,
           legend = "bottom", common.legend = T)
+dev.off()

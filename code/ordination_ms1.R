@@ -50,6 +50,14 @@ abumat_trimmed <- abumat_noip[rownames(abumat_noip) %in% rownames(treats_trimmed
 biomat_trimmed <- biomat_noip[rownames(biomat_noip) %in% rownames(treats_trimmed), ]
 plants_trimmed <- plants_woody[rownames(plants_woody) %in% rownames(treats_trimmed), ]
 
+abufull.trimmed <- abumat[rownames(abumat) %in% rownames(treats_trimmed),]
+abufull.trimmed <- abufull.trimmed[, colSums(abufull.trimmed) != 0]
+biofull.trimmed <- biomat[rownames(biomat) %in% rownames(treats_trimmed),]
+biofull.trimmed <- biofull.trimmed[, colSums(biofull.trimmed) != 0]
+
+# text(fullRDA, display = "species")
+
+
 # Intermediate predator subset
 ipabu_trimmed <- abumat[treats_trimmed$sites,
                         grep("aran|mant", colnames(abumat))]
@@ -60,66 +68,234 @@ ipbio_trimmed <- biomat[treats_trimmed$sites,
 treats_to_formula <- as.character(unique(treats_trimmed$treat))
 treats_to_formula <- treats_to_formula[!(treats_to_formula %in% c("CONTROL"))]
 
-# Add general descriptions for IPs to treats_trimmed
-IPabundance <- rowSums(abumatOrig[,grep("aran|mant", 
-                                        colnames(abumatOrig))])
-IPbiomass <- rowSums(biomatOrig[,grep("aran|mant", 
-                                      colnames(biomatOrig))])
-IPdiversity <- vegan::diversity(abumatOrig[,grep("aran|mant", 
-                                                 colnames(abumatOrig))], MARGIN = 1)
-IPrichness <-  rowSums(abumatOrig[,grep("aran|mant", 
-                                        colnames(abumatOrig))] > 0)
+# Separate analyses for AP and HERB with plant PCA and The opposite community PCA.
 
-# Herbivore community descriptors
-Habundance <- rowSums(abumatOrig[,-grep("aran|mant", 
-                                        colnames(abumatOrig))])
-Hbiomass <- rowSums(biomatOrig[,-grep("aran|mant", 
-                                      colnames(biomatOrig))])
-Hdiversity <- vegan::diversity(abumatOrig[,-grep("aran|mant", 
-                                                 colnames(abumatOrig))], MARGIN = 1)
-Hrichness <-  rowSums(abumatOrig[,-grep("aran|mant", 
-                                        colnames(abumatOrig))] > 0)
 
-treats_trimmed$habu <- Habundance[treats_trimmed$sites]
-treats_trimmed$hbio <- Hbiomass[treats_trimmed$sites]
-treats_trimmed$hdiv <- Hdiversity[treats_trimmed$sites]
-treats_trimmed$hric <- Hrichness[treats_trimmed$sites]
 
-treats_trimmed$ipabu <- IPabundance[treats_trimmed$sites]
-treats_trimmed$ipbio <- IPbiomass[treats_trimmed$sites]
-treats_trimmed$ipdiv <- IPdiversity[treats_trimmed$sites]
-treats_trimmed$ipric <- IPrichness[treats_trimmed$sites]
 
-# Pairwise comparisons of the descriptors
+# Add general descriptions for IPs to treats_trimmed ----
+
+
+# IPabundance <- rowSums(abumatOrig[,grep("aran|mant", 
+#                                         colnames(abumatOrig))])
+# IPbiomass <- rowSums(biomatOrig[,grep("aran|mant", 
+#                                       colnames(biomatOrig))])
+# IPdiversity <- vegan::diversity(abumatOrig[,grep("aran|mant", 
+#                                                  colnames(abumatOrig))], MARGIN = 1)
+# IPrichness <-  rowSums(abumatOrig[,grep("aran|mant", 
+#                                         colnames(abumatOrig))] > 0)
+# 
+# # Herbivore community descriptors
+# Habundance <- rowSums(abumatOrig[,-grep("aran|mant", 
+#                                         colnames(abumatOrig))])
+# Hbiomass <- rowSums(biomatOrig[,-grep("aran|mant", 
+#                                       colnames(biomatOrig))])
+# Hdiversity <- vegan::diversity(abumatOrig[,-grep("aran|mant", 
+#                                                  colnames(abumatOrig))], MARGIN = 1)
+# Hrichness <-  rowSums(abumatOrig[,-grep("aran|mant", 
+#                                         colnames(abumatOrig))] > 0)
+# 
+# treats_trimmed$habu <- Habundance[treats_trimmed$sites]
+# treats_trimmed$hbio <- Hbiomass[treats_trimmed$sites]
+# treats_trimmed$hdiv <- Hdiversity[treats_trimmed$sites]
+# treats_trimmed$hric <- Hrichness[treats_trimmed$sites]
+# 
+# treats_trimmed$ipabu <- IPabundance[treats_trimmed$sites]
+# treats_trimmed$ipbio <- IPbiomass[treats_trimmed$sites]
+# treats_trimmed$ipdiv <- IPdiversity[treats_trimmed$sites]
+# treats_trimmed$ipric <- IPrichness[treats_trimmed$sites]
+
+
+
+
+
+
+# Pairwise comparisons of the descriptors ----
+
 # pairs(treats_trimmed[,7:14], 
 #       bg=as.numeric(treats_trimmed$treat)+1,pch=21)
 # 
 # library(PerformanceAnalytics)
 # chart.Correlation(treats_trimmed[,7:14], 
 #                   pch=treats_trimmed$treat)
-library(ggcorrplot)
-inddat <- treats_trimmed[,7:14]
-inddatcor <- cor(inddat,
-                  method = "pearson", 
-                  use = "pairwise.complete.obs")
-inddatpval <- cor_pmat(inddat)
 
-ggcorrplot(inddatcor,
-           hc.order = F,
-           type = "upper",
-           p.mat = inddatpval,
-           outline.color = "white",
-           ggtheme = ggplot2::theme_gray)
+# Descriptor correlation plot
+# library(ggcorrplot)
+# inddat <- treats_trimmed[,7:14]
+# inddatcor <- cor(inddat,
+#                   method = "pearson", 
+#                   use = "pairwise.complete.obs")
+# inddatpval <- cor_pmat(inddat)
+# 
+# ggcorrplot(inddatcor,
+#            hc.order = F,
+#            type = "upper",
+#            p.mat = inddatpval,
+#            outline.color = "white",
+#            ggtheme = ggplot2::theme_gray)
 
-# Plant PCA
+
+# Plant PCA ----
+
 pldat <- as.data.frame(plants_trimmed[, colSums(plants_trimmed)!=0])
 plPDC <- rda(pldat ~ Condition(block), data=treats_trimmed)
 plant_ort_sites <- plPDC$CA$u
+
+
+# Herbivore PCA main axes of herbivore community change ----
+
+# hdat <- as.data.frame(plants_trimmed[, colSums(plants_trimmed)!=0])
+hPCA <- rda(abumat_trimmed ~ Condition(block), data=treats_trimmed)
+h_ort_sites <- hPCA$CA$u
+colnames(h_ort_sites) <- paste(colnames(h_ort_sites), "h", sep = "")
+
+
+# AP PCA main axes of AP community change ----
+
+apPCA <- rda(ipabu_trimmed ~ Condition(block), data=treats_trimmed)
+ap_ort_sites <- apPCA$CA$u
+colnames(ap_ort_sites) <- paste(colnames(ap_ort_sites), "ap", sep = "")
+
+t.t.all.PCA <- cbind(treats_trimmed,
+                     plant_ort_sites,
+                     h_ort_sites,
+                     ap_ort_sites)
+
+
+# Forward selection for H and AP with plant and opposite community PCA----
+
+# Herbivore abundance
+# prda.h.null <- rda(abumat_trimmed~1+Condition(block+treat),
+#                    data = t.t.all.PCA)
+# prda.h.scope <- rda(abumat_trimmed~ . +Condition(block+treat),
+#                     data = t.t.all.PCA[, c("block","treat",
+#                                            "PC1","PC2",
+#                                            "PC3","PC4",
+#                                            "PC5","PC6",
+#                                            "PC1ap","PC2ap",
+#                                            "PC3ap","PC4ap",
+#                                            "PC5ap","PC6ap")])
+# ordistep(prda.h.null, prda.h.scope) # no significant variables
+
+# Herbivore biomass
+# prda.h.null <- rda(biomat_trimmed~1+Condition(block+treat),
+#                    data = t.t.all.PCA)
+# prda.h.scope <- rda(biomat_trimmed~ . +Condition(block+treat),
+#                     data = t.t.all.PCA[, c("block","treat",
+#                                            "PC1","PC2",
+#                                            "PC3","PC4",
+#                                            "PC5","PC6",
+#                                            "PC1ap","PC2ap",
+#                                            "PC3ap","PC4ap",
+#                                            "PC5ap","PC6ap")])
+# ordistep(prda.h.null, prda.h.scope) # no significant variables
+
+# AP abundance
+# prda.ap.null <- rda(ipabu_trimmed ~ 1 + Condition(block+treat),
+#                    data = t.t.all.PCA)
+# prda.ap.scope <- rda(ipabu_trimmed ~ . + Condition(block+treat),
+#                     data = t.t.all.PCA[, c("block","treat",
+#                                            "PC1","PC2",
+#                                            "PC3","PC4",
+#                                            "PC5","PC6",
+#                                            "PC1h","PC2h",
+#                                            "PC3h","PC4h",
+#                                            "PC5h","PC6h")])
+# ordistep(prda.ap.null, prda.ap.scope) # no significant variables
+
+# AP biomass
+# prda.ap.null <- rda(ipbio_trimmed~1+Condition(block+treat),
+#                    data = t.t.all.PCA)
+# prda.ap.scope <- rda(ipbio_trimmed ~ . +Condition(block+treat),
+#                     data = t.t.all.PCA[, c("block","treat",
+#                                            "PC1","PC2",
+#                                            "PC3","PC4",
+#                                            "PC5","PC6",
+#                                            "PC1h","PC2h",
+#                                            "PC3h","PC4h",
+#                                            "PC5h","PC6h")])
+# ordistep(prda.ap.null, prda.ap.scope) # no significant variables
+
+
+
+
 # Treatments and plant ortogonal 
-treats_trimmedPCA <- cbind(treats_trimmed, plant_ort_sites)
+# treats_trimmedPCA <- cbind(treats_trimmed, plant_ort_sites)
+
+# Forward selectin of variables for the complete community.
+# prdaNulla <- rda(abufull.trimmed~1+Condition(block+treat), 
+#                  data = treats_trimmedPCA)
+# prdaNullb <- rda(biofull.trimmed~1+Condition(block+treat), 
+#                  data = treats_trimmedPCA)
+
+# Test each PC axis separately
+# prdaScopea <- rda(abufull.trimmed ~ . + Condition(block+treat),
+#                   data = treats_trimmedPCA[, c("block","treat",
+#                                                "PC1","PC2",
+#                                                "PC3","PC4",
+#                                                "PC5","PC6")])
+# prdaScopeb <- rda(biofull.trimmed ~ . + Condition(block+treat),
+#                   data = treats_trimmedPCA[, c("block","treat",
+#                                                "PC1","PC2",
+#                                                "PC3","PC4",
+#                                                "PC5","PC6")])
+# ordistep(prdaNulla, prdaScopea)
+# ordistep(prdaNullb, prdaScopeb)
 
 
-# Test the significance of each variable on the community composition of herbioves and IAPS
+
+# Full RDA ----
+fullRDA <- rda(abufull.trimmed ~ CONTROL + Condition(block), 
+               data = treats_trimmed)
+summary(fullRDA)
+anova(fullRDA, by = "terms", permutations = 999)
+
+
+fullRDA.PCA <- rda(biofull.trimmed ~ CONTROL + Condition(block+PC1+PC2+PC3+PC4),
+    data = t.t.all.PCA[, c("CONTROL", "block","treat",
+                           "PC1","PC2",
+                           "PC3","PC4")])
+plot(fullRDA.PCA)
+
+
+#Design based permutation
+h <- how(blocks = t.t.all.PCA$block, nperm = 9999)
+
+
+
+# Design based permutation
+anova(fullRDA.PCA, by = "terms", permutations = 999)
+
+# PERMANOVA results show also no effect
+# anosim(abufull.trimmed, treats_trimmed$CONTROL)
+colors <- ifelse(grepl("aran|mant",
+                       colnames(abufull.trimmed)), 
+                 rgb(0.8,0.4,0,0.5), 
+                 rgb(0,0.6,0.5,0.5))
+
+plot(fullRDA.PCA, display="species", type = "n",
+     xlab = "RDA (39.8%)", ylab = "PC (60.2%)")
+points(fullRDA.PCA, display = "species", 
+       col = colors, pch = 19, cex = 1.2)
+shape::Arrows(0,0,-0.5363*0.1,0,lwd = 2, arr.type = "triangle",
+              col = "grey20")
+text(-0.5363*0.1,0.01,labels = "Effect of predators",
+              col = "grey20")
+
+summary(fullRDA.PCA)
+fit <- envfit(fullRDA.PCA, t.t.all.PCA[, c("CONTROL")])
+
+plot(fit)
+# More complicated models are studied below
+# Within order analysis - no significance
+ordnm <- "cole"
+for (fm in unique(ins_bio$family)){
+  dset <- abufull.trimmed[,grepl(fm, colnames(abufull.trimmed))]
+  ordrds <- rda(dset~CONTROL+Condition(block), data = treats_trimmed)
+  print(anova(ordrds))
+  points
+}
+
 
 # For herbivores withouth the effect of site and exclosure
 prdaNulla <- rda(abumat_trimmed~1+Condition(block+treat), 
@@ -128,7 +304,7 @@ prdaNullb <- rda(biomat_trimmed~1+Condition(block+treat),
                 data = treats_trimmedPCA)
 
 # Test each PC axis separately
-prdaScopea <- rda(abumat_trimmed~.+Condition(block+treat),
+prdaScopea <- rda(abumat_trimmed ~ . + Condition(block+treat),
                  data = treats_trimmedPCA[, c("block","treat","habu","hbio","hdiv",
                                               "hric","ipabu","ipbio",
                                               "ipdiv","ipric","PC1",
@@ -152,7 +328,6 @@ prdaScopea <- rda(ipabu_trimmed~.+Condition(block+treat),
                                                "hric","ipabu","ipbio",
                                                "ipdiv","ipric","PC1",
                                                "PC2","PC3","PC4","PC5","PC6")])
-# habu is significant
 
 prdaScopeb <- rda(ipbio_trimmed~.+Condition(block+treat),
                   data = treats_trimmedPCA[, c("block","treat","habu","hbio","hdiv",
@@ -161,16 +336,23 @@ prdaScopeb <- rda(ipbio_trimmed~.+Condition(block+treat),
                                                "PC2","PC3","PC4","PC5","PC6")])
 
 aipform <- ordistep(prdaNulla, prdaScopea)
-aipform$call
+aipform$call # ipbio now is significant
 bipform <- ordistep(prdaNullb, prdaScopeb)
-bipform$call
+bipform$call # 
+
 # Full RDA for herbivores and IAPs
 abuHerbRDA <- rda(abumat_trimmed~CONTROL+Condition(block), treats_trimmedPCA)
 bioHerbRDA <- rda(biomat_trimmed~CONTROL+Condition(block), treats_trimmedPCA)
 
-abuIpRDA <- rda(ipabu_trimmed~CONTROL+Condition(block + habu), treats_trimmedPCA)
+abuIpRDA <- rda(ipabu_trimmed~CONTROL+Condition(block+ipbio), treats_trimmedPCA)
 bioIpRDA <- rda(ipbio_trimmed~CONTROL+Condition(block), treats_trimmedPCA)
 
+anova(abuHerbRDA)
+anova(bioHerbRDA)
+anova(abuIpRDA) # This is marginally significant
+anova(bioIpRDA)
+
+# Plot of the effects
 library(ggplot2)
 
 
@@ -213,8 +395,8 @@ checkPredEffectStrength <- function(abuHerbRDA, treshold = 10, ...){
 }
 library(ggpubr)
 
-cols <- c(rgb(),
-          rgb())
+# cols <- c(rgb(),
+#           rgb())
 
 p1 <- checkPredEffectStrength(abuHerbRDA, colour = c("red","red","black","red","black"))
 p2 <- checkPredEffectStrength(bioHerbRDA, colour = c("red","red","black","red","black"))
@@ -230,7 +412,8 @@ ggarrange(p1,p2,p3,p4,
 efvars <- treats_trimmedPCA[, c("block","treat","habu","hbio","hdiv",
                                 "hric","ipabu","ipbio",
                                 "ipdiv","ipric")]
-# Indiviidual species changes with RDA
+
+# Individual species changes with RDA
 ahsef <- envfit(abuHerbRDA, abumat_trimmed) # species
 ahvef <- envfit(abuHerbRDA, efvars) # variables - nothing
 
@@ -241,5 +424,3 @@ anova(abuHerbRDA)
 anova(bioHerbRDA)
 anova(abuIpRDA)
 anova(bioIpRDA)
-
-# Plot RDA graphs

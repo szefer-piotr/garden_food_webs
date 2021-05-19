@@ -10,10 +10,7 @@ source("code/diet_shift.R")
 
 library(ggplot2)
 
-# Assume that each plant hosts unique community of insects.
-
 # Log ratio analyses
-
 treats$block <- substr(treats$codes,3,4)
 # ins_bio with biomass for plants
 plot <- "w1g2p4"
@@ -33,7 +30,6 @@ plantBio <- function(species, plot){
 }
 
 # * 2.0 Log ratio for given plant, family and set of treatments ----
-
 families <- c("orth", "hemi")
 plants <- c("piptar", "melamu")
 treatments <- c("weevil125", "control") #numerator/denominator
@@ -199,14 +195,14 @@ groupLogratio <-function(fam, treatments, abundance=T){
   return(genlratio)
 }
 
-groupLogratio(c(), c("weevil125", "control"), abundance=T)
 
 treat_pair_list <- list(c("weevil125", "control"),
                         # c("weevil125", "predator"),
                         c("weevil25", "control"),
                         # c("weevil25", "predator"),
-                        c("control", "insecticide"),
-                        c("control", "predator"))
+                        c("control", "insecticide")
+                        # ,c("control", "predator")
+                        )
 
 treat_pair_list <- list(# c("weevil125", "control"),
                         # c("weevil125", "predator"),
@@ -274,56 +270,111 @@ plotDFLRbio$lratioPL <- log(plotDFLRbio$numpl/plotDFLRbio$denpl)
 plotDFLRbio$fams <- as.character(plotDFLRbio$fams)
 plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 
+# IAP/H ratio vs LRR for plants
+
+# numip and numh indicate abundances in the control plots
+# h <- plotDFLR[,c("numh", "fams", "block","lratioH", "lratioPL")]
+# ip <- plotDFLR[,c("numip", "fams", "lratioIP")]
+# 
+# hcc <- h[complete.cases(h) & h$fams == "cumulative", ]
+# ipcc <- ip[complete.cases(ip) & ip$fams == "cumulative",]
+# abu_ratio <- cbind(hcc,ipcc)[,-2]
+
+library(dplyr)
+
+abu_ratio <- groupLogratio(c(), c("control", "predator"), abundance=T)
+
+abu_ratio <- abu_ratio %>%
+  mutate(ratio = numip/numh,
+         pratio = denip/denh,
+         lratioPl = log(numpl/denpl))
+
+rp1 <- ggplot(abu_ratio,aes(x=ratio,y=lratioPl))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  xlab("AP to herbivore ratio")+
+  ylab("Log-response ratio of plants")
+
+
+rp2 <- ggplot(abu_ratio,aes(x=pratio,y=lratioPl))+
+  geom_point()+
+  geom_smooth(method = "lm", lty=2, se = F)+
+  xlab("AP to herbivore ratio")+
+  ylab("Log-response ratio of plants")
+
+# ggpubr::ggarrange(rp1,rp2, labels = c("A","B"),ncol = 2)
+
+compdf <- data.frame(Treatment = rep(c("Exclosure", "Control"),each = 6),
+                     Ratio = c(abu_ratio$pratio,abu_ratio$ratio))
+
+summary(lm(lratioPl~pratio, data=abu_ratio))
+summary(lm(lratioPl~ratio, data=abu_ratio))
+
+summary(nlme::gls(Ratio~Treatment, data = compdf))
+
+# ggplot(compdf, aes(y = Ratio, x = Treatment))+
+#   geom_jitter(width = 0.1,alpha= 0.3)+
+#   stat_summary(fun.data = mean_cl_boot,
+#               geom = "pointrange", 
+#               col = "grey30")
 # Figure 3 panels ----
 # PANE 1 ----
 
 # Run this to change abundance into biomass
 # plotDFLR <- plotDFLRbio
-# 
+
+plotDFLR$Order <- as.factor(plotDFLR$fams)
+ord.labs <- c("Orthoptera",
+              "Aranea",
+              "Homoptera",
+              "Heteroptera",
+              "Mantodea",
+              "Coleoptera","Lepidoptera", "Cumulative")
+levels(plotDFLR$Order) <- sort(ord.labs)
+
 # # Create plos
-# pane1 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
-#        aes(y = lratioH, x=lratioPL))+
-#   geom_point()+
-#   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=0.5)+
-#   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=0.5)+
-#   stat_smooth(method="lm", se=T, col = "grey50",
-#               data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
-#   stat_smooth(method="lm", se=F, col = "grey50",lty=2,
-#               data = plotDFLR[plotDFLR$comp == "control / predator",])
-# 
-# #regression coefs.
-# rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
-# 
-# pane1test <- lm(lratioH~lratioPL,
-#              data = rcoefdf)
-# summary(pane1test)
+pane1 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ],
+       aes(y = lratioH, x=lratioPL))+
+  geom_point()+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=0.5)+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
+  stat_smooth(method="lm", se=F, col = "grey50",lty=2,
+              data = plotDFLR[plotDFLR$comp == "control / predator",])
+
+#regression coefs.
+rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
+
+pane1test <- lm(lratioH~lratioPL,
+             data = rcoefdf)
+summary(pane1test)
 # 
 # 
 # 
 # # PANE 2 ----
-# pane2 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ], 
-#        aes(x = lratioH, y=lratioIP))+
-#   geom_point()+
-#   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-#   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-#   stat_smooth(method="lm", se=T, col = "grey50",
-#               data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
-#   stat_smooth(method="lm", se=T, col = "grey50",
-#               data = plotDFLR[plotDFLR$comp == "control / predator",])
-# 
-# rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
-# 
-# pane2test <- lm(lratioIP~lratioH,
-#                 data = rcoefdf)
-# summary(pane2test)
-# 
-# # Herbivore vs PLant FAMS
-# 
-# # I could try to figure out maybe the average ind size for a given family at a given plot to see wether there is a pattern with this relationship
-# 
+pane2 <- ggplot(plotDFLR[plotDFLR$fams == "cumulative", ],
+       aes(x = lratioH, y=lratioIP))+
+  geom_point()+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / insecticide",])+
+  stat_smooth(method="lm", se=T, col = "grey50",
+              data = plotDFLR[plotDFLR$comp == "control / predator",])
+
+rcoefdf <- plotDFLR[plotDFLR$fams == "cumulative", ]
+
+pane2test <- lm(lratioIP~lratioH,
+                data = rcoefdf)
+summary(pane2test)
+
+# Herbivore vs PLant FAMS
+# I could try to figure out maybe the average ind size for a given family at a given plot to see wether there is a pattern with this relationship
+
 # plotDFLR$some_quality <- 1
-# 
-# # PANE 3 ----
+
+# PANE 3 ----
 # pane3 <- ggplot(plotDFLR[plotDFLR$fams != "cumulative", ], 
 #        aes(y = lratioH, x=lratioPL, col = fams))+
 #   geom_point(size = 4)+
@@ -332,29 +383,31 @@ plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 #   stat_smooth(method="lm", se=F)+
 #   facet_wrap(~comp, scales = "free")
 # 
-# rcoefdf <- plotDFLR[plotDFLR$fams != "cumulative", ]
-# rcoefdf <- rcoefdf[-grep("aran|mant",rcoefdf$fams), ]
-# rcoefdf <- rcoefdf[complete.cases(rcoefdf$lratioH),]
+rcoefdf <- plotDFLR[plotDFLR$fams != "cumulative", ]
+rcoefdf <- rcoefdf[-grep("aran|mant",rcoefdf$fams), ]
+rcoefdf <- rcoefdf[complete.cases(rcoefdf$lratioH),]
+
+p3dat <- plotDFLR[plotDFLR$fams != "cumulative", ]
+
+p3dat <- p3dat[-grep("aran|mant",p3dat$fams),]
 # 
-# p3dat <- plotDFLR[plotDFLR$fams != "cumulative", ]
-# 
-# p3dat <- p3dat[-grep("aran|mant",p3dat$fams),]
-# 
-# pane3 <- ggplot(p3dat, 
-#                 aes(y = lratioH, x=lratioPL))+
-#   geom_point(aes(pch = fams, col = fams), size = 4)+
-#   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-#   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-#   stat_smooth(data = p3dat, 
-#               mapping = aes(y = lratioH, x=lratioPL), 
-#               method="lm", se=T, col = "gray40")
-# 
-# pane3
-# 
+
+
+
+
+pane3 <- ggplot(p3dat,
+                aes(y = lratioH, x=lratioPL))+
+  geom_point(aes(pch = Order, col = Order), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(data = p3dat,
+              mapping = aes(y = lratioH, x=lratioPL),
+              method="lm", se=T, col = "gray40")
+
 # pane3test <- lm(lratioH~lratioPL+fams,
 #                 data = rcoefdf)
 # summary(pane3test)
-# 
+
 # dummy_data <- rcoefdf[, c("lratioH","lratioPL","fams")]
 # library(psych)
 # fams_dummy <- dummy.code(dummy_data$fams)
@@ -378,39 +431,45 @@ plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 # # lmIP <- lm(lratioIP~lratioPL,
 # #           data = plotDFLR[plotDFLR$fams == "cumulative", ])
 # # summary(lmIP)
+
+
+
+
+
+
+
+# PANE 4 ----
+pane4df <- plotDFLR[plotDFLR$fams != "cumulative", ]
+pane4df_noIp <- pane4df[!(pane4df$fams %in% c("aran","mant")),
+                        c("block","fams","lratioH")]
+pane4df_Ip <- pane4df[(pane4df$fams %in% c("aran","mant")),
+                      c("block","fams","lratioIP")]
+
+basedf<- expand.grid(unique(pane4df_noIp$fams), unique(pane4df_Ip$fams), unique(pane4df_noIp$block))
+colnames(basedf) <- c("hfam","ipfam","block")
+basedf$lrIP <- NA
+basedf$lrH <- NA
+
+for(row in 1:dim(basedf)[1]){
+  print(row)
+  ipfam <- as.character(basedf[row,]$ipfam)
+  hfam <- as.character(basedf[row,]$hfam)
+  block <- as.character(basedf[row,]$block)
+
+  ipval <- pane4df[(pane4df$fams %in% ipfam & pane4df$block %in% block), ]$lratioIP
+  hval <- pane4df[(pane4df$fams %in% hfam & pane4df$block %in% block), ]$lratioH
+
+  basedf[row,]$lrH <- hval
+  basedf[row,]$lrIP <- ipval
+
+}
+
+basedf$ordcomp <- paste(basedf$hfam, basedf$ipfam, sep="_")
+library(RColorBrewer)
+# display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE,
+#                    colorblindFriendly=T)
 # 
-# # PANE 4 ----
-# pane4df <- plotDFLR[plotDFLR$fams != "cumulative", ]
-# pane4df_noIp <- pane4df[!(pane4df$fams %in% c("aran","mant")), 
-#                         c("block","fams","lratioH")]
-# pane4df_Ip <- pane4df[(pane4df$fams %in% c("aran","mant")), 
-#                       c("block","fams","lratioIP")]
-# 
-# basedf<- expand.grid(unique(pane4df_noIp$fams), unique(pane4df_Ip$fams), unique(pane4df_noIp$block))
-# colnames(basedf) <- c("hfam","ipfam","block")
-# basedf$lrIP <- NA
-# basedf$lrH <- NA
-# 
-# for(row in 1:dim(basedf)[1]){
-#   print(row)
-#   ipfam <- as.character(basedf[row,]$ipfam)
-#   hfam <- as.character(basedf[row,]$hfam)
-#   block <- as.character(basedf[row,]$block)
-#   
-#   ipval <- pane4df[(pane4df$fams %in% ipfam & pane4df$block %in% block), ]$lratioIP
-#   hval <- pane4df[(pane4df$fams %in% hfam & pane4df$block %in% block), ]$lratioH
-#   
-#   basedf[row,]$lrH <- hval
-#   basedf[row,]$lrIP <- ipval
-#   
-# }
-# 
-# basedf$ordcomp <- paste(basedf$hfam, basedf$ipfam, sep="_")
-# library(RColorBrewer)
-# # display.brewer.all(n=NULL, type="all", select=NULL, exact.n=TRUE, 
-# #                    colorblindFriendly=T)
-# 
-# pane4 <- ggplot(basedf, 
+# pane4 <- ggplot(basedf,
 #                    aes(x = lrH, y=lrIP, col = ordcomp))+
 #   geom_point()+
 #   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
@@ -418,92 +477,99 @@ plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 #   stat_smooth(method="lm", se=F)+
 #   scale_color_manual(values =brewer.pal(10,"Paired"))+
 #   facet_wrap(~ipfam, scales = "free")
-# 
-# fullfams <- c("Arachnids","Mantoids")
-# names(fullfams) <- c("aran","mant")
-# 
-# pane4 <- ggplot(basedf, 
-#                 aes(x = lrH, y=lrIP))+
-#   geom_point(aes(pch = hfam, col = hfam), size = 4)+
-#   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-#   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-#   facet_wrap(~ipfam, scales = "free", labeller = labeller(ipfam = fullfams))+
-#   stat_smooth(data = basedf, 
-#               mapping = aes(x = lrH, y=lrIP), 
-#               method="lm", se=T, col = "gray40", lty = 1)
-# 
-# 
+
+fullfams <- c("Arachnids","Mantoids")
+names(fullfams) <- c("aran","mant")
+
+pane4 <- ggplot(basedf,
+                aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = hfam, col = hfam), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  facet_wrap(~ipfam, scales = "free", labeller = labeller(ipfam = fullfams))+
+  stat_smooth(data = basedf,
+              mapping = aes(x = lrH, y=lrIP),
+              method="lm", se=T, col = "gray40", lty = 1)
+
 # pane4
 # pane4testA <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "aran", ])
 # pane4testM <- lm(lrIP~lrH+hfam,data = basedf[basedf$ipfam == "mant", ])
 # summary(pane4testA)
 # summary(pane4testM)
-# 
-# # Run for biomass
-# # 
-# # pane4 <- ggplot(basedf[basedf$ipfam == "aran",], 
-# #                 aes(x = lrH, y=lrIP))+
-# #   geom_point(aes(pch = hfam, col = hfam), size = 4)+
-# #   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-# #   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
-# #   stat_smooth(data = basedf[basedf$ipfam == "aran",], 
-# #               mapping = aes(x = lrH, y=lrIP), 
-# #               method="lm", se=T, col = "gray40", lty = 1)
-# # 
-# # pane5 <- ggplot(basedf[basedf$ipfam == "mant",], 
-# #                          aes(x = lrH, y=lrIP))+
-# #   geom_point(aes(pch = hfam, col = hfam), size = 4)+
-# #   geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
-# #   geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)
-# # 
-# # pane4
-# # pane5
-# 
-# # Arrange panel plot ----
-# 
-# library(ggpubr)
-# # library(gridExtra)
-# # grid.arrange(arrangeGrob(pane1,pane2, pane3, ncol=3, nrow=1),
-# #              arrangeGrob(pane4, ncol=1, nrow=1), heights=c(4,1), widths=c(2,1))
-# 
-# lH <- c("Predator effect on herbivores")
-# lP <- c("Predator effect on plants")
-# lIP  <- c("Predator effect on IAPs")
-# 
-# labsize <- 8
-# axissize <- 10
-# 
-# pane1 <- pane1 + 
-#   theme_bw()+
-#   theme(axis.text=element_text(size=axissize),
-#         axis.title=element_text(size=labsize))
-# pane2 <- pane2 + 
-#   theme_bw()+
-#   theme(axis.text=element_text(size=axissize),
-#         axis.title=element_text(size=labsize))
-# pane3 <- pane3 + 
-#   theme_bw()+
-#   theme(axis.text=element_text(size=axissize),
-#         axis.title=element_text(size=labsize))
-# pane4 <- pane4 + 
-#   theme_bw()+
-#   theme(axis.text=element_text(size=axissize),
-#         axis.title=element_text(size=labsize))
-# 
-# # Run for biomass
-# # pane5 <- pane5 + 
-# #   theme_bw()+
-# #   theme(axis.text=element_text(size=axissize),
-# #         axis.title=element_text(size=labsize))
-# 
-# #labels for the panels
+
+# Run for biomass
+#
+
+
+
+
+pane4 <- ggplot(basedf[basedf$ipfam == "aran",],
+                aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = hfam, col = hfam), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)+
+  stat_smooth(data = basedf[basedf$ipfam == "aran",],
+              mapping = aes(x = lrH, y=lrIP),
+              method="lm", se=T, col = "gray40", lty = 1)
+
+
+
+
+
+pane5 <- ggplot(basedf[basedf$ipfam == "mant",],
+                         aes(x = lrH, y=lrIP))+
+  geom_point(aes(pch = hfam, col = hfam), size = 4)+
+  geom_hline(yintercept=0,linetype="dotted", color="grey60", size=1)+
+  geom_vline(xintercept=0,linetype="dotted", color="grey60", size=1)
+
+
+# Arrange panel plot ----
+
+library(ggpubr)
+library(gridExtra)
+
+# grid.arrange(arrangeGrob(pane1,pane2, pane3, ncol=3, nrow=1),
+#              arrangeGrob(pane4, ncol=1, nrow=1), 
+# heights=c(4,1), widths=c(2,1))
+
+lH <- c("LRR of herbivores")
+lP <- c("LRR of plants")
+lIP  <- c("LRR of AP")
+
+labsize <- 8
+axissize <- 10
+
+pane1 <- pane1 +
+  theme_bw()+
+  theme(axis.text=element_text(size=axissize),
+        axis.title=element_text(size=labsize))
+pane2 <- pane2 +
+  theme_bw()+
+  theme(axis.text=element_text(size=axissize),
+        axis.title=element_text(size=labsize))
+pane3 <- pane3 +
+  theme_bw()+
+  theme(axis.text=element_text(size=axissize),
+        axis.title=element_text(size=labsize))
+pane4 <- pane4 +
+  theme_bw()+
+  theme(axis.text=element_text(size=axissize),
+        axis.title=element_text(size=labsize))
+
+# Run for biomass
+pane5 <- pane5 +
+  theme_bw()+
+  theme(axis.text=element_text(size=axissize),
+        axis.title=element_text(size=labsize))
+
+#labels for the panels
 # summary(pane1test)
 # summary(pane2test)
 # summary(pane3test)
 # summary(pane4testA)
 # summary(pane4testM)
-# 
-# # Arrange the plot
+
+# Arrange the plot
 # ggarrange(pane1+ylab(lH)+xlab(lP),
 #           pane2+ylab(lIP)+xlab(lH),
 #           pane3+theme(legend.position = "none")+ylab(lH)+xlab(lP),
@@ -512,10 +578,10 @@ plotDFLRbio[plotDFLRbio$fams == "", ]$fams <- "cumulative"
 #           labels = c("A", "B", "C","D","E"),
 #           ncol = 3, nrow = 2,
 #           legend = "bottom", common.legend = T)
-# 
-# 
-# 
-# 
+
+
+
+
 
 # PAirwise correlations of IAPs and Herb
 pairdat <- plotDFLR[plotDFLR$fams != "cumulative", ]
@@ -541,8 +607,8 @@ for(ord in orders){
   pairwise_mat[, ord] <- vals
 }
 
-pairs(pairwise_mat)
-names(pairwise_mat)
+# pairs(pairwise_mat)
+# names(pairwise_mat)
 library(corrplot)
 pairwise_cor <- cor(pairwise_mat, 
                     method = "pearson", 
@@ -550,19 +616,59 @@ pairwise_cor <- cor(pairwise_mat,
 pairwise_sig <- cor.mtest(pairwise_mat, 
                           conf.level = .95,
                           use = "pairwise.complete.obs")
-p1 <- corrplot(pairwise_cor,
-         p.mat = pairwise_sig$p, 
-         insig = "label_sig",
-         sig.level = c(.001, .01, .05), 
-         pch.cex = .9, 
-         pch.col = "white",
-         type = "upper")
 
-library("PerformanceAnalytics")
-chart.Correlation(pairwise_mat, histogram=F, pch=19)
-library(GGally)
+rownames(pairwise_cor) <- colnames(pairwise_cor) <- toupper(c("Orth",
+                            "Homo",
+                            "Hete",
+                            "Cole",
+                            "Lepi",
+                            "Aran",
+                            "Mant"))
 
-ggpairs(pairwise_mat,upper=list(continuous="smooth"),lower=list(continuous="smooth"))
+pairwise_sig$p[lower.tri(pairwise_sig$p)] <- 1
+col2 <- colorRampPalette(c("#67001F", "#B2182B", "#D6604D", "#F4A582",
+                           "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE",
+                           "#4393C3", "#2166AC", "#053061"))
+
+# p1 <- corrplot.mixed(pairwise_cor,
+#                      upper = "circle",
+#          p.mat = pairwise_sig$p,
+#          addgrid.col = "white",
+#          insig = "label_sig",
+#          sig.level = c(.001, .01, .05), 
+#          pch.cex = 2, 
+#          pch.col = "white",
+#          tl.col = "black",
+#          order = "AOE",
+#          lower.col = rev(col2(50)),
+#          upper.col = rev(col2(50)),
+#          number.cex = .85,number.font = 1)
+tiff(filename='ms1/draft_4/figures/fig3.tif',
+     height=5600,
+     width=5200,
+     units='px',
+     res=800,compression='lzw') 
+# svg("ms1/draft_3/figures/fig3.svg", width=6,height=6)
+corrplot.mixed(pairwise_cor,
+               upper = "circle",
+               p.mat = pairwise_sig$p,
+               addgrid.col = "white",
+               insig = "label_sig",
+               sig.level = c(.001, .01, .05), 
+               pch.cex = 2, 
+               pch.col = "white",
+               tl.col = "black",
+               order = "AOE",
+               lower.col = rev(col2(50)),
+               upper.col = rev(col2(50)),
+               number.cex = .85,number.font = 1)
+dev.off()
+
+# library("PerformanceAnalytics")
+# chart.Correlation(pairwise_mat, histogram=F, pch=19)
+# library(GGally)
+# 
+# ggpairs(pairwise_mat,upper=list(continuous="smooth"),lower=list(continuous="smooth"))
 
 ####
 

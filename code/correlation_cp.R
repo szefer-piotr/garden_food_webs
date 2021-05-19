@@ -28,14 +28,14 @@ pairs(cordf)
 
 
 library(psych)
-pairs.panels(cordf, 
-             method = "pearson", # correlation method
-             hist.col = "#00AFBB",
-             density = TRUE,  # show density plots
-             ellipses = TRUE # show correlation ellipses
-)
+# pairs.panels(cordf, 
+#              method = "pearson", # correlation method
+#              hist.col = "#00AFBB",
+#              density = TRUE,  # show density plots
+#              ellipses = TRUE # show correlation ellipses
+# )
 library(PerformanceAnalytics)
-chart.Correlation(cordf, pch="+")
+# chart.Correlation(cordf, pch="+")
 
 # Both not significant
 cor.test(cordf[,1], cordf[,3])
@@ -121,6 +121,18 @@ corpredbio_sig <- cor.mtest(matbiodf[matbiodf$trt == "PREDATOR",-8],
 #          diag = FALSE)
 
 library(ggcorrplot)
+
+nms <- c("Aranea",
+  "Coleoptera",
+  "Heteroptera",
+  "Homoptera",
+  "Lepidoptera",
+  "Mantodea",
+  "Orthoptera",
+  "trt")
+
+colnames(matamodf) <- nms
+colnames(matbiodf) <- nms
 
 corcontabu <- cor(matamodf[matamodf$trt == "CONTROL",-8], 
                   method = "pearson", 

@@ -1,12 +1,14 @@
 # Size structure change
-
+rm(list=ls())
 source("code/data_processing_code.R")
+
+library(ggplot2)
 
 psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
 csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
 
 # Only adults?
-ins_bio <- ins_bio[ins_bio$adult.larvae != "L", ]
+# ins_bio <- ins_bio[ins_bio$adult.larvae != "L", ]
 ins_bio$block <- substr(ins_bio$plot, 3, 4)
 ibcp <- ins_bio[ins_bio$plot %in% c(psites,csites), ]
 
@@ -72,12 +74,6 @@ for(family in unique(ins_bio$family)){
 
 # Species size dsitribution
 ndssdf <- ssdf[!duplicated(ssdf),]
-
-
-# W30  aran ficucp   434.5  77 0.001819995
-# W31  aran costsp   434.5  77 0.001819995
-# W32  aran pipead   434.5  77 0.001819995
-# W33  aran macabi   434.5  77 0.001819995
 
 ndssdf[ndssdf$family == "aran" & ndssdf$plant == "ficucp", ]
 
@@ -172,40 +168,8 @@ library(RColorBrewer)
 
 crs <- alpha(RColorBrewer::brewer.pal(6,"PiYG"),0.1)
 
-# ndividuals - I think yes
-# ggplot(ssdf, aes(y=lbio, x = type, color = block))+
-#   geom_jitter(width=0.1)+
-#   scale_color_manual(values=crs)+
-#   stat_summary(fun.y = mean, geom = "point", col= "red")+
-#   stat_summary(fun.data = mean_se, #"mean_cl_boot"
-#                  geom = "errorbar",
-#                  width=0.05, col="red", lwd=1.1)+
-#   facet_wrap(~fam)
-
-ggplot(ndssdf, aes(x=lbio, fill=type))+
-  geom_density(position = "identity", 
-               adjust=1,
-               alpha=0.3,
-               lwd=0.5)+
-  facet_grid(vars(fam))+
-  geom_text(data = npar_res, 
-            mapping = aes(x=-Inf, y=-Inf, label = label),
-            hjust = -1.3,
-            vjust = -8)
-  # scale_fill_manual(crs[c(1,2)])+
-  # scale_color_manual(values=crs)+
-  # stat_summary(fun.y = mean, geom = "point", col= "red")+
-  # stat_summary(fun.data = mean_se, #"mean_cl_boot"
-  #              geom = "errorbar",
-  #              width=0.05, col="red", lwd=1.1)+
-  
-# summary(lmer(lbio~type+(1|block/fam), data=ssdf)) # family nested within the block
-# IC <- mod1$coefficients[1,1]
-# C <- mod1$coefficients[2,1]
-# exp(IC) # average size of a herbivore
-# exp(IC+ C)# <- average size in predator exclosure
-
 # Check whether number of individualt match the data
+
 with(ssdf, {
   nind <- dim(ssdf[fam == "orth" & type == "predator" & block == "g5", ])[1]
   print(nind)
@@ -215,38 +179,244 @@ with(ins_bio, {
   sum(ins_bio[family == "orth" & (plot %in% psites) & block == "g5", ]$amount)
 })
 
-# Violoin plots
-
-ggplot(ssdf, aes(x=type, y=lbio))+
-  geom_violin(scale="width")+
-  # scale_fill_manual(crs[c(1,2)])+
-  # scale_color_manual(values=crs)+
-  # stat_summary(fun.y = mean, geom = "point", col= "red")+
-  # stat_summary(fun.data = mean_se, #"mean_cl_boot"
-  #              geom = "errorbar",
-  #              width=0.05, col="red", lwd=1.1)+
-  facet_wrap(~fam)
-
-# Geom ridges
-library(ggridges)
-ggplot(ndssdf, aes(x = lbio, y = type, fill=type)) + 
-  geom_density_ridges(quantile_lines = T, lty = 1,
-                      quantiles = c(0.5), alpha=0.5, scale =3)+
-  # facet_grid(vars(fam), vars(block))+
-  facet_grid(vars(fam))+
-  geom_text(data = npar_res, 
-            mapping = aes(x=-Inf, y=-Inf, label = label),
-            hjust = -1,
-            vjust = -0.25)+
-  theme_bw()+
-  theme(legend.position = "none")
-
-
-
-npar_res
-
-
-
-
 ann_text <- data.frame(mpg = 15,wt = 5,lab = "Text",
                        cyl = factor(8,levels = c("4","6","8")))
+
+# Individual size distribution ----
+ibcp 
+ibcp.expanded <- ibcp[rep(row.names(ibcp), ibcp$amount), 
+                      c(3,4,7,9,11)]
+library(dplyr)
+
+ibcp.expanded <- ibcp.expanded %>%
+  mutate(Treatment = ifelse(plot %in% csites,
+                            "C", "Ex"))
+
+ndssdf <- ndssdf %>%
+  mutate(Treatment = ifelse(type == "predator",
+                            "Ex", "C"))
+
+ord.labs <- c("Orthoptera", "Aranea","Homoptera","Heteroptera",
+              "Mantodea", "Coleoptera","Lepidoptera")
+
+levels(ibcp.expanded$family)
+levels(ibcp.expanded$family) <- ord.labs[c(2,6,4,3,7,5,1)]
+
+ibcp.expanded$family <- factor(ibcp.expanded$family, 
+                               levels = ord.labs)
+ibcp.expanded <- ibcp.expanded %>%
+  mutate(lbio = log(bio))
+
+sigcol <- "red"
+nsigcol <- "black"
+msigcol <- "gold"
+ind.b.cols <- c(sigcol,sigcol,
+                sigcol,sigcol,
+                sigcol,sigcol,
+                nsigcol,nsigcol,
+                sigcol,sigcol,
+                sigcol,sigcol,
+                sigcol,sigcol)
+
+sb.b.cols <- c(nsigcol,nsigcol,
+                sigcol,sigcol,
+                nsigcol,nsigcol,
+                nsigcol,nsigcol,
+                nsigcol,nsigcol,
+                nsigcol,nsigcol,
+                nsigcol,nsigcol)
+
+# Individual based plots
+mp1 <- ggplot(data = ibcp.expanded) +
+  geom_pointrange(mapping = aes(y = log(bio), x = Treatment),
+                  stat = "summary",
+                  fun.min = function(z) {quantile(z,0.05)},
+                  fun.max = function(z) {quantile(z,0.95)},
+                  fun = median,
+                  col = ind.b.cols)+
+  facet_wrap(vars(family),ncol = 7)+ xlab("")+
+  ylab("Log[individual body size]")
+# 
+# levels(ndssdf$fam) <- ord.labs
+# 
+# # Species based
+# mp2 <- ggplot(data = ndssdf) +
+#   geom_pointrange(mapping = aes(y=lbio, x=Treatment),
+#                   stat = "summary",
+#                   fun.min = function(z) {quantile(z,0.05)},
+#                   fun.max = function(z) {quantile(z,0.95)},
+#                   fun = median,
+#                   col = sb.b.cols)+
+#   facet_wrap(vars(fam),ncol = 7) + xlab("")+
+#   ylab("Log[species body size]")
+# 
+# ggpubr::ggarrange(mp1, mp2, labels = c("A","B"), nrow = 2)
+
+# U-Mann whitney test for families
+# Hodges Lemann centrality instead of median
+# Based on individuals and raw values
+
+generalUW <-data.frame()
+siteUW <- data.frame()
+plantUW <- data.frame()
+for (fam in unique(ibcp.expanded$family)){
+  print(fam)
+  subdat <- ibcp.expanded[ibcp.expanded$family == fam,]
+  wt <- wilcox.test(subdat$bio~subdat$Treatment, conf.int = T)
+  generalUW <- rbind(generalUW, data.frame(
+    Order = fam,
+    NC = nrow(subdat[subdat$Treatment == "C", ]),
+    NEx = nrow(subdat[subdat$Treatment == "Ex", ]),
+    HL = wt$estimate,
+    MC = median(subdat[subdat$Treatment == "C", ]$lbio,na.rm=T),
+    MEx = median(subdat[subdat$Treatment == "Ex", ]$lbio,na.rm=T),
+    # HLLCL = wt$conf.int[[1]],
+    # HLUCL = wt$conf.int[[2]],
+    P = round(wt$p.value, 3)
+  )) 
+  
+  for(st in unique(subdat$block)){
+    print(st)
+    sdst <-subdat[subdat$block == st, ]
+    if(length(unique(sdst$Treatment)) < 2){
+      print("no values in the other treatment")
+      next
+    }
+    wt <- wilcox.test(sdst$bio~sdst$Treatment, conf.int = T)
+    siteUW <- rbind(siteUW, data.frame(
+      Order = fam,
+      Site = st,
+      NC = nrow(sdst[sdst$Treatment == "C", ]),
+      NEx = nrow(sdst[sdst$Treatment == "Ex", ]),
+      HL = wt$estimate,
+      HLLCL = wt$conf.int[[1]],
+      HLUCL = wt$conf.int[[2]],
+      P = round(wt$p.value, 3)
+    ))
+  }
+  
+  for(pltnm in unique(subdat$tree)){
+    print(pltnm)
+    sdpl <-subdat[subdat$tree == pltnm, ]
+    
+    TT <- table(sdpl$Treatment)
+    
+    if(dim(TT) == 1 | TT[1]<2 | TT[2]<2 ){
+      print("no species present in both treatment")
+      next
+    }
+    wt <- wilcox.test(sdpl$bio~sdpl$Treatment, conf.int = T)
+    plantUW <- rbind(plantUW, data.frame(
+      Order = fam,
+      Plant = pltnm,
+      NC = nrow(sdpl[sdpl$Treatment == "C", ]),
+      NEx = nrow(sdpl[sdpl$Treatment == "Ex", ]),
+      HL = wt$estimate,
+      HLLCL = wt$conf.int[[1]],
+      HLUCL = wt$conf.int[[2]],
+      P = round(wt$p.value, 3)
+    ))
+  }
+}
+
+generalUW <- generalUW %>% mutate(pred.eff = ifelse(P <= 0.05, 
+                                       ifelse(HL < 0, 
+                                              "decrease",
+                                              "increase"), "ns"))
+siteUW <- siteUW %>% mutate(pred.eff = ifelse(P <= 0.05, 
+                                    ifelse(HL < 0, 
+                                           "decrease",
+                                           "increase"), "ns"))
+plantUW <- plantUW %>% mutate(pred.eff = ifelse(P <= 0.05, 
+                                     ifelse(HL < 0, 
+                                            "decrease",
+                                            "increase"), "ns"))
+
+
+# Based on species
+
+ndssdf$bio <- exp(ndssdf$lbio)
+
+generalUWsb <-data.frame()
+siteUWsb <- data.frame()
+plantUWsb <- data.frame()
+
+for (fm in unique(ndssdf$fam)){
+  print(fm)
+  subdat <- ndssdf[ndssdf$fam == fm,]
+  wt <- wilcox.test(subdat$bio~subdat$Treatment, conf.int = T)
+  generalUWsb <- rbind(generalUWsb, data.frame(
+    Order = fm,
+    NC = nrow(subdat[subdat$Treatment == "C", ]),
+    NEx = nrow(subdat[subdat$Treatment == "Ex", ]),
+    HL = wt$estimate,
+    HLLCL = wt$conf.int[[1]],
+    HLUCL = wt$conf.int[[2]],
+    P = round(wt$p.value, 3)
+  )) 
+  
+  for(st in unique(subdat$block)){
+    print(st)
+    sdst <-subdat[subdat$block == st, ]
+    if(length(unique(sdst$Treatment)) < 2){
+      print("no values in the other treatment")
+      next
+    }
+    wt <- wilcox.test(sdst$bio~sdst$Treatment, conf.int = T)
+    siteUWsb <- rbind(siteUWsb, data.frame(
+      Order = fm,
+      Site = st,
+      NC = nrow(sdst[sdst$Treatment == "C", ]),
+      NEx = nrow(sdst[sdst$Treatment == "Ex", ]),
+      HL = wt$estimate,
+      HLLCL = wt$conf.int[[1]],
+      HLUCL = wt$conf.int[[2]],
+      P = round(wt$p.value, 3)
+    ))
+  }
+  
+  for(pltnm in unique(subdat$plant)){
+    print(pltnm)
+    sdpl <-subdat[subdat$plant == pltnm, ]
+    if(length(unique(sdpl$Treatment)) < 2){
+      print("no species present in both treatment")
+      next
+    }
+    wt <- wilcox.test(sdpl$bio~sdpl$Treatment, conf.int = T)
+    plantUWsb <- rbind(plantUWsb, data.frame(
+      Order = fm,
+      Plant = pltnm,
+      NC = nrow(sdpl[sdpl$Treatment == "C", ]),
+      NEx = nrow(sdpl[sdpl$Treatment == "Ex", ]),
+      HL = wt$estimate,
+      HLLCL = wt$conf.int[[1]],
+      HLUCL = wt$conf.int[[2]],
+      P = round(wt$p.value, 3)
+    ))
+  }
+}
+
+generalUWsb <- generalUWsb %>% 
+  mutate(pred.eff = ifelse(P <= 0.05,
+                           ifelse(HL < 0,
+                                  "decrease",
+                                  "increase"), "ns"))
+siteUWsb <- siteUWsb %>% 
+  mutate(pred.eff = ifelse(P <= 0.05,
+                           ifelse(HL < 0,
+                                  "decrease",
+                                  "increase"), "ns"))
+plantUWsb <- plantUWsb %>% 
+  mutate(pred.eff = ifelse(P <= 0.05,
+                           ifelse(HL < 0,
+                                  "decrease",
+                                  "increase"), "ns"))
+
+write.table(generalUW, "ms1/draft_3/tables/general_uw.txt")
+write.table(siteUW, "ms1/draft_3/tables/site_uw.txt")
+write.table(plantUW, "ms1/draft_3/tables/plant_uw.txt")
+
+write.table(generalUWsb, "ms1/draft_3/tables/general_uw_sb.txt")
+write.table(siteUWsb, "ms1/draft_3/tables/site_uw_sb.txt")
+write.table(plantUWsb, "ms1/draft_3/tables/plant_uw_sb.txt")
+

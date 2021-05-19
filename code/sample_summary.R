@@ -1,8 +1,27 @@
 rm(list=ls())
 source("code/data_processing_code.R")
 
+# Insect sample size and mass
+
+psites <- as.character(treats[treats$treat %in% c("PREDATOR"), ]$codes)
+csites <- as.character(treats[treats$treat %in% c("CONTROL"), ]$codes)
+
+sum(ins_bio[ins_bio$plot %in% c(csites, psites),]$amount)
+sum(ins_bio[ins_bio$plot %in% c(csites, psites),]$totbio, na.rm=T)
+
+
 # 141 samples from which we collected insects
 sum(table(ins_bio$tree, ins_bio$plot)>0)
+
+# No of species in each order
+tds <- ins_bio[ins_bio$plot %in% c(csites, psites),]
+library(dplyr)
+sumtds <- tds %>%
+  group_by(family) %>%
+  summarise(sp_no = length(unique(morph)))
+
+ap <- sum(sumtds[sumtds$family %in% c("aran", "mant"),]$sp_no)
+herb <- sum(sumtds$sp_no) - ap
 
 # 27 tree species
 spsp <- toupper(unique(ins_bio$tree))

@@ -100,3 +100,46 @@ ggpubr::ggarrange(hd, hsla, damsla, ncol=3, nrow = 1,
 
 # vals <- seq(from =0.01, to=0.99, by = 0.05)
 # lvals <- log(vals/(1 - vals))
+
+# Do plants that compensate have higher relative abundance?
+data_full <- data.frame()
+for(gd in unique(ddat$block)){
+  print(gd)
+  subsC <- ddat %>% 
+    filter(block == gd & treat == "Co")
+  subsEx <- ddat %>% 
+    filter(block == gd & treat == "Ex")
+  print(subsC)
+  print(subsEx)
+  plant_nm <- subsC$sp_code[subsC$sp_code %in% subsEx$sp_code]
+  subs_fin <- cbind(subsC[subsC$sp_code %in% plant_nm, ],
+                    subsEx[subsEx$sp_code %in% plant_nm, ])
+  data_full <- rbind(data_full, subs_fin)
+}
+colnames(data_full) <- c("codeC", "blockC", "treatC", "leavesC", "weightC", "sp_codeC", "no_stemsC", "slaC", "herbC", "sp_blockC", "areaC","code","block","treat","leaves","weight","sp_code","no_stems","sla","herb","sp_block","area")
+
+relDominance <- function(bl, plant, tr){
+  reldat <- ddat %>%
+    filter(block == bl & treat == tr)
+  reldom <- reldat[reldat$sp_code == plant, ]$weight/sum(reldat$weight)
+  return(reldom)
+}
+
+data_full$RD <- NA
+
+# Log ratio vs relative dominance in the control
+for(row in 1:nrow(data_full)){
+  print(row)
+  data_full[row, ]$RD <- relDominance(data_full[row, ]$block,
+                                      data_full[row, ]$sp_code,
+                                      "Co")
+}
+
+data_full$RD <- data_full$RD
+data_full <- data_full %>%
+  mutate(deltaSLA = log(slaC/sla))
+
+ggplot(data_full, aes(y = RD,x = deltaSLA))+
+  geom_point(size = 5, alpha=0.5)
+
+summary(betareg::betareg(RD~deltaSLA, data = data_full))

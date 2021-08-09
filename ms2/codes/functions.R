@@ -4,7 +4,11 @@ TukeyGroups <- function(model, data, ...){
   inter.test <- emmeans(model, "treat", 
                         data = data)
   print("inter.test passed")
-  pairwise <- cld(inter.test, Letter="abcdefghijklm")
+  pairwise <- cld(inter.test, Letter="abcdefghijklm", type = "response")
+  yvalue <- aggregate(.~treat, 
+                      data=data[, c("treat","val")], 
+                      mean)
+  tdat <- merge(yvalue, pairwise[,c(2,5,6,7)])
   return(pairwise)
 }
 

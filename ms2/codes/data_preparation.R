@@ -7,24 +7,45 @@ rm(list=ls())
 arthropods <- read.table("data/ins_bioOrig.txt")   # arthropods
 # plantData <- read.table("data/main_biomass.txt")  # plants
 treatments <- read.table("data/treats_clean.txt")  # treatments
-arthropodSizes <- read.table("data/treats_clean.txt")  # treatments
+arthropodSizes <- read.table("data/size_dat_bio.txt")  # treatments
+leafAreaOrig <- read.table("data/wng_main_clean.txt")
 
 library(dplyr)
 library(vegan) # for invsimpson
+library(data.table)
+
+# 1.1Density
+
+# 1.1.1 Caluclate leaf area per individual tree
+leafArea <- leafAreaOrig %>%
+  filter(LIFE.FORM %in% c("shrub", "tree")) %>%
+  dplyr::select(CODE, PLOT, BLOCK, TREAT, SP_CODE,
+                LDMC,WATER,HERB,LEAVES,SLA)%>%
+  mutate(area.m2 = ((LEAVES*1000)*SLA)/10000)
+
+# 1.1.2 Calculate leaf area per individual plot
+leafAreaPlot <- leafArea %>%
+  group_by(CODE) %>%
+  summarise(total.leaf = sum(area.m2, na.rm = T))
+
+# 1.1.3 Append area to each row in the arthropod dataset
+arthropods <- arthropods %>%
+  mutate(ch.plot = as.character(plot),
+         ch.tree = as.character(tree),
+         leaf.area.m2 = NA)
 
 
-
-# 1. General descriptors data, grouped by treatment and 
+# 1.2 General descriptors data, grouped by treatment and 
 genDescriptors <- arthropods %>%
   group_by(plot, guild, treat) %>%
   summarise(bio = sum(totbio, na.rm = T),
             abu = sum(amount,na.rm = T),
             rich = length(unique(morphotype)),
-            ric = n(),
+            ric = n(), # what is this?
             diva = diversity(amount[!is.na(amount)], 
                              index = "invsimpson"),
             divb = diversity(totbio[!is.na(totbio)], 
-                             index = "invsimpson"))
+                             index = "shannon"))
 
 
 genDescriptorsPlot <- rbind(genDescriptors[1:3],
@@ -95,7 +116,48 @@ genDescriptorsPlot <- genDescriptorsPlot %>%
 # 
 # write.table(arthropods, "data/ins_bioOrig.txt")
 
+# Add density
+leafAreaPlot <- leafAreaPlot %>%
+  mutate(CODE = tolower(CODE))
+
+abu <- genDescriptorsPlot %>%
+  filter(ind == "abu")
+
+# go through the 'abu' plot column and extract the leaf area for that plot from the leafAreaPlot to calculate densities.
+# rw = 1
+
+densDf <- data.frame()
+
+for (rw in 1:nrow(abu)){
+  subrw <- abu[rw,]
+  
+  ###### HERE NEEDS TO WORK
+  areal = tolower(leafAreaPlot$CODE) %like% 
+    substr(as.character(subrw$plot), 3,6) # extract the area
+  
+  area = leafAreaPlot[areal, ]$total.leaf
+  
+  gDnR <- data.frame(
+    plot = subrw$plot,
+    guild = subrw$guild,
+    treat = subrw$treat,
+    ind = "dens",
+    val = subrw$val/area, #ind/m2
+    block = subrw$block)
+  
+  densDf <- rbind(densDf, gDnR)
+  
+}
+
+genDescriptorsPlotDens <- rbind(as.data.frame(genDescriptorsPlot),
+                                densDf)
 
 # Clean-up
-
-rm(list = ls()[!(ls() %in% c("genDescriptorsPlot"))])
+genDescriptorsPlotDens$treat <- as.factor(genDescriptorsPlotDens$treat)
+genDescriptorsPlotDens$treat <- factor(genDescriptorsPlotDens$treat, 
+                                   levels = c("insecticide", 
+                                              "control", 
+                                              "weevil25",
+                                              "weevil125"),
+                                   labels = c("I","C","H1","H2"))
+rm(list = ls()[!(ls() %in% c("genDescriptorsPlotDens"))])

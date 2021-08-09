@@ -90,8 +90,7 @@ csites <- treats[treats$treat %in% "CONTROL",]$codes
 psites <- as.character(psites)
 csites <- as.character(csites)
 
-c1 <- networkPlot(abugardnets, csites[4], hmltp = multiplier, emltp = multiplier/3,
-            pmltp = multiplier)
+c1 <- networkPlot(abugardnets, csites[4], hmltp = multiplier, emltp = multiplier/3,pmltp = multiplier)
 
 
 
@@ -120,8 +119,8 @@ bipartieNetworkPlot(abugardnets, pmltp = 5, "w1g1p3")
 psites
 csites
 
-pwg2 <- "w1g2p3"
-cwg2 <- "w1g2p6"
+pwg2 <- psites[1]
+cwg2 <- csites[2]
 
 par(mfrow = c(2,1))
 
